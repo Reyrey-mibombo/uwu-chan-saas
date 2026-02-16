@@ -1,8 +1,51 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { User, Activity } = require('../../database/mongo');
+
 module.exports = {
-  data: new SlashCommandBuilder().setName('strike_add').setDescription('Add strike to user')
-    .addUserOption(o => o.setName('user').setDescription('User').setRequired(true))
-    .addStringOption(o => o.setName('reason').setDescription('Reason').setRequired(true))
+  data: new SlashCommandBuilder()
+    .setName('strike_add')
+    .setDescription('Add strike to user')
+    .addUserOption(option =>
+      option.setName('user')
+        .setDescription('User to strike')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('reason')
+        .setDescription('Reason for strike')
+        .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-  async execute(interaction) { await interaction.reply('Strike added!'); }
+
+  async execute(interaction) {
+    const target = interaction.options.getUser('user');
+    const reason = interaction.options.getString('reason');
+    const guildId = interaction.guildId;
+
+    let user = await User.findOne({ userId: target.id });
+    if (!user) {
+      user = new User({ userId: target.id, username: target.username });
+    }
+    if (!user.staff) user.staff = {};
+    user.staff.warnings = (user.staff.warnings || 0) + 1;
+    await user.save();
+
+    await Activity.create({
+      guildId,
+      userId: target.id,
+      type: 'warning',
+      data: { action: 'strike', reason, moderatorId: interaction.user.id }
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle('⚡ Strike Added')
+      .setColor(0xf39c12)
+      .addFields(
+        { name: 'User', value: target.tag, inline: true },
+        { name: 'Reason', value: reason, inline: true },
+        { name: 'Total Strikes', value: user.staff.warnings.toString(), inline: true }
+      )
+      .setFooter({ text: `By ${interaction.user.username}` })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  }
 };

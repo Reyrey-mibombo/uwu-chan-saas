@@ -10,7 +10,7 @@ module.exports = {
         .setDescription('Number of days to analyze (7-90)')
         .setMinValue(7)
         .setMaxValue(90)
-        .setRequired(false)
+        .setRequired(false) // optional, default handled in code
     ),
 
   async execute(interaction) {
@@ -72,7 +72,6 @@ module.exports = {
 
     } catch (error) {
       console.error('Error in activity_insights command:', error);
-
       if (!interaction.replied) {
         await interaction.reply({
           content: 'Something went wrong while fetching activity insights.',

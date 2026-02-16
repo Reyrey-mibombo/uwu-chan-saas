@@ -1,13 +1,14 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { Guild, License } = require('../../database/mongo');
+const axios = require('axios');
 
 const PLANS = {
-  premium_monthly: { tier: 'premium', name: 'Premium', price: 9.99, period: 'month', duration: 30 },
-  premium_yearly: { tier: 'premium', name: 'Premium', price: 99.99, period: 'year', duration: 365 },
-  premium_lifetime: { tier: 'premium', name: 'Premium', price: 199.99, period: 'lifetime', duration: 3650 },
-  enterprise_monthly: { tier: 'enterprise', name: 'Enterprise', price: 19.99, period: 'month', duration: 30 },
-  enterprise_yearly: { tier: 'enterprise', name: 'Enterprise', price: 199.99, period: 'year', duration: 365 },
-  enterprise_lifetime: { tier: 'enterprise', name: 'Enterprise', price: 399.99, period: 'lifetime', duration: 3650 },
+  premium_monthly: { tier: 'premium', name: 'Premium Monthly', price: 9.99, period: 'month', duration: 30 },
+  premium_yearly: { tier: 'premium', name: 'Premium Yearly', price: 99.99, period: 'year', duration: 365 },
+  premium_lifetime: { tier: 'premium', name: 'Premium Lifetime', price: 199.99, period: 'lifetime', duration: 3650 },
+  enterprise_monthly: { tier: 'enterprise', name: 'Enterprise Monthly', price: 19.99, period: 'month', duration: 30 },
+  enterprise_yearly: { tier: 'enterprise', name: 'Enterprise Yearly', price: 199.99, period: 'year', duration: 365 },
+  enterprise_lifetime: { tier: 'enterprise', name: 'Enterprise Lifetime', price: 399.99, period: 'lifetime', duration: 3650 },
   trial: { tier: 'premium', name: 'Free Trial', price: 0, period: '7 days', duration: 7 }
 };
 
@@ -33,14 +34,15 @@ module.exports = {
     const planKey = interaction.options.getString('plan');
     const plan = PLANS[planKey];
     const guildId = interaction.guildId;
-
-    const licenseSystem = client.systems.license;
-    const licenseKey = licenseSystem.generateLicenseKey();
+    const userId = interaction.user.id;
 
     if (planKey === 'trial') {
+      const licenseSystem = client.systems.license;
+      const licenseKey = licenseSystem.generateLicenseKey();
+
       await License.create({
         key: licenseKey,
-        userId: interaction.user.id,
+        userId: userId,
         guildId: guildId,
         tier: 'premium',
         status: 'active',
@@ -77,9 +79,12 @@ module.exports = {
       return interaction.reply({ embeds: [embed] });
     }
 
+    const licenseSystem = client.systems.license;
+    const licenseKey = licenseSystem.generateLicenseKey();
+
     await License.create({
       key: licenseKey,
-      userId: interaction.user.id,
+      userId: userId,
       guildId: guildId,
       tier: plan.tier,
       status: 'pending',
@@ -100,14 +105,40 @@ module.exports = {
       )
       .setFooter({ text: 'Complete payment to activate your license' });
 
-    const row = new ActionRowBuilder()
-      .addComponents(
+    const row1 = new ActionRowBuilder();
+    const row2 = new ActionRowBuilder();
+
+    const stripeCheckoutUrl = process.env.STRIPE_CHECKOUT_URL;
+    const paypalCheckoutUrl = process.env.PAYPAL_CHECKOUT_URL;
+
+    if (stripeCheckoutUrl) {
+      row1.addComponents(
         new ButtonBuilder()
-          .setURL('https://discord.gg/your-support-server')
-          .setLabel('Contact for Payment')
+          .setURL(`${stripeCheckoutUrl}?plan=${planKey}&key=${licenseKey}&guild=${guildId}&user=${userId}`)
+          .setLabel('Pay with Stripe 💳')
           .setStyle(ButtonStyle.Link)
       );
+    }
 
-    await interaction.reply({ embeds: [embed], components: [row] });
+    if (paypalCheckoutUrl) {
+      row1.addComponents(
+        new ButtonBuilder()
+          .setURL(`${paypalCheckoutUrl}?plan=${planKey}&key=${licenseKey}&guild=${guildId}&user=${userId}`)
+          .setLabel('Pay with PayPal 🅿️')
+          .setStyle(ButtonStyle.Link)
+      );
+    }
+
+    row2.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`confirm_payment_${licenseKey}`)
+        .setLabel('I Have Paid ✅')
+        .setStyle(ButtonStyle.Success)
+    );
+
+    await interaction.reply({ 
+      embeds: [embed], 
+      components: [row1, row2].filter(r => r.components.length > 0) 
+    });
   }
 };

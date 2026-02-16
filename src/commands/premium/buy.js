@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { Guild, License } = require('../../database/mongo');
-const axios = require('axios');
 
 const PLANS = {
   premium_monthly: { tier: 'premium', name: 'Premium Monthly', price: 9.99, period: 'month', duration: 30 },
@@ -37,6 +36,40 @@ module.exports = {
     const userId = interaction.user.id;
 
     if (planKey === 'trial') {
+      const existingTrial = await License.findOne({ 
+        guildId: guildId,
+        paymentProvider: 'trial'
+      });
+
+      if (existingTrial) {
+        const embed = new EmbedBuilder()
+          .setTitle('❌ Free Trial Already Used')
+          .setColor(0xe74c3c)
+          .setDescription('This server has already used the free trial!')
+          .addFields(
+            { name: 'Expired', value: existingTrial.expiresAt ? new Date(existingTrial.expiresAt).toDateString() : 'N/A', inline: true }
+          )
+          .setFooter({ text: 'Purchase Premium to continue using premium features!' });
+
+        const row = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('buy_premium_monthly')
+              .setLabel('Buy Premium')
+              .setStyle(ButtonStyle.Success)
+          );
+
+        return interaction.reply({ embeds: [embed], components: [row] });
+      }
+
+      const guild = await Guild.findOne({ guildId });
+      if (guild?.premium?.isActive) {
+        return interaction.reply({ 
+          content: '❌ You already have an active subscription!',
+          ephemeral: true 
+        });
+      }
+
       const licenseSystem = client.systems.license;
       const licenseKey = licenseSystem.generateLicenseKey();
 
@@ -51,11 +84,11 @@ module.exports = {
         paymentProvider: 'trial'
       });
 
-      let guild = await Guild.findOne({ guildId });
-      if (!guild) {
-        guild = new Guild({ guildId, name: interaction.guild.name });
+      let guildData = await Guild.findOne({ guildId });
+      if (!guildData) {
+        guildData = new Guild({ guildId, name: interaction.guild.name });
       }
-      guild.premium = {
+      guildData.premium = {
         isActive: true,
         tier: 'premium',
         activatedAt: new Date(),
@@ -63,7 +96,7 @@ module.exports = {
         licenseKey: licenseKey,
         paymentProvider: 'trial'
       };
-      await guild.save();
+      await guildData.save();
 
       const embed = new EmbedBuilder()
         .setTitle('🎉 Free Trial Activated!')
@@ -74,7 +107,7 @@ module.exports = {
           { name: 'Duration', value: '7 days', inline: true },
           { name: 'Expires', value: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toDateString(), inline: true }
         )
-        .setFooter({ text: 'Enjoy your trial!' });
+        .setFooter({ text: 'Enjoy your trial! Use /buy to upgrade after trial ends.' });
 
       return interaction.reply({ embeds: [embed] });
     }

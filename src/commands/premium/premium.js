@@ -29,6 +29,12 @@ module.exports = {
     const isPremium = guild?.premium?.isActive || false;
     const tier = guild?.premium?.tier || 'free';
 
+    const existingTrial = await License.findOne({ 
+      guildId: guildId,
+      paymentProvider: 'trial'
+    });
+    const trialUsed = !!existingTrial;
+
     const embed = new EmbedBuilder()
       .setTitle('💎 Premium Subscription')
       .setColor(0xe74c3c)
@@ -43,11 +49,16 @@ module.exports = {
         { name: 'Status', value: 'Not Active', inline: true }
       );
 
+      if (!trialUsed) {
+        row1.addComponents(
+          new ButtonBuilder()
+            .setCustomId('trial_start')
+            .setLabel('Start Free Trial')
+            .setStyle(ButtonStyle.Secondary)
+        );
+      }
+
       row1.addComponents(
-        new ButtonBuilder()
-          .setCustomId('trial_start')
-          .setLabel('Start Free Trial')
-          .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId('buy_premium_monthly')
           .setLabel('Premium - $9.99/mo')
@@ -96,13 +107,13 @@ module.exports = {
       .addFields(
         { name: 'Premium', value: '$9.99/month\n$99.99/year\n$199.99 lifetime', inline: true },
         { name: 'Enterprise', value: '$19.99/month\n$199.99/year\n$399.99 lifetime', inline: true },
-        { name: 'Free Trial', value: '7 days FREE', inline: true }
+        { name: 'Free Trial', value: trialUsed ? '❌ Already Used' : '7 days FREE', inline: true }
       )
       .setFooter({ text: 'Uwu-chan SaaS Bot' });
 
     await interaction.reply({ 
       embeds: [embed, pricingEmbed], 
-      components: isPremium ? [row2] : [row1, row2] 
+      components: isPremium ? [row2] : [row1, row2].filter(r => r.components.length > 0) 
     });
   }
 };

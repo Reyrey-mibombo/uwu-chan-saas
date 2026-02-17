@@ -16,7 +16,7 @@ module.exports = {
       guildId,
       type: { $in: ['notification', 'reminder', 'alert'] },
       createdAt: { $gte: startDate }
-    }).sort({ createdAt -1 });
+    }).sort({ createdAt: -1 });
 
     const notificationCounts = {};
     const userNotifications = {};

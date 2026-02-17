@@ -25,7 +25,7 @@ module.exports = {
     });
 
     const userQuery = targetUser ? { userId: targetUser.id } : {};
-    const userActivities = await Activity.find({ ...userQuery, guildId }).sort({ createdAt -1 });
+    const userActivities = await Activity.find({ ...userQuery, guildId }).sort({ createdAt: -1 });
     const lastActivity = userActivities[0];
 
     const dailyAvg = (activities.length / days).toFixed(1);

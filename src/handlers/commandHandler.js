@@ -10,6 +10,16 @@ class CommandHandler {
       }
     }
 
+    // Check for problems FIRST
+    for (const cmd of commands) {
+      if ((cmd.description || '').length > 100) console.log(`TOOLONG CMD ${cmd.name}: ${cmd.description.length}`);
+      if (cmd.options) {
+        for (const opt of cmd.options) {
+          if ((opt.description || '').length > 100) console.log(`TOOLONG OPT ${cmd.name}.${opt.name}: ${opt.description.length}`);
+        }
+      }
+    }
+
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
     try {
@@ -32,20 +42,6 @@ class CommandHandler {
         logger.info('Deployed 100 commands');
       }
     } catch (error) {
-      // Find which command has the problem
-      for (const cmd of commands) {
-        if ((cmd.description || '').length > 100) logger.error(`CMD ${cmd.name}: desc=${cmd.description.length}`);
-        if (cmd.options) {
-          for (const opt of cmd.options) {
-            if ((opt.description || '').length > 100) logger.error(`CMD ${cmd.name} OPT ${opt.name}: desc=${opt.description.length}`);
-            if (opt.choices) {
-              for (const c of opt.choices) {
-                if ((c.name || '').length > 100) logger.error(`CMD ${cmd.name} OPT ${opt.name} CHOICE: name=${c.name.length}`);
-              }
-            }
-          }
-        }
-      }
       logger.error('Deploy error: ' + error.message);
     }
   }

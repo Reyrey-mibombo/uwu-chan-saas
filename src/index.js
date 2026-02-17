@@ -42,30 +42,23 @@ async function initializeSystems() {
 }
 
 async function loadCommands() {
-  const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['v1'];
-  
-  for (const version of versions) {
-    const versionPath = path.join(commandsPath, version);
-    if (!fs.existsSync(versionPath)) continue;
-    
-    const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
-    for (const file of commandFiles) {
-      const command = require(path.join(versionPath, file));
-      if ('data' in command && 'execute' in command) {
-        command.requiredVersion = version;
-        client.commands.set(command.data.name, command);
-      }
+  client.commands.set('ping', {
+    data: {
+      name: 'ping',
+      description: 'Check bot latency'
+    },
+    async execute(interaction) {
+      await interaction.reply('Pong!');
     }
-  }
-  logger.info(`Loaded ${client.commands.size} commands across all versions`);
+  });
+  logger.info(`Loaded ${client.commands.size} commands`);
 }
 
 client.once('ready', async () => {
   logger.info(`Bot logged in as ${client.user.tag}`);
   await initializeSystems();
   await loadCommands();
-  // await commandHandler.deployCommands(client);
+  await commandHandler.deployCommands(client);
   
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });

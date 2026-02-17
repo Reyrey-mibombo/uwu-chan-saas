@@ -1,12 +1,6 @@
 const { REST, Routes } = require('discord.js');
-const { SlashCommandBuilder } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
-
-console.log('DISCORD_TOKEN:', process.env.DISCORD_TOKEN ? 'set' : 'NOT SET');
-console.log('CLIENT_ID:', process.env.CLIENT_ID ? 'set' : 'NOT SET');
-console.log('TEST_GUILD_ID:', process.env.TEST_GUILD_ID ? 'set' : 'NOT SET');
 
 function loadCommands() {
   const commands = [];
@@ -36,19 +30,34 @@ async function deploy() {
   const commands = loadCommands();
   console.log(`Loaded ${commands.length} commands`);
   
-  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-  const guildId = process.env.TEST_GUILD_ID;
+  // Read from .env file manually
+  const envPath = path.join(__dirname, '.env');
+  let DISCORD_TOKEN = '', CLIENT_ID = '', TEST_GUILD_ID = '';
   
-  if (!guildId) {
-    console.log('ERROR: TEST_GUILD_ID not set in .env file');
-    console.log('Add this to your .env file: TEST_GUILD_ID=1459564006334533804');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      if (line.startsWith('DISCORD_TOKEN=')) DISCORD_TOKEN = line.split('=')[1].trim();
+      if (line.startsWith('CLIENT_ID=')) CLIENT_ID = line.split('=')[1].trim();
+      if (line.startsWith('TEST_GUILD_ID=')) TEST_GUILD_ID = line.split('=')[1].trim();
+    });
+  }
+  
+  console.log('DISCORD_TOKEN:', DISCORD_TOKEN ? 'set' : 'NOT SET');
+  console.log('CLIENT_ID:', CLIENT_ID ? 'set' : 'NOT SET');
+  console.log('TEST_GUILD_ID:', TEST_GUILD_ID ? 'set' : 'NOT SET');
+  
+  if (!DISCORD_TOKEN || !CLIENT_ID || !TEST_GUILD_ID) {
+    console.log('\nERROR: Missing values in .env file');
     return;
   }
   
+  const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+  
   try {
-    console.log(`Deploying to guild ${guildId}...`);
+    console.log(`Deploying to guild ${TEST_GUILD_ID}...`);
     await rest.put(
-      Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
+      Routes.applicationGuildCommands(CLIENT_ID, TEST_GUILD_ID),
       { body: commands }
     );
     console.log(`SUCCESS! Deployed ${commands.length} commands to your server!`);

@@ -2,7 +2,11 @@ const { REST, Routes } = require('discord.js');
 const { SlashCommandBuilder } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+console.log('DISCORD_TOKEN:', process.env.DISCORD_TOKEN ? 'set' : 'NOT SET');
+console.log('CLIENT_ID:', process.env.CLIENT_ID ? 'set' : 'NOT SET');
+console.log('TEST_GUILD_ID:', process.env.TEST_GUILD_ID ? 'set' : 'NOT SET');
 
 function loadCommands() {
   const commands = [];

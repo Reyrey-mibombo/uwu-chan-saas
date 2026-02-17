@@ -155,14 +155,21 @@ app.use('/webhooks', require('./webhook/paymentWebhook'));
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => logger.info('Connected to MongoDB'))
-  .catch(err => logger.error('MongoDB connection error:', err));
+  .catch(err => {
+    logger.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   logger.info(`API server running on port ${PORT}`);
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN)
+  .catch(err => {
+    logger.error('Discord login error:', err);
+    process.exit(1);
+  });
 
 process.on('unhandledRejection', error => {
   logger.error('Unhandled promise rejection:', error);

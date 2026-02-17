@@ -34,19 +34,14 @@ class CommandHandler {
       : Array.from(loadCommands().values()).map(c => c.data.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-    const guildId = process.env.TEST_GUILD_ID;
 
     try {
-      if (guildId) {
-        logger.info(`Deploying ${commands.length} commands to guild...`);
-        await rest.put(
-          Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
-          { body: commands }
-        );
-        logger.info(`Deployed ${commands.length} commands!`);
-      } else {
-        logger.info('No guild ID');
-      }
+      logger.info(`Deploying ${commands.length} commands globally...`);
+      await rest.put(
+        Routes.applicationCommands(process.env.CLIENT_ID),
+        { body: commands }
+      );
+      logger.info(`SUCCESS: Deployed ${commands.length} commands!`);
     } catch (error) {
       logger.error('Deploy error: ' + error.message);
     }

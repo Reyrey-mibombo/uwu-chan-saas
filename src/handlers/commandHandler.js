@@ -28,9 +28,23 @@ class CommandHandler {
     try {
       const guildId = process.env.TEST_GUILD_ID;
       
-      // Skip deployment for now - Railway keeps killing the process
-      // Run locally with: npm run deploy
-      logger.info(`Skipping deployment - ${commands.length} commands loaded. Run 'npm run deploy' locally to deploy.`);
+      // Deploy first 50 commands only
+      const first50 = commands.slice(0, 50);
+      
+      if (guildId) {
+        logger.info(`Deploying 50 commands to guild ${guildId}...`);
+        await rest.put(
+          Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
+          { body: first50 }
+        );
+        logger.info(`Successfully deployed 50 commands!`);
+      } else {
+        await rest.put(
+          Routes.applicationCommands(process.env.CLIENT_ID),
+          { body: first50 }
+        );
+        logger.info('Deployed 50 commands globally');
+      }
     } catch (error) {
       logger.error('Deploy error: ' + error.message);
     }

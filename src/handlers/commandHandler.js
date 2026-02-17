@@ -26,25 +26,8 @@ class CommandHandler {
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
     try {
-      const guildId = process.env.TEST_GUILD_ID;
-      
-      // Deploy first 50 commands only
-      const first50 = commands.slice(0, 50);
-      
-      if (guildId) {
-        logger.info(`Deploying 50 commands to guild ${guildId}...`);
-        await rest.put(
-          Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
-          { body: first50 }
-        );
-        logger.info(`Successfully deployed 50 commands!`);
-      } else {
-        await rest.put(
-          Routes.applicationCommands(process.env.CLIENT_ID),
-          { body: first50 }
-        );
-        logger.info('Deployed 50 commands globally');
-      }
+      // Skip auto-deployment - Railway keeps killing the container
+      logger.info(`Loaded ${commands.length} commands. Deploy manually with: npm run deploy`);
     } catch (error) {
       logger.error('Deploy error: ' + error.message);
     }

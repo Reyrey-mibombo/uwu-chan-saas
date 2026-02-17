@@ -5,7 +5,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('optimization_report')
     .setDescription('View server optimization recommendations')
-    .addIntegerOption(opt => opt.setName('days').setDescription('Days to analyze').setMinValue(7).setMaxValue(90).setDefaultValue(30)),
+    .addIntegerOption(opt => opt.setName('days').setDescription('Days to analyze').setMinValue(7).setMaxValue(90)),
 
   async execute(interaction) {
     const guildId = interaction.guildId;

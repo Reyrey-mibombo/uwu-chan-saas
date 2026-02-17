@@ -5,7 +5,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('trend_alerts')
     .setDescription('View and configure trend alerts')
-    .addIntegerOption(opt => opt.setName('threshold').setDescription('Alert threshold %').setMinValue(5).setMaxValue(50).setDefaultValue(20)),
+    .addIntegerOption(opt => opt.setName('threshold').setDescription('Alert threshold %').setMinValue(5).setMaxValue(50)),
 
   async execute(interaction) {
     const guildId = interaction.guildId;

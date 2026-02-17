@@ -5,7 +5,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('scoreboard')
     .setDescription('View staff scoreboard')
-    .addIntegerOption(opt => opt.setName('limit').setDescription('Number of entries').setMinValue(5).setMaxValue(25).setDefaultValue(10)),
+    .addIntegerOption(opt => opt.setName('limit').setDescription('Number of entries').setMinValue(5).setMaxValue(25)),
 
   async execute(interaction) {
     const guildId = interaction.guildId;

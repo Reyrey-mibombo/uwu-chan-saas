@@ -5,7 +5,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('prediction_chart')
     .setDescription('View activity prediction chart')
-    .addIntegerOption(opt => opt.setName('days').setDescription('Historical days').setMinValue(14).setMaxValue(60).setDefaultValue(30)),
+    .addIntegerOption(opt => opt.setName('days').setDescription('Historical days').setMinValue(14).setMaxValue(60)),
 
   async execute(interaction) {
     const guildId = interaction.guildId;

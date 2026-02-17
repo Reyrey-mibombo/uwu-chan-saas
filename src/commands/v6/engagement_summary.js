@@ -5,7 +5,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('engagement_summary')
     .setDescription('View engagement summary for this server')
-    .addIntegerOption(opt => opt.setName('days').setDescription('Days to analyze').setMinValue(1).setMaxValue(90).setDefaultValue(7)),
+    .addIntegerOption(opt => opt.setName('days').setDescription('Days to analyze').setMinValue(1).setMaxValue(90)),
 
   async execute(interaction) {
     const guildId = interaction.guildId;

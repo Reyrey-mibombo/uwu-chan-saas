@@ -42,12 +42,26 @@ async function initializeSystems() {
 }
 
 async function loadCommands() {
-  client.commands.set('ping', {
-    data: new SlashCommandBuilder().setName('ping').setDescription('Check bot latency'),
-    async execute(interaction) {
-      await interaction.reply('Pong!');
+  const commandsPath = path.join(__dirname, 'commands');
+  const versions = ['v1', 'v2'];
+  
+  for (const version of versions) {
+    const versionPath = path.join(commandsPath, version);
+    if (!fs.existsSync(versionPath)) continue;
+    
+    const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
+    for (const file of commandFiles) {
+      try {
+        const command = require(path.join(versionPath, file));
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = version;
+          client.commands.set(command.data.name, command);
+        }
+      } catch (e) {
+        logger.error(`Error loading command ${file}: ${e.message}`);
+      }
     }
-  });
+  }
   logger.info(`Loaded ${client.commands.size} commands`);
 }
 

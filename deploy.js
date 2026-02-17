@@ -52,15 +52,15 @@ async function deploy() {
     return;
   }
   
-  const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+  const rest = new REST({ version: '10', timeout: 30000 }).setToken(DISCORD_TOKEN);
   
   try {
-    console.log(`Deploying globally...`);
+    console.log(`Deploying ${commands.length} commands globally...`);
     await rest.put(
       Routes.applicationCommands(CLIENT_ID),
       { body: commands }
     );
-    console.log(`SUCCESS! Deployed ${commands.length} commands to your server!`);
+    console.log(`SUCCESS! Deployed ${commands.length} commands!`);
   } catch (error) {
     console.log('ERROR:', error.message);
   }

@@ -12,10 +12,13 @@ class CommandHandler {
 
     // Check for problems FIRST
     for (const cmd of commands) {
-      if ((cmd.description || '').length > 100) console.log(`TOOLONG CMD ${cmd.name}: ${cmd.description.length}`);
+      if ((cmd.description || '').length > 100) logger.error(`TOOLONG CMD ${cmd.name}: ${cmd.description.length}`);
+      if ((cmd.name || '').length > 32) logger.error(`CMD NAME TOOLONG ${cmd.name}: ${cmd.name.length}`);
+      if (cmd.default_member_permissions && cmd.default_member_permissions.length > 100) logger.error(`CMD ${cmd.name}: perms too long`);
       if (cmd.options) {
         for (const opt of cmd.options) {
-          if ((opt.description || '').length > 100) console.log(`TOOLONG OPT ${cmd.name}.${opt.name}: ${opt.description.length}`);
+          if ((opt.description || '').length > 100) logger.error(`TOOLONG OPT ${cmd.name}.${opt.name}: ${opt.description.length}`);
+          if ((opt.name || '').length > 32) logger.error(`OPT NAME TOOLONG ${cmd.name}.${opt.name}: ${opt.name.length}`);
         }
       }
     }

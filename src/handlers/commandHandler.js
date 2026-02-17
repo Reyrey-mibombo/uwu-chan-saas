@@ -10,24 +10,20 @@ class CommandHandler {
       }
     }
 
-    // Check for problems FIRST
-    for (const cmd of commands) {
-      if ((cmd.description || '').length > 100) logger.error(`TOOLONG CMD ${cmd.name}: ${cmd.description.length}`);
-      if ((cmd.name || '').length > 32) logger.error(`CMD NAME TOOLONG ${cmd.name}: ${cmd.name.length}`);
-      if (cmd.default_member_permissions && cmd.default_member_permissions.length > 100) logger.error(`CMD ${cmd.name}: perms too long`);
-      if (cmd.options) {
-        for (const opt of cmd.options) {
-          if ((opt.description || '').length > 100) logger.error(`TOOLONG OPT ${cmd.name}.${opt.name}: ${opt.description.length}`);
-          if ((opt.name || '').length > 32) logger.error(`OPT NAME TOOLONG ${cmd.name}.${opt.name}: ${opt.name.length}`);
-        }
-      }
-    }
-
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+    const guildId = process.env.TEST_GUILD_ID;
 
     try {
-      // Skip auto-deployment - Railway keeps killing the container
-      logger.info(`Loaded ${commands.length} commands. Deploy manually with: npm run deploy`);
+      if (guildId) {
+        logger.info(`Deploying ${commands.length} commands to guild...`);
+        await rest.put(
+          Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
+          { body: commands }
+        );
+        logger.info(`Deployed ${commands.length} commands!`);
+      } else {
+        logger.info('No guild ID');
+      }
     } catch (error) {
       logger.error('Deploy error: ' + error.message);
     }

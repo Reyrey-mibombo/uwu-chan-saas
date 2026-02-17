@@ -43,7 +43,7 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
+  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8']; // removed premium temporarily
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);

@@ -29,12 +29,14 @@ class CommandHandler {
       const guildId = process.env.TEST_GUILD_ID;
       
       if (guildId) {
-        logger.info(`Deploying all ${commands.length} commands to guild ${guildId}...`);
+        // Deploy first 100 commands only for now
+        const first100 = commands.slice(0, 100);
+        logger.info(`Deploying first 100 commands to guild ${guildId}...`);
         await rest.put(
           Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
-          { body: commands }
+          { body: first100 }
         );
-        logger.info(`Successfully deployed ${commands.length} commands!`);
+        logger.info(`Successfully deployed 100 commands!`);
       } else {
         logger.info('No TEST_GUILD_ID - deploying first 100 globally...');
         const first100 = commands.slice(0, 100);

@@ -5,7 +5,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('visual_feedback')
     .setDescription('View visual feedback on activity')
-    .addUserOption(opt => opt.getUser('user').setDescription('User to check feedback for')),
+    .addUserOption(opt => opt.setName('user').setDescription('User to check feedback for')),
   async execute(interaction) {
     const target = interaction.options.getUser('user') || interaction.user;
     const userId = target.id;

@@ -65,7 +65,7 @@ client.once('ready', async () => {
   logger.info(`Bot logged in as ${client.user.tag}`);
   await initializeSystems();
   await loadCommands();
-  await commandHandler.deployCommands(client);
+  // await commandHandler.deployCommands(client);
   
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });

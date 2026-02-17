@@ -15,40 +15,21 @@ class CommandHandler {
     try {
       logger.info(`Started refreshing ${commands.length} application (/) commands.`);
       
-      const data = await rest.put(
-        Routes.applicationCommands(process.env.CLIENT_ID),
-        { body: commands }
-      );
-
-      logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
-    } catch (error) {
-      if (error.code === 50035) {
-        logger.error('Description too long error. Checking commands...');
-        for (let i = 0; i < commands.length; i++) {
-          const cmd = commands[i];
-          const descLen = (cmd.description || '').length;
-          if (descLen > 100) {
-            logger.error(`Command ${i}: ${cmd.name} - description length: ${descLen}`);
-          }
-          if (cmd.options) {
-            for (const opt of cmd.options) {
-              const optDescLen = (opt.description || '').length;
-              if (optDescLen > 100) {
-                logger.error(`Command ${cmd.name} option ${opt.name}: description length: ${optDescLen}`);
-              }
-              if (opt.choices) {
-                for (const choice of opt.choices) {
-                  const choiceNameLen = (choice.name || '').length;
-                  if (choiceNameLen > 100) {
-                    logger.error(`Command ${cmd.name} option ${opt.name} choice: name length: ${choiceNameLen}`);
-                  }
-                }
-              }
-            }
-          }
-        }
+      // Deploy in batches of 50 to avoid hitting limits
+      const batchSize = 50;
+      for (let i = 0; i < commands.length; i += batchSize) {
+        const batch = commands.slice(i, i + batchSize);
+        logger.info(`Deploying commands ${i+1} to ${Math.min(i+batchSize, commands.length)}...`);
+        await rest.put(
+          Routes.applicationCommands(process.env.CLIENT_ID),
+          { body: batch }
+        );
       }
-      logger.error(error);
+
+      logger.info(`Successfully reloaded all ${commands.length} application (/) commands.`);
+    } catch (error) {
+      logger.error('Failed to deploy commands: ' + error.message);
+      // Don't crash - just log the error
     }
   }
 }

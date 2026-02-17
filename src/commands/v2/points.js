@@ -6,14 +6,14 @@ const userPoints = new Map();  // Key: userId, Value: points
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('points')
-    .setDescription('Check youw points ow add points to anothew usew! (UwU)')
+    .setDescription('Check or add points to users')
     .addUserOption(option =>
-      option.setName('usew')
-        .setDescription('The usew to check ow add points to (optionaw)')
+      option.setName('user')
+        .setDescription('User to check or add points to')
         .setRequired(false))
     .addIntegerOption(option =>
       option.setName('add')
-        .setDescription('Amount of points to add (optionaw, admin onwy)')
+        .setDescription('Amount of points to add (admin only)')
         .setRequired(false)),
 
   async execute(interaction) {

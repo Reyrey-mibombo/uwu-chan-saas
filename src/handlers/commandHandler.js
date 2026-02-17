@@ -33,18 +33,7 @@ class CommandHandler {
       ? Array.from(client.commands.values()).map(c => c.data.toJSON())
       : Array.from(loadCommands().values()).map(c => c.data.toJSON());
 
-    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-
-    try {
-      logger.info(`Deploying ${commands.length} commands globally...`);
-      await rest.put(
-        Routes.applicationCommands(process.env.CLIENT_ID),
-        { body: commands }
-      );
-      logger.info(`SUCCESS: Deployed ${commands.length} commands!`);
-    } catch (error) {
-      logger.error('Deploy error: ' + error.message);
-    }
+    logger.info(`Loaded ${commands.length} commands. Use node deploy.js locally to deploy.`);
   }
 }
 

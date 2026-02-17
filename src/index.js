@@ -69,7 +69,10 @@ client.once('ready', async () => {
   logger.info(`Bot logged in as ${client.user.tag}`);
   await initializeSystems();
   await loadCommands();
-  await commandHandler.deployCommands(client);
+  // Skip auto-deployment - deploy commands manually or use fewer commands
+  // await commandHandler.deployCommands(client);
+  
+  logger.info('Bot is ready! Commands are loaded but not deployed. Use /deploy manually or reduce command count.');
   
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });

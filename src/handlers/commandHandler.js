@@ -27,12 +27,22 @@ class CommandHandler {
         for (let i = 0; i < commands.length; i++) {
           const cmd = commands[i];
           const descLen = (cmd.description || '').length;
-          logger.error(`Command ${i}: ${cmd.name} - description length: ${descLen}`);
+          if (descLen > 100) {
+            logger.error(`Command ${i}: ${cmd.name} - description length: ${descLen}`);
+          }
           if (cmd.options) {
             for (const opt of cmd.options) {
               const optDescLen = (opt.description || '').length;
               if (optDescLen > 100) {
-                logger.error(`  Option ${opt.name}: description length: ${optDescLen}`);
+                logger.error(`Command ${cmd.name} option ${opt.name}: description length: ${optDescLen}`);
+              }
+              if (opt.choices) {
+                for (const choice of opt.choices) {
+                  const choiceNameLen = (choice.name || '').length;
+                  if (choiceNameLen > 100) {
+                    logger.error(`Command ${cmd.name} option ${opt.name} choice: name length: ${choiceNameLen}`);
+                  }
+                }
               }
             }
           }

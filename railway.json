@@ -2,7 +2,9 @@
   "$schema": "https://railway.app/schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm rebuild canvas",
+    "nixpacksJson": {
+      "node": "20"
+    },
     "installCommand": "npm install --legacy-peer-deps"
   },
   "deploy": {

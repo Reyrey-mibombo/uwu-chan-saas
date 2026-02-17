@@ -17,8 +17,6 @@
     "axios": "^1.6.0",
     "dotenv": "^16.3.1",
     "node-cron": "^3.0.3",
-    "canvas": "^2.11.2",
-    "chart.js": "^4.4.0",
     "moment-timezone": "^0.5.43",
     "winston": "^3.11.0",
     "express-rate-limit": "^7.1.0",

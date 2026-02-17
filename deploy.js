@@ -55,9 +55,9 @@ async function deploy() {
   const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
   
   try {
-    console.log(`Deploying to guild ${TEST_GUILD_ID}...`);
+    console.log(`Deploying globally...`);
     await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID, TEST_GUILD_ID),
+      Routes.applicationCommands(CLIENT_ID),
       { body: commands }
     );
     console.log(`SUCCESS! Deployed ${commands.length} commands to your server!`);

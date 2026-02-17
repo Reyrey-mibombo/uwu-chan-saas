@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, SlashCommandBuilder } = require('discord.js');
 const mongoose = require('mongoose');
 const express = require('express');
 const path = require('path');
@@ -43,10 +43,7 @@ async function initializeSystems() {
 
 async function loadCommands() {
   client.commands.set('ping', {
-    data: {
-      name: 'ping',
-      description: 'Check bot latency'
-    },
+    data: new SlashCommandBuilder().setName('ping').setDescription('Check bot latency'),
     async execute(interaction) {
       await interaction.reply('Pong!');
     }

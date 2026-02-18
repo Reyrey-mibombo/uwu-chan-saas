@@ -5,8 +5,6 @@ const fs = require('fs');
 const commandsPath = path.join(__dirname, '../commands');
 
 const prefixCommands = {
-  v1: [],
-  v2: [],
   v3: [],
   v4: [],
   v5: [],
@@ -17,7 +15,7 @@ const prefixCommands = {
 };
 
 function loadPrefixCommands() {
-  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
+  const versions = ['v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);

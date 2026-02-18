@@ -111,16 +111,16 @@ module.exports = {
       .setColor(0x3498db)
       .setDescription(`Use \`&\` prefix to run commands\n\n**FREE:** v1, v2\n**PREMIUM:** v3, v4, v5\n**ENTERPRISE:** v6, v7, v8${isOwner ? '\n\n👑 **You are the bot owner**' : ''}`)
       .addFields(
-        { name: '🔹 v1 Commands (FREE) - 25 commands', value: '`' + v1List + '`', inline: false },
-        { name: '🔹 v2 Commands (FREE) - 26 commands', value: '`' + v2List + '`', inline: false }
+        { name: `🔹 v1 Commands (FREE) - ${v1Commands.length} commands`, value: '`' + v1List + '`', inline: false },
+        { name: `🔹 v2 Commands (FREE) - ${v2Commands.length} commands`, value: '`' + v2List + '`', inline: false }
       );
 
     // Show v3-v5 based on tier (owner or premium)
     if (isOwner || isPremium) {
       embed.addFields(
-        { name: '💎 v3 Commands (Premium) - 25 commands', value: '`' + v3Commands.join(', ') + '`', inline: false },
-        { name: '💎 v4 Commands (Premium) - 49 commands', value: '`' + v4Commands.join(', ') + '`', inline: false },
-        { name: '💎 v5 Commands (Premium) - 29 commands', value: '`' + v5Commands.join(', ') + '`', inline: false }
+        { name: `💎 v3 Commands (Premium) - ${v3Commands.length} commands`, value: '`' + v3Commands.join(', ') + '`', inline: false },
+        { name: `💎 v4 Commands (Premium) - ${v4Commands.length} commands`, value: '`' + v4Commands.join(', ') + '`', inline: false },
+        { name: `💎 v5 Commands (Premium) - ${v5Commands.length} commands`, value: '`' + v5Commands.join(', ') + '`', inline: false }
       );
     } else {
       embed.addFields(
@@ -131,9 +131,9 @@ module.exports = {
     // Show v6-v8 based on tier (owner or enterprise)
     if (isOwner || isEnterprise) {
       embed.addFields(
-        { name: '🌟 v6 Commands (Enterprise) - 25 commands', value: '`' + v6Commands.join(', ') + '`', inline: false },
-        { name: '🌟 v7 Commands (Enterprise) - 25 commands', value: '`' + v7Commands.join(', ') + '`', inline: false },
-        { name: '🌟 v8 Commands (Enterprise) - 52 commands', value: '`' + v8Commands.join(', ') + '`', inline: false }
+        { name: `🌟 v6 Commands (Enterprise) - ${v6Commands.length} commands`, value: '`' + v6Commands.join(', ') + '`', inline: false },
+        { name: `🌟 v7 Commands (Enterprise) - ${v7Commands.length} commands`, value: '`' + v7Commands.join(', ') + '`', inline: false },
+        { name: `🌟 v8 Commands (Enterprise) - ${v8Commands.length} commands`, value: '`' + v8Commands.join(', ') + '`', inline: false }
       );
     } else {
       embed.addFields(

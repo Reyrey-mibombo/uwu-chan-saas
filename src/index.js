@@ -10,6 +10,54 @@ const { versionGuard } = require('./guards/versionGuard');
 const LicenseSystem = require('./systems/licenseSystem');
 const commandHandler = require('./handlers/commandHandler');
 const prefixHandler = require('./handlers/prefixHandler');
+const { Guild, License } = require('./database/mongo');
+
+async function handleButtonInteraction(interaction) {
+  const customId = interaction.customId;
+  const guildId = interaction.guildId;
+  const userId = interaction.user.id;
+  
+  if (customId === 'trial_start') {
+    const existingTrial = await License.findOne({ guildId, paymentProvider: 'trial' });
+    
+    if (existingTrial) {
+      return interaction.reply({ content: '❌ This server has already used the free trial!', ephemeral: true });
+    }
+    
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    
+    let guild = await Guild.findOne({ guildId });
+    if (!guild) {
+      guild = new Guild({ guildId });
+    }
+    
+    guild.premium = {
+      isActive: true,
+      tier: 'premium',
+      startedAt: new Date(),
+      expiresAt: expiresAt
+    };
+    await guild.save();
+    
+    const license = new License({
+      guildId,
+      userId,
+      tier: 'premium',
+      paymentProvider: 'trial',
+      startedAt: new Date(),
+      expiresAt: expiresAt,
+      status: 'active'
+    });
+    await license.save();
+    
+    return interaction.reply({ content: '🎉 **Free Trial Activated!**\n\nYou now have **7 days** of Premium access!\nUse `/premium` to view your subscription.\n\nEnjoy all the premium features!', ephemeral: true });
+  }
+  
+  if (customId.startsWith('buy_') || customId.startsWith('upgrade_') || customId === 'renew_premium') {
+    return interaction.reply({ content: '💳 Payment processing coming soon! Contact the bot owner to set up payments.', ephemeral: true });
+  }
+}
 
 const client = new Client({
   intents: [
@@ -76,6 +124,12 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
+  // Handle button interactions
+  if (interaction.isButton()) {
+    await handleButtonInteraction(interaction);
+    return;
+  }
+  
   if (!interaction.isChatInputCommand()) return;
   
   const command = client.commands.get(interaction.commandName);

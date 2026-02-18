@@ -1,7 +1,7 @@
 const { Guild } = require('../database/mongo');
 const logger = require('../utils/logger');
 
-const OWNER_IDS = ['REPLACE_WITH_YOUR_DISCORD_ID']; // Add your Discord ID here
+const OWNER_IDS = ['1357317173470564433']; // Bot owner
 
 const VERSIONS = {
   v1: { tier: 'free', name: 'Core Free' },

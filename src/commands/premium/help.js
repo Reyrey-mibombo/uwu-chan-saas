@@ -53,29 +53,46 @@ const v5Commands = [
   'weekly_bonus'
 ];
 
+const OWNER_ID = '1357317173470564433';
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('help')
     .setDescription('Show all available commands'),
 
   async execute(interaction, client) {
-    const v1List = v1Commands.map(c => `\`&${c}\``).join(', ');
-    const v2List = v2Commands.map(c => `\`&${c}\``).join(', ');
+    const isOwner = interaction.user.id === OWNER_ID;
+    
+    const v1List = v1Commands.map(c => `&${c}`).join(', ');
+    const v2List = v2Commands.map(c => `&${c}`).join(', ');
     
     const embed = new EmbedBuilder()
       .setTitle('🤖 Uwu-chan Bot Commands')
       .setColor(0x3498db)
-      .setDescription('Use `&` prefix to run commands\n\n**FREE:** v1, v2\n**PREMIUM:** v3, v4, v5\n**ENTERPRISE:** v6, v7, v8')
+      .setDescription(`Use \`&\` prefix to run commands\n\n**FREE:** v1, v2\n**PREMIUM:** v3, v4, v5\n**ENTERPRISE:** v6, v7, v8${isOwner ? '\n\n👑 **You are the bot owner - you have access to all commands!**' : ''}`)
       .addFields(
-        { name: '🔹 v1 Commands (FREE) - 25 commands', value: v1List, inline: false },
-        { name: '🔹 v2 Commands (FREE) - 25 commands', value: v2List, inline: false },
-        { name: '💎 v3 Commands (Premium) - 25 commands', value: '🔒 Use `/premium` to unlock', inline: false },
-        { name: '💎 v4 Commands (Premium) - 49 commands', value: '🔒 Use `/premium` to unlock', inline: false },
-        { name: '💎 v5 Commands (Premium) - 29 commands', value: '🔒 Use `/premium` to unlock', inline: false },
-        { name: '🌟 v6-v8 Commands (Enterprise)', value: '🔒 Use `/premium` to upgrade to Enterprise', inline: false },
-        { name: '💎 Premium Slash Commands', value: '`/premium` - View plans\n`/buy` - Purchase\n`/activate` - Activate', inline: false }
-      )
-      .setFooter({ text: 'Uwu-chan Bot - v1 & v2 are FREE!' });
+        { name: '🔹 v1 Commands (FREE) - 25 commands', value: '`' + v1List + '`', inline: false },
+        { name: '🔹 v2 Commands (FREE) - 26 commands', value: '`' + v2List + '`', inline: false }
+      );
+
+    // Show premium/enterprise commands only to owner
+    if (isOwner) {
+      embed.addFields(
+        { name: '💎 v3 Commands (Premium) - 25 commands', value: '`' + v3Commands.join(', ') + '`', inline: false },
+        { name: '💎 v4 Commands (Premium) - 49 commands', value: '`' + v4Commands.join(', ') + '`', inline: false },
+        { name: '💎 v5 Commands (Premium) - 29 commands', value: '`' + v5Commands.join(', ') + '`', inline: false },
+        { name: '🌟 v6-v8 Commands (Enterprise)', value: '🔒 Run `/premium` to upgrade', inline: false }
+      );
+    } else {
+      embed.addFields(
+        { name: '💎 v3-v5 Commands (Premium)', value: '🔒 Use `/premium` to unlock', inline: false },
+        { name: '🌟 v6-v8 Commands (Enterprise)', value: '🔒 Use `/premium` to upgrade to Enterprise', inline: false }
+      );
+    }
+
+    embed.addFields(
+      { name: '💎 Premium Slash Commands', value: '`/premium` - View plans\n`/buy` - Purchase\n`/activate` - Activate', inline: false }
+    );
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -87,14 +87,15 @@ client.on('interactionCreate', async interaction => {
     command.requiredVersion
   );
   
-  // /help is always free
-  if (command.data?.name === 'help' || command.data?.name === 'ping') {
-    // allow
-  } else if (!hasAccess.allowed) {
-    return interaction.reply({ 
-      content: hasAccess.message, 
-      ephemeral: true 
-    });
+  // These commands are always free (to let users buy premium)
+  const freeCommands = ['help', 'premium', 'buy', 'activate'];
+  if (!freeCommands.includes(command.data?.name)) {
+    if (!hasAccess.allowed) {
+      return interaction.reply({ 
+        content: hasAccess.message, 
+        ephemeral: true 
+      });
+    }
   }
 
   const { cooldowns } = client;

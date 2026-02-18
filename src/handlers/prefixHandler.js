@@ -44,6 +44,39 @@ function loadPrefixCommands() {
 
 loadPrefixCommands();
 
+function createMockInteraction(message, args) {
+  return {
+    client: message.client,
+    guild: message.guild,
+    channel: message.channel,
+    user: message.author,
+    member: message.member,
+    guildId: message.guildId,
+    channelId: message.channelId,
+    userId: message.author.id,
+    message,
+    reply: async (opts) => {
+      if (opts.embeds) {
+        return message.reply({ embeds: opts.embeds });
+      }
+      return message.reply(opts);
+    },
+    followUp: async (opts) => {
+      return message.channel.send(opts);
+    },
+    deferReply: async () => {},
+    isChatInputCommand: () => true,
+    options: {
+      getString: (name) => args[0] || null,
+      getUser: (name) => null,
+      getMember: (name) => null,
+      getChannel: (name) => null,
+      getInteger: (name) => null,
+      getBoolean: (name) => null,
+    }
+  };
+}
+
 module.exports = {
   prefixCommands,
   handleMessage: async function(message, client, versionGuard) {
@@ -73,10 +106,11 @@ module.exports = {
         }
         
         try {
-          await cmd.command.execute(message, client, args);
+          const interaction = createMockInteraction(message, args);
+          await cmd.command.execute(interaction, client);
         } catch (error) {
           console.error('Error executing prefix command:', error);
-          message.reply('An error occurred while executing this command.');
+          message.reply('An error occurred while executing this command: ' + error.message);
         }
         return;
       }

@@ -87,7 +87,10 @@ client.on('interactionCreate', async interaction => {
     command.requiredVersion
   );
   
-  if (!hasAccess.allowed) {
+  // /help is always free
+  if (command.data?.name === 'help' || command.data?.name === 'ping') {
+    // allow
+  } else if (!hasAccess.allowed) {
     return interaction.reply({ 
       content: hasAccess.message, 
       ephemeral: true 

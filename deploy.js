@@ -28,13 +28,20 @@ if (!token || !id) { console.log("ERROR: No token/id in .env or env variables");
 
 console.log("Deploying to", guildId ? "guild " + guildId : "global");
 
-const rest = new REST({ timeout: 30000 });
+const rest = new REST({ timeout: 120000 });
 rest.setToken(token);
 
 const route = guildId 
   ? Routes.applicationGuildCommands(id, guildId)
   : Routes.applicationCommands(id);
 
-rest.put(route, { body: commands })
-  .then(r => console.log("SUCCESS! Deployed", r.length, "commands"))
-  .catch(e => console.log("ERROR:", e.message));
+async function deploy() {
+  try {
+    const r = await rest.put(route, { body: commands });
+    console.log("SUCCESS! Deployed", r.length, "commands");
+  } catch (e) {
+    console.log("ERROR:", e.message);
+  }
+}
+
+deploy();

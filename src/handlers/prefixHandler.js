@@ -59,14 +59,17 @@ module.exports = {
       const cmd = commands.find(c => c.name.toLowerCase() === cmdName);
       
       if (cmd) {
-        const hasAccess = await versionGuard.checkAccess(
-          message.guildId,
-          message.author.id,
-          version
-        );
-        
-        if (!hasAccess.allowed) {
-          return message.reply({ content: hasAccess.message, ephemeral: true });
+        // v1 and v2 are always free, no access check needed
+        if (version !== 'v1' && version !== 'v2') {
+          const hasAccess = await versionGuard.checkAccess(
+            message.guildId,
+            message.author.id,
+            version
+          );
+          
+          if (!hasAccess.allowed) {
+            return message.reply({ content: hasAccess.message, ephemeral: true });
+          }
         }
         
         try {

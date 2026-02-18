@@ -41,13 +41,21 @@ console.log("Route:", route);
 
 async function deploy() {
   console.log("Starting deploy...");
-  try {
-    console.log("Sending request...");
-    const r = await rest.put(route, { body: commands });
-    console.log("SUCCESS! Deployed", r.length, "commands");
-  } catch (e) {
-    console.log("ERROR:", e.message);
+  
+  // Deploy in batches of 20
+  const batchSize = 20;
+  for (let i = 0; i < commands.length; i += batchSize) {
+    const batch = commands.slice(i, i + batchSize);
+    console.log(`Deploying batch ${Math.floor(i/batchSize) + 1}: ${batch.length} commands`);
+    try {
+      const r = await rest.put(route, { body: batch });
+      console.log("Batch deployed:", r.length, "commands");
+    } catch (e) {
+      console.log("ERROR:", e.message);
+      return;
+    }
   }
+  console.log("All done!");
 }
 
 deploy();

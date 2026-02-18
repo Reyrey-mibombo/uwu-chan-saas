@@ -20,20 +20,28 @@ for (const version of versions) {
 
 console.log("Loaded", commands.length, "commands");
 
+let token = process.env.DISCORD_TOKEN || "";
+let id = process.env.CLIENT_ID || "";
+let guildId = process.env.TEST_GUILD_ID || "";
+
 const env = fs.readFileSync(path.join(__dirname, ".env"), "utf8");
-let token = "", id = "";
 env.split("\n").forEach(l => {
-  if (l.startsWith("DISCORD_TOKEN=")) token = l.split("=")[1].trim();
-  if (l.startsWith("CLIENT_ID=")) id = l.split("=")[1].trim();
+  if (l.startsWith("DISCORD_TOKEN=")) token = token || l.split("=")[1].trim();
+  if (l.startsWith("CLIENT_ID=")) id = id || l.split("=")[1].trim();
+  if (l.startsWith("TEST_GUILD_ID=")) guildId = guildId || l.split("=")[1].trim();
 });
 
-if (!token || !id) { console.log("ERROR: No token/id in .env"); process.exit(1); }
+if (!token || !id) { console.log("ERROR: No token/id in .env or env variables"); process.exit(1); }
 
-console.log("Deploying...");
+console.log("Deploying to", guildId ? "guild " + guildId : "global");
 
 const rest = new REST({ timeout: 10000 });
 rest.setToken(token);
 
-rest.put(Routes.applicationCommands(id), { body: commands })
+const route = guildId 
+  ? Routes.applicationGuildCommands(id, guildId)
+  : Routes.applicationCommands(id);
+
+rest.put(route, { body: commands })
   .then(r => console.log("SUCCESS! Deployed", r.length, "commands"))
   .catch(e => console.log("ERROR:", e.message));

@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const commandsPath = path.join(__dirname, "src/commands");
-const versions = ["v1", "v2", "premium"];
+const versions = ["v1", "v2"]; // Only v1, v2 as slash commands (free)
 const commands = [];
 
 for (const version of versions) {
@@ -41,22 +41,12 @@ console.log("Route:", route);
 
 async function deploy() {
   console.log("Starting deploy...");
-  
-  // Deploy one at a time
-  let count = 0;
-  for (const cmd of commands) {
-    count++;
-    console.log(`Deploying command ${count}/${commands.length}: ${cmd.name}`);
-    try {
-      const r = await rest.post(route, { body: cmd });
-      console.log("Deployed:", cmd.name);
-      await new Promise(r => setTimeout(r, 1000)); // Wait 1 second between each
-    } catch (e) {
-      console.log("ERROR:", e.message);
-      return;
-    }
+  try {
+    const r = await rest.put(route, { body: commands });
+    console.log("SUCCESS! Deployed", r.length, "commands");
+  } catch (e) {
+    console.log("ERROR:", e.message);
   }
-  console.log("All done!");
 }
 
 deploy();

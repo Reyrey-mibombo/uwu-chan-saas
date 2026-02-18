@@ -9,6 +9,7 @@ const logger = require('./utils/logger');
 const { versionGuard } = require('./guards/versionGuard');
 const LicenseSystem = require('./systems/licenseSystem');
 const commandHandler = require('./handlers/commandHandler');
+const prefixHandler = require('./handlers/prefixHandler');
 
 const client = new Client({
   intents: [
@@ -131,6 +132,10 @@ client.on('interactionCreate', async interaction => {
       await interaction.reply(reply);
     }
   }
+});
+
+client.on('messageCreate', async message => {
+  await prefixHandler.handleMessage(message, client, versionGuard);
 });
 
 const app = express();

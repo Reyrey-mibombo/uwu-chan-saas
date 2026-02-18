@@ -39,7 +39,7 @@ if (!token || !id) { console.log("ERROR: No token/id in .env or env variables");
 
 console.log("Deploying to", guildId ? "guild " + guildId : "global");
 
-const rest = new REST({ timeout: 10000 });
+const rest = new REST({ timeout: 30000 });
 rest.setToken(token);
 
 const route = guildId 

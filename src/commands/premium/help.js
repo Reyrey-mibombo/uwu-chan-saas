@@ -1,4 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { Guild } = require('../../database/mongo');
+
+const OWNER_ID = '1357317173470564433';
 
 const v1Commands = [
   'activity_chart', 'activity_log', 'check_activity', 'check_permissions', 
@@ -53,7 +56,39 @@ const v5Commands = [
   'weekly_bonus'
 ];
 
-const OWNER_ID = '1357317173470564433';
+const v6Commands = [
+  'activity_insights', 'activity_patterns', 'alerts_dashboard', 'analytics_trend',
+  'automation_suggestions', 'automation_tips', 'efficiency_analysis', 'engagement_summary',
+  'engagement_trends', 'forecast', 'monthly_forecast', 'optimization_report',
+  'performance_reports', 'prediction_chart', 'productivity_analysis', 'recommendation_summary',
+  'role_efficiency', 'scoreboard', 'server_health', 'staff_prediction', 'staff_recommend',
+  'task_insights', 'team_forecast', 'trend_alerts', 'weekly_forecast'
+];
+
+const v7Commands = [
+  'achievement_chart', 'achievement_rewards', 'auto_assign', 'auto_promotion',
+  'auto_rank_up', 'auto_rewards', 'automation_report', 'automation_settings',
+  'auto_task', 'bonus_summary', 'daily_bonus', 'event_rewards', 'milestone_summary',
+  'notification_log', 'progress_tracker', 'rank_announce', 'rank_chart', 'rank_summary',
+  'reward_logs', 'reward_points', 'reward_prediction', 'smart_alerts', 'smart_notifications',
+  'task_alerts', 'weekly_bonus'
+];
+
+const v8Commands = [
+  'achievement_display', 'achievement_leaderboard', 'achievement_tracker_visual',
+  'activity_graph', 'activity_summary', 'analytics_summary', 'automation_overview',
+  'auto_promotion_visual', 'bonus_tracker', 'bonus_visual', 'elite_badges',
+  'elite_rewards', 'elite_showcase', 'event_visuals', 'growth_forecast',
+  'growth_visuals', 'interactive_dashboard', 'interactive_summary', 'leaderboard_visual',
+  'milestone_effects', 'milestone_tracker', 'notification_effect', 'performance_visual',
+  'prediction_graph', 'prediction_summary', 'premium_effects', 'premium_unlock',
+  'progress_animation', 'progress_chart', 'progress_notify', 'progress_summary',
+  'promotion_announce', 'promotion_flow', 'rank_animation', 'rank_display',
+  'rank_upgrade', 'reward_display', 'reward_flow', 'season_rewards', 'season_summary',
+  'server_heatmap', 'smart_recommendation', 'staff_highlight', 'staff_recognition',
+  'staff_showcase', 'team_highlights', 'trend_visuals', 'visual_feedback',
+  'visual_leaderboard', 'visual_rankings'
+];
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -63,29 +98,45 @@ module.exports = {
   async execute(interaction, client) {
     const isOwner = interaction.user.id === OWNER_ID;
     
+    const guild = await Guild.findOne({ guildId: interaction.guildId });
+    const tier = guild?.premium?.tier || 'free';
+    const isPremium = tier === 'premium' || tier === 'enterprise';
+    const isEnterprise = tier === 'enterprise';
+    
     const v1List = v1Commands.map(c => `&${c}`).join(', ');
     const v2List = v2Commands.map(c => `&${c}`).join(', ');
     
     const embed = new EmbedBuilder()
       .setTitle('🤖 Uwu-chan Bot Commands')
       .setColor(0x3498db)
-      .setDescription(`Use \`&\` prefix to run commands\n\n**FREE:** v1, v2\n**PREMIUM:** v3, v4, v5\n**ENTERPRISE:** v6, v7, v8${isOwner ? '\n\n👑 **You are the bot owner - you have access to all commands!**' : ''}`)
+      .setDescription(`Use \`&\` prefix to run commands\n\n**FREE:** v1, v2\n**PREMIUM:** v3, v4, v5\n**ENTERPRISE:** v6, v7, v8${isOwner ? '\n\n👑 **You are the bot owner**' : ''}`)
       .addFields(
         { name: '🔹 v1 Commands (FREE) - 25 commands', value: '`' + v1List + '`', inline: false },
         { name: '🔹 v2 Commands (FREE) - 26 commands', value: '`' + v2List + '`', inline: false }
       );
 
-    // Show premium/enterprise commands only to owner
-    if (isOwner) {
+    // Show v3-v5 based on tier (owner or premium)
+    if (isOwner || isPremium) {
       embed.addFields(
         { name: '💎 v3 Commands (Premium) - 25 commands', value: '`' + v3Commands.join(', ') + '`', inline: false },
         { name: '💎 v4 Commands (Premium) - 49 commands', value: '`' + v4Commands.join(', ') + '`', inline: false },
-        { name: '💎 v5 Commands (Premium) - 29 commands', value: '`' + v5Commands.join(', ') + '`', inline: false },
-        { name: '🌟 v6-v8 Commands (Enterprise)', value: '🔒 Run `/premium` to upgrade', inline: false }
+        { name: '💎 v5 Commands (Premium) - 29 commands', value: '`' + v5Commands.join(', ') + '`', inline: false }
       );
     } else {
       embed.addFields(
-        { name: '💎 v3-v5 Commands (Premium)', value: '🔒 Use `/premium` to unlock', inline: false },
+        { name: '💎 v3-v5 Commands (Premium)', value: '🔒 Use `/premium` to unlock', inline: false }
+      );
+    }
+
+    // Show v6-v8 based on tier (owner or enterprise)
+    if (isOwner || isEnterprise) {
+      embed.addFields(
+        { name: '🌟 v6 Commands (Enterprise) - 25 commands', value: '`' + v6Commands.join(', ') + '`', inline: false },
+        { name: '🌟 v7 Commands (Enterprise) - 25 commands', value: '`' + v7Commands.join(', ') + '`', inline: false },
+        { name: '🌟 v8 Commands (Enterprise) - 52 commands', value: '`' + v8Commands.join(', ') + '`', inline: false }
+      );
+    } else {
+      embed.addFields(
         { name: '🌟 v6-v8 Commands (Enterprise)', value: '🔒 Use `/premium` to upgrade to Enterprise', inline: false }
       );
     }

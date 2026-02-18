@@ -44,7 +44,7 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['v1', 'v2']; // Only v1, v2 as slash commands
+  const versions = ['premium']; // Premium as slash commands
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);

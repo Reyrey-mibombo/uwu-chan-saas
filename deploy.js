@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const commandsPath = path.join(__dirname, "src/commands");
-const versions = ["v1", "v2"]; // Only v1, v2 as slash commands (free)
+const versions = ["premium"]; // Premium as slash commands
 const commands = [];
 
 for (const version of versions) {

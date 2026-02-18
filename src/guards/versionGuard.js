@@ -1,6 +1,8 @@
 const { Guild } = require('../database/mongo');
 const logger = require('../utils/logger');
 
+const OWNER_IDS = ['REPLACE_WITH_YOUR_DISCORD_ID']; // Add your Discord ID here
+
 const VERSIONS = {
   v1: { tier: 'free', name: 'Core Free' },
   v2: { tier: 'free', name: 'Automation Lite' },
@@ -15,6 +17,11 @@ const VERSIONS = {
 
 class VersionGuard {
   async checkAccess(guildId, userId, requiredVersion) {
+    // Bot owner always has access
+    if (OWNER_IDS.includes(userId)) {
+      return { allowed: true };
+    }
+
     if (!requiredVersion || requiredVersion === 'v1' || requiredVersion === 'v2') {
       return { allowed: true };
     }

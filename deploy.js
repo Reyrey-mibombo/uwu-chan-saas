@@ -20,20 +20,9 @@ for (const version of versions) {
 
 console.log("Loaded", commands.length, "commands");
 
-console.log("Railway token:", process.env.DISCORD_TOKEN ? "set" : "NOT SET");
-console.log("Railway client id:", process.env.CLIENT_ID ? "set" : "NOT SET");
-console.log("Railway guild id:", process.env.TEST_GUILD_ID ? "set" : "NOT SET");
-
 let token = process.env.DISCORD_TOKEN || "";
 let id = process.env.CLIENT_ID || "";
 let guildId = process.env.TEST_GUILD_ID || "";
-
-const env = fs.readFileSync(path.join(__dirname, ".env"), "utf8");
-env.split("\n").forEach(l => {
-  if (l.startsWith("DISCORD_TOKEN=")) token = token || l.split("=")[1].trim();
-  if (l.startsWith("CLIENT_ID=")) id = id || l.split("=")[1].trim();
-  if (l.startsWith("TEST_GUILD_ID=")) guildId = guildId || l.split("=")[1].trim();
-});
 
 if (!token || !id) { console.log("ERROR: No token/id in .env or env variables"); process.exit(1); }
 

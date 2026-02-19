@@ -1,9 +1,11 @@
 const { REST, Routes } = require("discord.js");
 const path = require("path");
 const fs = require("fs");
+require('dotenv').config();
 
 const commandsPath = path.join(__dirname, "src/commands");
-const versions = ["premium"]; // Premium as slash commands
+// STRATA 1: v1 (free), v2 (free), premium (buy/activate commands)
+const versions = ["v1", "v2", "premium"];
 const commands = [];
 
 for (const version of versions) {

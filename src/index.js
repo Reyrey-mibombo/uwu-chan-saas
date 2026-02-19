@@ -92,7 +92,7 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['premium']; // Premium as slash commands
+  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);
@@ -101,6 +101,8 @@ async function loadCommands() {
     const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
     for (const file of commandFiles) {
       try {
+        // Clear require cache to allow reloading
+        delete require.cache[require.resolve(path.join(versionPath, file))];
         const command = require(path.join(versionPath, file));
         if ('data' in command && 'execute' in command) {
           command.requiredVersion = version;

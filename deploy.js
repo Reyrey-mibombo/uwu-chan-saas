@@ -4,8 +4,8 @@ const fs = require("fs");
 require('dotenv').config();
 
 const commandsPath = path.join(__dirname, "src/commands");
-// STRATA 1: v1 (free), v2 (free), premium (buy/activate commands)
-const versions = ["v1", "v2", "premium"];
+// STRATA 2: v3, v4, v5 (Premium tier commands)
+const versions = ["v3", "v4", "v5"];
 const commands = [];
 
 for (const version of versions) {

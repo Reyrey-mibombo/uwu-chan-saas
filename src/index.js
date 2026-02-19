@@ -92,7 +92,8 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
+  // STRATA 1: v1 (free), v2 (free), premium (buy/activate commands)
+  const versions = ['v1', 'v2', 'premium'];
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);

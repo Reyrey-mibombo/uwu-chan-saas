@@ -34,8 +34,8 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  // STRATA 2: v3, v4, v5 (Premium tier commands)
-  const versions = ['v3', 'v4', 'v5'];
+  // Load all command versions: v1, v2 (free) + v3, v4, v5 (premium)
+  const versions = ['v1', 'v2', 'v3', 'v4', 'v5'];
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);
@@ -51,11 +51,11 @@ async function loadCommands() {
           client.commands.set(command.data.name, command);
         }
       } catch (e) {
-        logger.error(`[STRATA2] Error loading command ${file}: ${e.message}`);
+        logger.error(`[STRATA] Error loading command ${file}: ${e.message}`);
       }
     }
   }
-  logger.info(`[STRATA2] Loaded ${client.commands.size} commands`);
+  logger.info(`[STRATA] Loaded ${client.commands.size} commands`);
 }
 
 client.once('ready', async () => {

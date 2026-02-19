@@ -86,8 +86,8 @@ client.on('interactionCreate', async interaction => {
   logger.info(`[CMD] Access result: ${JSON.stringify(hasAccess)}`);
   
   if (!hasAccess.allowed) {
-    return interaction.reply({
-      content: '💎 **Premium Required**\n\nThis bot requires **Premium** or **Enterprise** access.\n\n✅ **Premium unlocks:** v3, v4, v5 commands (this bot)\n🌟 **Enterprise unlocks:** v3-v8 commands (all bots)\n\nUse `/buy` or `/premium` in the **Strata1 Bot** to upgrade!', 
+    return interaction.reply({ 
+      content: '💎 **Premium Required**\n\nThis bot requires **Premium** or **Enterprise** access.\n\n✅ **Premium unlocks:** v3, v4, v5 commands (this bot)\n🌟 **Enterprise unlocks:** v6, v7, v8 commands (all bots)\n\nUse `/buy` or `/premium` in the **Strata1 Bot** to upgrade!', 
       ephemeral: true 
     });
   }

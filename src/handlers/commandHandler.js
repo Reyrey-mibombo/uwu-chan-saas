@@ -32,9 +32,18 @@ class CommandHandler {
     const commands = Array.from(client.commands.values()).map(c => c.data.toJSON());
     const rest = new REST({ timeout: 120000 }).setToken(process.env.DISCORD_TOKEN);
     const clientId = process.env.CLIENT_ID;
+    const token = process.env.DISCORD_TOKEN;
+    
+    logger.info(`[DEPLOY] Token length: ${token?.length || 0}, ClientID: ${clientId || 'NOT SET'}, GuildID: ${guildId || 'global'}`);
+    logger.info(`[DEPLOY] Commands to deploy: ${commands.length}`);
     
     if (!clientId) {
-      logger.error('CLIENT_ID not set in environment variables');
+      logger.error('[DEPLOY] CLIENT_ID not set in environment variables');
+      return;
+    }
+    
+    if (!token) {
+      logger.error('[DEPLOY] DISCORD_TOKEN not set');
       return;
     }
     
@@ -42,12 +51,15 @@ class CommandHandler {
       ? Routes.applicationGuildCommands(clientId, guildId)
       : Routes.applicationCommands(clientId);
     
+    logger.info(`[DEPLOY] Route: ${route}`);
+    
     try {
-      await rest.put(route, { body: commands });
-      logger.info(`Deployed ${commands.length} commands ${guildId ? 'to guild' : 'globally'}`);
+      const result = await rest.put(route, { body: commands });
+      logger.info(`[DEPLOY] SUCCESS! Deployed ${result.length} commands ${guildId ? 'to guild' : 'globally'}`);
     } catch (error) {
-      logger.error('Deploy error: ' + error.message);
-      throw error;
+      logger.error(`[DEPLOY] Error: ${error.message}`);
+      if (error.code) logger.error(`[DEPLOY] Error code: ${error.code}`);
+      if (error.status) logger.error(`[DEPLOY] HTTP status: ${error.status}`);
     }
   }
 }

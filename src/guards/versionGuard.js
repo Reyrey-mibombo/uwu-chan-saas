@@ -17,8 +17,11 @@ const VERSIONS = {
 
 class VersionGuard {
   async checkAccess(guildId, userId, requiredVersion) {
+    logger.info(`[VERSION] checkAccess called: userId=${userId}, requiredVersion=${requiredVersion}, ownerIds=${OWNER_IDS.includes(userId)}`);
+    
     // Bot owner always has access
     if (OWNER_IDS.includes(userId)) {
+      logger.info(`[VERSION] Owner access granted for ${userId}`);
       return { allowed: true };
     }
 

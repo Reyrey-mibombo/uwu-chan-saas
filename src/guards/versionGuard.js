@@ -2,7 +2,6 @@ const { Guild } = require('../database/mongo');
 const logger = require('../utils/logger');
 
 const OWNER_IDS = ['1357317173470564433']; // Bot owner
-const BYPASS_ALL = true; // TEMP: Allow all commands for testing
 
 const VERSIONS = {
   v1: { tier: 'free', name: 'Core Free' },
@@ -18,16 +17,15 @@ const VERSIONS = {
 
 class VersionGuard {
   async checkAccess(guildId, userId, requiredVersion) {
-    // TEMP BYPASS FOR TESTING
-    if (BYPASS_ALL) {
-      return { allowed: true };
-    }
+    // Convert userId to string for comparison
+    const userIdStr = String(userId);
+    const ownerIdsStr = OWNER_IDS.map(id => String(id));
     
-    logger.info(`[VERSION] checkAccess called: userId=${userId}, requiredVersion=${requiredVersion}, ownerIds=${OWNER_IDS.includes(userId)}`);
+    logger.info(`[VERSION] checkAccess: userId=${userIdStr}, requiredVersion=${requiredVersion}, isOwner=${ownerIdsStr.includes(userIdStr)}`);
     
     // Bot owner always has access
-    if (OWNER_IDS.includes(userId)) {
-      logger.info(`[VERSION] Owner access granted for ${userId}`);
+    if (ownerIdsStr.includes(userIdStr)) {
+      logger.info(`[VERSION] Owner access granted for ${userIdStr}`);
       return { allowed: true };
     }
 

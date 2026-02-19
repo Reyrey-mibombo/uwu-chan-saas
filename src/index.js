@@ -79,7 +79,7 @@ client.on('interactionCreate', async interaction => {
   
   const hasAccess = await versionGuard.checkAccess(
     interaction.guildId, 
-    interaction.userId, 
+    interaction.user.id, 
     command.requiredVersion
   );
   

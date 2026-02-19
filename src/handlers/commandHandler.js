@@ -28,12 +28,27 @@ function loadCommands() {
 }
 
 class CommandHandler {
-  async deployCommands(client) {
-    const commands = client 
-      ? Array.from(client.commands.values()).map(c => c.data.toJSON())
-      : Array.from(loadCommands().values()).map(c => c.data.toJSON());
-
-    logger.info(`Loaded ${commands.length} commands. Use node deploy.js locally to deploy.`);
+  async deployCommands(client, guildId = null) {
+    const commands = Array.from(client.commands.values()).map(c => c.data.toJSON());
+    const rest = new REST({ timeout: 120000 }).setToken(process.env.DISCORD_TOKEN);
+    const clientId = process.env.CLIENT_ID;
+    
+    if (!clientId) {
+      logger.error('CLIENT_ID not set in environment variables');
+      return;
+    }
+    
+    const route = guildId 
+      ? Routes.applicationGuildCommands(clientId, guildId)
+      : Routes.applicationCommands(clientId);
+    
+    try {
+      await rest.put(route, { body: commands });
+      logger.info(`Deployed ${commands.length} commands ${guildId ? 'to guild' : 'globally'}`);
+    } catch (error) {
+      logger.error('Deploy error: ' + error.message);
+      throw error;
+    }
   }
 }
 

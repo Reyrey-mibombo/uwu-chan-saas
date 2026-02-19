@@ -62,7 +62,9 @@ client.once('ready', async () => {
   logger.info(`[STRATA2] Bot logged in as ${client.user.tag}`);
   await initializeSystems();
   await loadCommands();
-  await commandHandler.deployCommands(client).catch(e => logger.error('[STRATA2] Deploy error: ' + e.message));
+  
+  const testGuildId = process.env.TEST_GUILD_ID;
+  await commandHandler.deployCommands(client, testGuildId || null).catch(e => logger.error('[STRATA2] Deploy error: ' + e.message));
   
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });

@@ -8,6 +8,11 @@ require('dotenv').config();
 const logger = require('./utils/logger');
 const { versionGuard } = require('./guards/versionGuard');
 const LicenseSystem = require('./systems/licenseSystem');
+const StaffSystem = require('./systems/staffSystem');
+const ModerationSystem = require('./systems/moderationSystem');
+const AnalyticsSystem = require('./systems/analyticsSystem');
+const AutomationSystem = require('./systems/automationSystem');
+const TicketSystem = require('./systems/ticketSystem');
 const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 
@@ -30,12 +35,26 @@ client.systems = {};
 async function initializeSystems() {
   client.systems.license = new LicenseSystem(client);
   await client.systems.license.initialize();
+  
+  client.systems.staff = new StaffSystem(client);
+  await client.systems.staff.initialize();
+  
+  client.systems.moderation = new ModerationSystem(client);
+  await client.systems.moderation.initialize();
+  
+  client.systems.analytics = new AnalyticsSystem(client);
+  await client.systems.analytics.initialize();
+  
+  client.systems.automation = new AutomationSystem(client);
+  await client.systems.automation.initialize();
+  
+  client.systems.tickets = new TicketSystem(client);
+  await client.systems.tickets.initialize();
 }
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  // Load all command versions: v1, v2 (free) + v3, v4, v5 (premium)
-  const versions = ['v1', 'v2', 'v3', 'v4', 'v5'];
+  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
   
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);
@@ -133,6 +152,7 @@ client.on('interactionCreate', async interaction => {
 });
 
 const app = express();
+app.locals.client = client;
 app.use(express.json());
 app.use(require('helmet')());
 app.use(require('cors')());
@@ -149,7 +169,7 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     version: '8.0.0',
-    strata: 'strata2'
+    strata: 'all'
   });
 });
 
@@ -159,6 +179,11 @@ mongoose.connect(process.env.MONGODB_URI)
     logger.error('[STRATA2] MongoDB connection error:', err);
     process.exit(1);
   });
+
+// API Routes
+app.use('/api/licenses', require('./api/licenses'));
+app.use('/api/guilds', require('./api/guilds'));
+app.use('/webhooks', require('./webhook/paymentWebhook'));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

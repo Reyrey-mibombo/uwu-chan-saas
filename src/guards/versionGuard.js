@@ -1,7 +1,7 @@
 const { Guild } = require('../database/mongo');
 const logger = require('../utils/logger');
 
-const OWNER_IDS = ['1357317173470564433']; // Bot owner
+const OWNER_IDS = process.env.OWNER_IDS ? process.env.OWNER_IDS.split(',') : ['1357317173470564433'];
 
 const VERSIONS = {
   v1: { tier: 'free', name: 'Core Free' },

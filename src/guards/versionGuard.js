@@ -1,7 +1,7 @@
 const { Guild } = require('../database/mongo');
 const logger = require('../utils/logger');
 
-// Bot 2 (Strata2) — Premium tier only. Requires guild.premium.tier = 'premium' or 'enterprise'
+// Bot 3 (Strata3) — Enterprise tier only. Requires guild.premium.tier = 'enterprise'
 
 const OWNER_IDS = process.env.OWNER_IDS ? process.env.OWNER_IDS.split(',') : ['1357317173470564433'];
 
@@ -28,40 +28,46 @@ class VersionGuard {
 
     const currentTier = guild.premium?.tier || 'free';
 
-    // Check premium expired
+    // Check enterprise expired
     if (guild.premium?.expiresAt && new Date() > guild.premium.expiresAt) {
       guild.premium.isActive = false;
       guild.premium.tier = 'free';
       await guild.save();
-      const renewUrl = process.env.STRIPE_CHECKOUT_URL || process.env.PAYPAL_CHECKOUT_URL || null;
-      const renewText = renewUrl ? `Renew at: ${renewUrl}` : 'Contact the server owner to renew.';
+      const renewUrl = process.env.ENTERPRISE_CHECKOUT_URL || process.env.STRIPE_CHECKOUT_URL || process.env.PAYPAL_CHECKOUT_URL || null;
+      const renewText = renewUrl ? `Renew at: ${renewUrl}` : 'Use `/enterprise` in the **Strata1 Bot** to renew.';
       return {
         allowed: false,
-        message: `⏰ **Premium Expired**\nYour premium subscription has expired.\n${renewText}`
+        message: `⏰ **Enterprise Expired**\nYour enterprise subscription has expired.\n${renewText}`
       };
     }
 
-    // This bot requires at minimum 'premium' tier
-    if (currentTier === 'free') {
-      const paymentUrl = process.env.STRIPE_CHECKOUT_URL || process.env.PAYPAL_CHECKOUT_URL || null;
-      const upgradeText = paymentUrl ? `Upgrade at: ${paymentUrl}` : 'Use `/buy` or `/premium` in the **Strata1 Bot** to upgrade.';
+    // This bot requires ENTERPRISE tier only — free and premium are both blocked
+    if (currentTier !== 'enterprise') {
+      const enterpriseUrl = process.env.ENTERPRISE_CHECKOUT_URL || process.env.STRIPE_CHECKOUT_URL || process.env.PAYPAL_CHECKOUT_URL || null;
+      const upgradeText = enterpriseUrl
+        ? `Upgrade at: ${enterpriseUrl}`
+        : 'Use `/buy` or `/enterprise` in the **Strata1 Bot** to upgrade.';
+
+      const tierMsg = currentTier === 'premium'
+        ? `💎 You have **Premium** but this bot requires **Enterprise**.\n\nEnterprise unlocks v6, v7, v8 commands (100 commands).\n\n${upgradeText}`
+        : `🌟 **Enterprise Required**\nThis bot (Strata3) requires an **Enterprise** subscription.\n\nEnterprise unlocks v6, v7, v8 commands (100 commands).\n\n${upgradeText}`;
+
       return {
         allowed: false,
-        message: `💎 **Premium Required**\nThis bot (Strata2) requires a **Premium** or **Enterprise** subscription.\n\n${upgradeText}\n\n*Get Premium to unlock v3, v4, v5 commands.*`
+        message: tierMsg
       };
     }
 
-    // 'premium' and 'enterprise' both have access to v3/v4/v5
     return { allowed: true };
   }
 
   getVersionInfo(version) {
     const VERSIONS = {
-      v3: { tier: 'premium', name: 'Premium Staff' },
-      v4: { tier: 'premium', name: 'Premium Moderation' },
-      v5: { tier: 'premium', name: 'Premium Analytics' }
+      v6: { tier: 'enterprise', name: 'Advanced Insights' },
+      v7: { tier: 'enterprise', name: 'Automation Ecosystem' },
+      v8: { tier: 'enterprise', name: 'Ultimate Experience' }
     };
-    return VERSIONS[version] || { tier: 'premium', name: 'Premium' };
+    return VERSIONS[version] || { tier: 'enterprise', name: 'Enterprise' };
   }
 }
 

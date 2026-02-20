@@ -90,6 +90,17 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
+  // Handle promotion approval buttons (fired from owner DMs)
+  if (interaction.isButton() && interaction.customId.startsWith('promo_')) {
+    try {
+      await client.systems.automation.handlePromotionButton(interaction);
+    } catch (err) {
+      logger.error('[PROMO BUTTON]', err);
+      if (!interaction.replied) await interaction.reply({ content: '❌ Error processing promotion decision.', ephemeral: true });
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);

@@ -28,7 +28,23 @@ const guildSchema = new mongoose.Schema({
     mutedRole: String,
     logChannel: String,
     welcomeChannel: String,
-    modChannel: String
+    modChannel: String,
+    promotionChannel: String  // channel to announce promotions
+  },
+  // rank → Discord role ID mapping (set via /setup_promo)
+  rankRoles: {
+    trial: { type: String, default: null },
+    staff: { type: String, default: null },
+    senior: { type: String, default: null },
+    manager: { type: String, default: null },
+    admin: { type: String, default: null }
+  },
+  // requirements that must be met for each rank promotion
+  promotionRequirements: {
+    staff: { points: { type: Number, default: 100 }, shifts: { type: Number, default: 5 }, consistency: { type: Number, default: 70 }, maxWarnings: { type: Number, default: 3 } },
+    senior: { points: { type: Number, default: 300 }, shifts: { type: Number, default: 10 }, consistency: { type: Number, default: 75 }, maxWarnings: { type: Number, default: 2 } },
+    manager: { points: { type: Number, default: 600 }, shifts: { type: Number, default: 20 }, consistency: { type: Number, default: 80 }, maxWarnings: { type: Number, default: 1 } },
+    admin: { points: { type: Number, default: 1000 }, shifts: { type: Number, default: 30 }, consistency: { type: Number, default: 85 }, maxWarnings: { type: Number, default: 0 } }
   },
   stats: {
     commandsUsed: { type: Number, default: 0 },
@@ -67,7 +83,9 @@ const userSchema = new mongoose.Schema({
     lastShift: Date,
     consistency: { type: Number, default: 100 },
     reputation: { type: Number, default: 0 },
-    achievements: [String]
+    achievements: [String],
+    promotionPending: { type: Boolean, default: false }, // true = owner DM already sent, awaiting decision
+    lastPromotionCheck: Date // last time this user was checked for promotion
   },
   stats: {
     commandsUsed: { type: Number, default: 0 },

@@ -1,30 +1,36 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('shift_start')
     .setDescription('Start your work shift'),
-  
-  async execute(interaction) {
+
+  async execute(interaction, client) {
+    const staffSystem = client.systems.staff;
     const userId = interaction.user.id;
-    const guildData = await Guild.findOne({ guildId: interaction.guild.id }) || new Guild({ guildId: interaction.guild.id });
+    const guildId = interaction.guildId;
     
-    if (!guildData.shifts) guildData.shifts = [];
+    const existingShift = await require('../../database/mongo').Shift.findOne({
+      userId,
+      guildId,
+      endTime: null
+    });
     
-    const activeShift = guildData.shifts.find(s => s.userId === userId && !s.endTime);
-    if (activeShift) {
+    if (existingShift) {
       return interaction.reply({ content: '❌ You already have an active shift!', ephemeral: true });
     }
     
-    guildData.shifts.push({ userId, startTime: new Date() });
-    await guildData.save();
+    const result = await staffSystem.startShift(userId, guildId);
     
     const embed = new EmbedBuilder()
       .setTitle('✅ Shift Started')
       .setDescription(`Your shift has started!\nStarted at: <t:${Math.floor(Date.now() / 1000)}:T>`)
-      .setColor('#2ecc71');
-    
+      .addFields(
+        { name: 'Shift ID', value: result.shiftId.toString(), inline: true }
+      )
+      .setColor('#2ecc71')
+      .setTimestamp();
+
     await interaction.reply({ embeds: [embed] });
   }
 };

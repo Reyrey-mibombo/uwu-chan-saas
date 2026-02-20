@@ -74,26 +74,56 @@ class AutomationSystem {
               endTime: { $ne: null }
             });
 
+            // Gather all user data needed for checks
             const pts = user.staff?.points || 0;
             const consistency = user.staff?.consistency || 100;
             const warnings = user.staff?.warnings || 0;
             const achievements = user.staff?.achievements?.length || 0;
+            const reputation = user.staff?.reputation || 0;
 
-            // Check all requirements
+            // Get total shift hours
+            const allShifts = await Shift.find({ guildId: guildData.guildId, userId: user.userId, endTime: { $ne: null } }).lean();
+            const totalHours = allShifts.reduce((s, sh) => s + (sh.duration || (new Date(sh.endTime) - new Date(sh.startTime)) / 3600000), 0);
+
+            // Days in server (fetch Discord member join date)
+            let daysInServer = 0;
+            try {
+              const discordMember = await discordGuild.members.fetch(user.userId).catch(() => null);
+              if (discordMember?.joinedAt) {
+                daysInServer = Math.floor((Date.now() - discordMember.joinedAt.getTime()) / 86400000);
+              }
+            } catch (_) { }
+
+            // Clean record days (days since last warning)
+            let cleanRecordDays = 9999;
+            if (warnings > 0) {
+              const { Warning } = require('../database/mongo');
+              const lastWarn = await Warning.findOne({ guildId: guildData.guildId, userId: user.userId }).sort({ createdAt: -1 }).lean();
+              if (lastWarn) cleanRecordDays = Math.floor((Date.now() - new Date(lastWarn.createdAt).getTime()) / 86400000);
+            }
+
+            // Build checks object — requirements with 0 value are skipped (disabled)
             const checks = {
-              points: { met: pts >= req.points, val: pts, req: req.points, label: '⭐ Points' },
-              shifts: { met: shiftCount >= req.shifts, val: shiftCount, req: req.shifts, label: '🔄 Shifts' },
-              consistency: { met: consistency >= req.consistency, val: consistency, req: req.consistency, label: '📈 Consistency %' },
-              warnings: { met: warnings <= req.maxWarnings, val: warnings, req: req.maxWarnings, label: '⚠️ Warnings (max)' }
+              points: { met: pts >= req.points, val: pts, req: req.points, label: '⭐ Points', active: true },
+              shifts: { met: shiftCount >= req.shifts, val: shiftCount, req: req.shifts, label: '🔄 Shifts', active: true },
+              consistency: { met: consistency >= req.consistency, val: consistency, req: req.consistency, label: '📈 Consistency %', active: true },
+              maxWarnings: { met: warnings <= req.maxWarnings, val: warnings, req: req.maxWarnings, label: '⚠️ Warnings (max)', active: req.maxWarnings !== undefined },
+              shiftHours: { met: totalHours >= req.shiftHours, val: Math.round(totalHours), req: req.shiftHours, label: '⏱️ Shift Hours', active: (req.shiftHours || 0) > 0 },
+              achievements: { met: achievements >= req.achievements, val: achievements, req: req.achievements, label: '🏅 Achievements', active: (req.achievements || 0) > 0 },
+              reputation: { met: reputation >= req.reputation, val: reputation, req: req.reputation, label: '🌟 Reputation', active: (req.reputation || 0) > 0 },
+              daysInServer: { met: daysInServer >= req.daysInServer, val: daysInServer, req: req.daysInServer, label: '📅 Days In Server', active: (req.daysInServer || 0) > 0 },
+              cleanRecord: { met: cleanRecordDays >= (req.cleanRecordDays || 0), val: cleanRecordDays, req: req.cleanRecordDays, label: '🔒 Clean Record Days', active: (req.cleanRecordDays || 0) > 0 }
             };
 
-            const allMet = Object.values(checks).every(c => c.met);
+            // Only check active requirements
+            const activeChecks = Object.fromEntries(Object.entries(checks).filter(([, c]) => c.active));
+            const allMet = Object.values(activeChecks).every(c => c.met);
             if (!allMet) continue;
 
             // All requirements met — DM the owner
             logger.info(`[PROMO] ${user.username} eligible for ${nextRank} in guild ${guildData.guildId}`);
 
-            await this.sendOwnerPromotionDM(owner, user, guildData, nextRank, checks, shiftCount, achievements);
+            await this.sendOwnerPromotionDM(owner, user, guildData, nextRank, activeChecks, shiftCount, achievements);
 
             // Mark as pending so we don't spam the owner
             user.staff.promotionPending = true;
@@ -129,7 +159,10 @@ class AutomationSystem {
         { name: '⬆️ Applying For', value: `${rankEmojis[nextRank] || ''} ${nextRank.toUpperCase()}`, inline: true },
         { name: '📋 Requirements Checklist', value: requirementLines },
         { name: '🏅 Achievements', value: achievements.toString(), inline: true },
-        { name: '🖥️ Server', value: guildData.name || guildData.guildId, inline: true }
+        { name: '🖥️ Server', value: guildData.name || guildData.guildId, inline: true },
+        ...(guildData.promotionRequirements?.[nextRank]?.customNote
+          ? [{ name: '📝 Custom Note (from owner)', value: guildData.promotionRequirements[nextRank].customNote }]
+          : [])
       )
       .setFooter({ text: `User ID: ${user.userId} | Guild: ${guildData.guildId}` })
       .setTimestamp();

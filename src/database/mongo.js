@@ -39,12 +39,60 @@ const guildSchema = new mongoose.Schema({
     manager: { type: String, default: null },
     admin: { type: String, default: null }
   },
-  // requirements that must be met for each rank promotion
+  // Full 10-field promotion requirements (customizable by tier)
+  // v1 (free): points, shifts, consistency
+  // v2 (free): + maxWarnings, shiftHours
+  // v3 (premium): + achievements, reputation
+  // v6 (enterprise): + daysInServer, cleanRecordDays, customNote
   promotionRequirements: {
-    staff: { points: { type: Number, default: 100 }, shifts: { type: Number, default: 5 }, consistency: { type: Number, default: 70 }, maxWarnings: { type: Number, default: 3 } },
-    senior: { points: { type: Number, default: 300 }, shifts: { type: Number, default: 10 }, consistency: { type: Number, default: 75 }, maxWarnings: { type: Number, default: 2 } },
-    manager: { points: { type: Number, default: 600 }, shifts: { type: Number, default: 20 }, consistency: { type: Number, default: 80 }, maxWarnings: { type: Number, default: 1 } },
-    admin: { points: { type: Number, default: 1000 }, shifts: { type: Number, default: 30 }, consistency: { type: Number, default: 85 }, maxWarnings: { type: Number, default: 0 } }
+    staff: {
+      points: { type: Number, default: 100 },   // req 1 (v1)
+      shifts: { type: Number, default: 5 },   // req 2 (v1)
+      consistency: { type: Number, default: 70 },   // req 3 (v1)
+      maxWarnings: { type: Number, default: 3 },   // req 4 (v2)
+      shiftHours: { type: Number, default: 0 },   // req 5 (v2) — 0 = disabled
+      achievements: { type: Number, default: 0 },   // req 6 (v3)
+      reputation: { type: Number, default: 0 },   // req 7 (v3)
+      daysInServer: { type: Number, default: 0 },   // req 8 (enterprise)
+      cleanRecordDays: { type: Number, default: 0 },   // req 9 (enterprise)
+      customNote: { type: String, default: '' }    // req 10 (enterprise) — text shown in DM
+    },
+    senior: {
+      points: { type: Number, default: 300 },
+      shifts: { type: Number, default: 10 },
+      consistency: { type: Number, default: 75 },
+      maxWarnings: { type: Number, default: 2 },
+      shiftHours: { type: Number, default: 0 },
+      achievements: { type: Number, default: 0 },
+      reputation: { type: Number, default: 0 },
+      daysInServer: { type: Number, default: 0 },
+      cleanRecordDays: { type: Number, default: 0 },
+      customNote: { type: String, default: '' }
+    },
+    manager: {
+      points: { type: Number, default: 600 },
+      shifts: { type: Number, default: 20 },
+      consistency: { type: Number, default: 80 },
+      maxWarnings: { type: Number, default: 1 },
+      shiftHours: { type: Number, default: 0 },
+      achievements: { type: Number, default: 0 },
+      reputation: { type: Number, default: 0 },
+      daysInServer: { type: Number, default: 0 },
+      cleanRecordDays: { type: Number, default: 0 },
+      customNote: { type: String, default: '' }
+    },
+    admin: {
+      points: { type: Number, default: 1000 },
+      shifts: { type: Number, default: 30 },
+      consistency: { type: Number, default: 85 },
+      maxWarnings: { type: Number, default: 0 },
+      shiftHours: { type: Number, default: 0 },
+      achievements: { type: Number, default: 0 },
+      reputation: { type: Number, default: 0 },
+      daysInServer: { type: Number, default: 0 },
+      cleanRecordDays: { type: Number, default: 0 },
+      customNote: { type: String, default: '' }
+    }
   },
   stats: {
     commandsUsed: { type: Number, default: 0 },

@@ -1,23 +1,37 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('activity_log')
     .setDescription('View recent activity log')
-    .addIntegerOption(opt => opt.setName('limit').setDescription('Number of entries').setMinValue(1).setMaxValue(50).setRequired(false)),
-  
-  async execute(interaction) {
+    .addIntegerOption(opt => opt.setName('limit').setDescription('Number of entries').setRequired(false)),
+
+  async execute(interaction, client) {
     const limit = interaction.options.getInteger('limit') || 10;
-    const guildData = await Guild.findOne({ guildId: interaction.guild.id });
+    const Activity = require('../../database/mongo').Activity;
     
-    const activities = guildData?.activityLog?.slice(0, limit) || [];
+    const activities = await Activity.find({ guildId: interaction.guildId })
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    
+    if (activities.length === 0) {
+      return interaction.reply({ content: 'No activity recorded yet', ephemeral: true });
+    }
+    
+    const activityList = await Promise.all(activities.map(async (a) => {
+      const user = await interaction.client.users.fetch(a.userId).catch(() => null);
+      const userName = user?.username || 'Unknown';
+      let action = a.type;
+      if (a.data?.action) action += ` (${a.data.action})`;
+      return `• ${action} - ${userName} - <t:${Math.floor(a.createdAt.getTime()/1000)}:R>`;
+    }));
+    
     const embed = new EmbedBuilder()
       .setTitle('📋 Activity Log')
-      .setDescription(activities.length > 0 ? activities.map(a => `• ${a.action} - ${a.user} (${a.time})`).join('\n') : 'No recent activity')
+      .setDescription(activityList.join('\n'))
       .setColor('#2ecc71')
       .setFooter({ text: `Showing ${activities.length} entries` });
-    
+
     await interaction.reply({ embeds: [embed] });
   }
 };

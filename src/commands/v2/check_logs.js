@@ -6,21 +6,35 @@ module.exports = {
     .setDescription('Check staff activity logs')
     .addUserOption(opt => opt.setName('user').setDescription('Staff member').setRequired(false))
     .addIntegerOption(opt => opt.setName('days').setDescription('Number of days').setRequired(false)),
-  
-  async execute(interaction) {
+
+  async execute(interaction, client) {
     const user = interaction.options.getUser('user');
     const days = interaction.options.getInteger('days') || 7;
+    const Activity = require('../../database/mongo').Activity;
+    const Warning = require('../../database/mongo').Warning;
+    const Shift = require('../../database/mongo').Shift;
+    
+    const query = { guildId: interaction.guildId };
+    if (user) query.userId = user.id;
+    
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    query.createdAt = { $gte: cutoff };
+    
+    const [activities, warnings, shifts] = await Promise.all([
+      Activity.find(query).sort({ createdAt: -1 }).limit(20),
+      Warning.find({ ...query, createdAt: { $gte: cutoff } }),
+      Shift.find({ ...query, createdAt: { $gte: cutoff } })
+    ]);
     
     const embed = new EmbedBuilder()
-      .setTitle('📜 Activity Logs')
-      .setDescription(user ? `Logs for ${user.username} (last ${days} days)` : `All staff logs (last ${days} days)`)
+      .setTitle(`📜 Activity Logs - Last ${days} days`)
       .addFields(
-        { name: 'Shifts', value: '12', inline: true },
-        { name: 'Warnings', value: '0', inline: true },
-        { name: 'Points Earned', value: '45', inline: true }
+        { name: 'Activities', value: `${activities.length}`, inline: true },
+        { name: 'Warnings', value: `${warnings.length}`, inline: true },
+        { name: 'Shifts', value: `${shifts.length}`, inline: true }
       )
       .setColor('#f39c12');
-    
+
     await interaction.reply({ embeds: [embed] });
   }
 };

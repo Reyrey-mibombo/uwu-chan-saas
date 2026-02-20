@@ -54,7 +54,7 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['v1', 'v2', 'buying']; // Bot 1 (Strata1): Free tier + purchasing commands
+  const versions = ['v3', 'v4', 'v5']; // Bot 2 (Strata2): Premium tier commands only
 
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);
@@ -78,8 +78,8 @@ async function loadCommands() {
 }
 
 client.once('ready', async () => {
-  logger.info(`[STRATA1] Bot 1 (Free Tier) logged in as ${client.user.tag}`);
-  logger.info(`[STRATA1] Commands: v1, v2, buying only`);
+  logger.info(`[STRATA2] Bot 2 (Premium Tier) logged in as ${client.user.tag}`);
+  logger.info(`[STRATA2] Commands: v3, v4, v5 — Requires Premium tier`);
   await initializeSystems();
   await loadCommands();
 

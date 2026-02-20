@@ -35,31 +35,31 @@ client.systems = {};
 async function initializeSystems() {
   client.systems.license = new LicenseSystem(client);
   await client.systems.license.initialize();
-  
+
   client.systems.staff = new StaffSystem(client);
   await client.systems.staff.initialize();
-  
+
   client.systems.moderation = new ModerationSystem(client);
   await client.systems.moderation.initialize();
-  
+
   client.systems.analytics = new AnalyticsSystem(client);
   await client.systems.analytics.initialize();
-  
+
   client.systems.automation = new AutomationSystem(client);
   await client.systems.automation.initialize();
-  
+
   client.systems.tickets = new TicketSystem(client);
   await client.systems.tickets.initialize();
 }
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const versions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
-  
+  const versions = ['v1', 'v2', 'buying']; // Bot 1 (Strata1): Free tier + purchasing commands
+
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version);
     if (!fs.existsSync(versionPath)) continue;
-    
+
     const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
     for (const file of commandFiles) {
       try {
@@ -78,36 +78,37 @@ async function loadCommands() {
 }
 
 client.once('ready', async () => {
-  logger.info(`[STRATA2] Bot logged in as ${client.user.tag}`);
+  logger.info(`[STRATA1] Bot 1 (Free Tier) logged in as ${client.user.tag}`);
+  logger.info(`[STRATA1] Commands: v1, v2, buying only`);
   await initializeSystems();
   await loadCommands();
-  
+
   const testGuildId = process.env.TEST_GUILD_ID;
   await commandHandler.deployCommands(client, testGuildId || null).catch(e => logger.error('[STRATA2] Deploy error: ' + e.message));
-  
+
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });
 
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
-  
+
   const command = client.commands.get(interaction.commandName);
   if (!command) return;
 
   logger.info(`[CMD] ${interaction.commandName} called by ${interaction.user.id} (${interaction.user.tag})`);
-  
+
   const hasAccess = await versionGuard.checkAccess(
-    interaction.guildId, 
-    interaction.user.id, 
+    interaction.guildId,
+    interaction.user.id,
     command.requiredVersion
   );
-  
+
   logger.info(`[CMD] Access result: ${JSON.stringify(hasAccess)}`);
-  
+
   if (!hasAccess.allowed) {
-    return interaction.reply({ 
-      content: '💎 **Premium Required**\n\nThis bot requires **Premium** or **Enterprise** access.\n\n✅ **Premium unlocks:** v3, v4, v5 commands (this bot)\n🌟 **Enterprise unlocks:** v6, v7, v8 commands (all bots)\n\nUse `/buy` or `/premium` in the **Strata1 Bot** to upgrade!', 
-      ephemeral: true 
+    return interaction.reply({
+      content: '💎 **Premium Required**\n\nThis bot requires **Premium** or **Enterprise** access.\n\n✅ **Premium unlocks:** v3, v4, v5 commands (this bot)\n🌟 **Enterprise unlocks:** v6, v7, v8 commands (all bots)\n\nUse `/buy` or `/premium` in the **Strata1 Bot** to upgrade!',
+      ephemeral: true
     });
   }
 
@@ -125,9 +126,9 @@ client.on('interactionCreate', async interaction => {
     const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
     if (now < expirationTime) {
       const expiredTimestamp = Math.round(expirationTime / 1000);
-      return interaction.reply({ 
-        content: `Please wait, you are on cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, 
-        ephemeral: true 
+      return interaction.reply({
+        content: `Please wait, you are on cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
+        ephemeral: true
       });
     }
   }
@@ -139,9 +140,9 @@ client.on('interactionCreate', async interaction => {
     await command.execute(interaction, client);
   } catch (error) {
     logger.error('[STRATA2]', error);
-    const reply = { 
-      content: 'There was an error executing this command!', 
-      ephemeral: true 
+    const reply = {
+      content: 'There was an error executing this command!',
+      ephemeral: true
     };
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp(reply);
@@ -164,8 +165,8 @@ const limiter = require('express-rate-limit')({
 app.use('/api/', limiter);
 
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     version: '8.0.0',

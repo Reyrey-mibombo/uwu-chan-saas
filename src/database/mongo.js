@@ -39,6 +39,13 @@ const guildSchema = new mongoose.Schema({
     manager: { type: String, default: null },
     admin: { type: String, default: null }
   },
+  // Helper application system configuration
+  helperConfig: {
+    enabled: { type: Boolean, default: false },
+    staffRole: { type: String, default: null },
+    logChannel: { type: String, default: null },
+    acceptedRole: { type: String, default: null }
+  },
   // Full 10-field promotion requirements (customizable by tier)
   // v1 (free): points, shifts, consistency
   // v2 (free): + maxWarnings, shiftHours

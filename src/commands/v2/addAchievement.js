@@ -1,14 +1,14 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { User } = require('../../database/mongo');
 
-// ───── CONFIG: Different embed style per CATEGORY ─────
+// ───── CONFIG: Different embed style PER CATEGORY ─────
 const embedConfigs = {
-  MONTHLY:    { color: '#ffd700', emoji: '🏆', titlePrefix: 'Staff of the Month' },
-  MOD:        { color: '#3498db', emoji: '🛡', titlePrefix: 'Moderation Excellence' },
-  SUPPORT:    { color: '#2ecc71', emoji: '🎫', titlePrefix: 'Support Hero' },
-  ACTIVITY:   { color: '#e67e22', emoji: '🚀', titlePrefix: 'Activity Legend' },
-  LEADERSHIP: { color: '#9b59b6', emoji: '👑', titlePrefix: 'Leadership Award' },
-  SPECIAL:    { color: '#e91e63', emoji: '💎', titlePrefix: 'Special Recognition' }
+  MONTHLY:    { color: '#ffd700', emoji: '🏆', prefix: 'Staff of the Month' },
+  MOD:        { color: '#3498db', emoji: '🛡', prefix: 'Moderation Excellence' },
+  SUPPORT:    { color: '#2ecc71', emoji: '🎫', prefix: 'Support Hero' },
+  ACTIVITY:   { color: '#e67e22', emoji: '🚀', prefix: 'Activity Legend' },
+  LEADERSHIP: { color: '#9b59b6', emoji: '👑', prefix: 'Leadership Award' },
+  SPECIAL:    { color: '#e91e63', emoji: '💎', prefix: 'Special Recognition' }
 };
 
 module.exports = {
@@ -23,24 +23,11 @@ module.exports = {
         .setRequired(true))
     .addStringOption(option =>
       option
-        .setName('category')
-        .setDescription('Main category of the achievement')
-        .setRequired(true)
-        .addChoices(
-          { name: '🏆 Monthly Award',     value: 'MONTHLY'    },
-          { name: '🛡 Moderation',        value: 'MOD'        },
-          { name: '🎫 Support',           value: 'SUPPORT'    },
-          { name: '🚀 Activity',          value: 'ACTIVITY'   },
-          { name: '👑 Leadership',        value: 'LEADERSHIP' },
-          { name: '💎 Special',           value: 'SPECIAL'    }
-        ))
-    .addStringOption(option =>
-      option
         .setName('achievement')
         .setDescription('Specific achievement to award')
         .setRequired(true)
         .addChoices(
-          // MONTHLY
+          // MONTHLY - 12 months
           { name: 'Staff of the Month – January',   value: 'MONTHLY:Staff of the Month – January' },
           { name: 'Staff of the Month – February',  value: 'MONTHLY:Staff of the Month – February' },
           { name: 'Staff of the Month – March',     value: 'MONTHLY:Staff of the Month – March' },
@@ -55,33 +42,33 @@ module.exports = {
           { name: 'Staff of the Month – December',  value: 'MONTHLY:Staff of the Month – December' },
 
           // MODERATION
-          { name: 'Exemplary Moderator',    value: 'MOD:Exemplary Moderator' },
-          { name: 'Rule Enforcer Elite',    value: 'MOD:Rule Enforcer Elite' },
-          { name: 'Peacekeeper',            value: 'MOD:Peacekeeper' },
-          { name: 'Spam Slayer',            value: 'MOD:Spam Slayer' },
-          { name: 'Conflict Resolver',      value: 'MOD:Conflict Resolver' },
+          { name: 'Exemplary Moderator',   value: 'MOD:Exemplary Moderator' },
+          { name: 'Rule Enforcer Elite',   value: 'MOD:Rule Enforcer Elite' },
+          { name: 'Peacekeeper',           value: 'MOD:Peacekeeper' },
+          { name: 'Spam Slayer',           value: 'MOD:Spam Slayer' },
+          { name: 'Conflict Resolver',     value: 'MOD:Conflict Resolver' },
 
           // SUPPORT
-          { name: 'Support Legend',         value: 'SUPPORT:Support Legend' },
-          { name: 'Ticket Master',          value: 'SUPPORT:Ticket Master' },
-          { name: 'Patience Champion',      value: 'SUPPORT:Patience Champion' },
-          { name: 'Welcome Wizard',         value: 'SUPPORT:Welcome Wizard' },
+          { name: 'Support Legend',        value: 'SUPPORT:Support Legend' },
+          { name: 'Ticket Master',         value: 'SUPPORT:Ticket Master' },
+          { name: 'Patience Champion',     value: 'SUPPORT:Patience Champion' },
+          { name: 'Welcome Wizard',        value: 'SUPPORT:Welcome Wizard' },
 
           // ACTIVITY
-          { name: 'Hyper Active Staff',     value: 'ACTIVITY:Hyper Active Staff' },
-          { name: 'Voice Chat Legend',      value: 'ACTIVITY:Voice Chat Legend' },
-          { name: 'Message Marathon',       value: 'ACTIVITY:Message Marathon' },
-          { name: 'Event Regular',          value: 'ACTIVITY:Event Regular' },
+          { name: 'Hyper Active Staff',    value: 'ACTIVITY:Hyper Active Staff' },
+          { name: 'Voice Chat Legend',     value: 'ACTIVITY:Voice Chat Legend' },
+          { name: 'Message Marathon',      value: 'ACTIVITY:Message Marathon' },
+          { name: 'Event Regular',         value: 'ACTIVITY:Event Regular' },
 
           // LEADERSHIP
-          { name: 'Outstanding Leadership', value: 'LEADERSHIP:Outstanding Leadership' },
-          { name: 'Team Inspirer',          value: 'LEADERSHIP:Team Inspirer' },
-          { name: 'Mentor Supreme',         value: 'LEADERSHIP:Mentor Supreme' },
+          { name: 'Outstanding Leadership',value: 'LEADERSHIP:Outstanding Leadership' },
+          { name: 'Team Inspirer',         value: 'LEADERSHIP:Team Inspirer' },
+          { name: 'Mentor Supreme',        value: 'LEADERSHIP:Mentor Supreme' },
 
           // SPECIAL
-          { name: 'Special Recognition',    value: 'SPECIAL:Special Recognition' },
-          { name: 'Meme Lord of Staff',     value: 'SPECIAL:Meme Lord of Staff' },
-          { name: 'Discord Savior',         value: 'SPECIAL:Discord Savior' }
+          { name: 'Special Recognition',   value: 'SPECIAL:Special Recognition' },
+          { name: 'Meme Lord of Staff',    value: 'SPECIAL:Meme Lord of Staff' },
+          { name: 'Discord Savior',        value: 'SPECIAL:Discord Savior' }
         )),
 
   async execute(interaction) {
@@ -91,20 +78,15 @@ module.exports = {
       const [category, title] = fullChoice.split(':', 2);
       const formattedAchievement = `[${category}] ${title}`;
 
-      // Get category-specific embed style
-      const cfg = embedConfigs[category] || { color: '#f1c40f', emoji: '🏆', titlePrefix: 'Achievement' };
+      const cfg = embedConfigs[category] || { color: '#f1c40f', emoji: '🏆', prefix: 'Achievement' };
 
       let user = await User.findOne({ userId: targetUser.id });
       if (!user) {
-        user = new User({
-          userId: targetUser.id,
-          username: targetUser.tag,
-          staff: { achievements: [] }
-        });
+        user = new User({ userId: targetUser.id, username: targetUser.tag, staff: { achievements: [] } });
       }
 
-      if (!user.staff) user.staff = {};
-      if (!user.staff.achievements) user.staff.achievements = [];
+      user.staff ??= {};
+      user.staff.achievements ??= [];
 
       if (user.staff.achievements.includes(formattedAchievement)) {
         return interaction.reply({
@@ -116,10 +98,9 @@ module.exports = {
       user.staff.achievements.push(formattedAchievement);
       await user.save();
 
-      // ───── UNIQUE EMBED PER ACHIEVEMENT / CATEGORY ─────
       const embed = new EmbedBuilder()
         .setColor(cfg.color)
-        .setTitle(`${cfg.emoji} ${cfg.titlePrefix} — ${title}`)
+        .setTitle(`${cfg.emoji} ${cfg.prefix} — ${title}`)
         .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 1024 }))
         .addFields(
           { name: '👤 Recipient',         value: `<@${targetUser.id}>`, inline: true },
@@ -131,13 +112,9 @@ module.exports = {
         .setTimestamp();
 
       await interaction.reply({ embeds: [embed] });
-
     } catch (error) {
       console.error('Error adding achievement:', error);
-      await interaction.reply({
-        content: '❌ Failed to award achievement.',
-        ephemeral: true
-      });
+      await interaction.reply({ content: '❌ Failed to award achievement.', ephemeral: true });
     }
   }
 };

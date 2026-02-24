@@ -1,33 +1,57 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { 
+  SlashCommandBuilder, 
+  EmbedBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ModalBuilder, 
+  TextInputBuilder, 
+  TextInputStyle,
+  PermissionFlagsBits
+} = require('discord.js');
 const { Guild, User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('helper_panel')
     .setDescription('[Helper] Create helper application panel')
-    .addChannelOption(opt => opt.setName('channel').setDescription('Channel to send panel').setRequired(true)),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addChannelOption(option =>
+      option.setName('channel')
+        .setDescription('Channel to send the application panel')
+        .setRequired(true)),
 
   async execute(interaction, client) {
     try {
       await interaction.deferReply({ ephemeral: true });
 
       const guildId = interaction.guildId;
-      const channel = interaction.options.getChannel('channel');
+      const targetChannel = interaction.options.getChannel('channel');
 
       const guild = await Guild.findOne({ guildId });
       if (!guild?.helperConfig?.enabled) {
         return interaction.editReply('❌ Helper system not configured. Use `/helper_setup` first!');
       }
 
-      const embed = new EmbedBuilder()
-        .setTitle('🙋 Helper Staff Applications')
-        .setDescription('Click the button below to apply to become a Helper!')
+      // Cool panel embed
+      const panelEmbed = new EmbedBuilder()
+        .setTitle('🌟 **Helper Staff Applications**')
+        .setDescription('✨ Click the button below to start your journey as a Helper!')
+        .setColor(0x9B59B6) // purple
+        .setThumbnail(interaction.guild.iconURL({ dynamic: true, size: 1024 }))
         .addFields(
-          { name: '📝 Requirements', value: '• Be active and helpful\n• Good communication skills\n• Want to assist the community', inline: false },
-          { name: '💡 Note', value: 'One application per 24 hours. Answer all questions carefully!', inline: false }
+          {
+            name: '📋 **Requirements**',
+            value: '```• Be active and helpful\n• Good communication skills\n• Want to assist the community```',
+            inline: false
+          },
+          {
+            name: '⏳ **Note**',
+            value: '```One application per 24 hours. Answer all questions carefully!```',
+            inline: false
+          }
         )
-        .setColor(0x5865f2)
-        .setThumbnail(interaction.guild.iconURL())
+        .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true }) })
         .setTimestamp();
 
       const row = new ActionRowBuilder()
@@ -36,10 +60,11 @@ module.exports = {
             .setCustomId('helper_apply')
             .setLabel('🙋 Apply Now')
             .setStyle(ButtonStyle.Primary)
+            .setEmoji('📝')
         );
 
-      await channel.send({ embeds: [embed], components: [row] });
-      await interaction.editReply({ content: `✅ Helper application panel sent to ${channel}!`, ephemeral: true });
+      await targetChannel.send({ embeds: [panelEmbed], components: [row] });
+      await interaction.editReply({ content: `✅ Application panel sent to ${targetChannel}!`, ephemeral: true });
     } catch (error) {
       console.error('Error in helper_panel execute:', error);
       if (!interaction.replied && !interaction.deferred) {
@@ -50,12 +75,12 @@ module.exports = {
     }
   },
 
+  // ==================== HANDLE APPLY BUTTON ====================
   handleApply: async (interaction, client) => {
     try {
-      // Show modal immediately – no database query here!
       const modal = new ModalBuilder()
         .setCustomId('helper_modal')
-        .setTitle('🙋 Helper Application');
+        .setTitle('🙋 Helper Application Form');
 
       const whyHelper = new TextInputBuilder()
         .setCustomId('why_helper')
@@ -109,12 +134,12 @@ module.exports = {
     }
   },
 
+  // ==================== HANDLE MODAL SUBMIT ====================
   handleSubmit: async (interaction, client) => {
     try {
       const guildId = interaction.guildId;
       const userId = interaction.user.id;
 
-      // Now check the database (after modal submission)
       const guild = await Guild.findOne({ guildId });
       if (!guild?.helperConfig?.enabled) {
         await interaction.reply({ content: '❌ Helper system not configured.', ephemeral: true });
@@ -125,11 +150,9 @@ module.exports = {
       if (!user) {
         user = new User({ userId, username: interaction.user.tag });
       }
+      if (!user.helperApplications) user.helperApplications = [];
 
-      if (!user.helperApplications) {
-        user.helperApplications = [];
-      }
-
+      // Cooldown check (24h)
       const lastApp = user.helperApplications
         .filter(a => a.guildId === guildId)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
@@ -137,7 +160,10 @@ module.exports = {
       if (lastApp) {
         const hoursSince = (Date.now() - new Date(lastApp.createdAt).getTime()) / (1000 * 60 * 60);
         if (hoursSince < 24) {
-          await interaction.reply({ content: `❌ You must wait **${Math.round(24 - hoursSince)} hours** before applying again.`, ephemeral: true });
+          await interaction.reply({
+            content: `⏳ You must wait **${Math.round(24 - hoursSince)} hours** before applying again.`,
+            ephemeral: true
+          });
           return;
         }
       }
@@ -157,9 +183,9 @@ module.exports = {
 
       const application = {
         id: appId,
-        guildId: guildId,
+        guildId,
         username: interaction.user.tag,
-        userId: userId,
+        userId,
         whyHelper,
         howAssist,
         experience,
@@ -169,51 +195,52 @@ module.exports = {
         createdAt: new Date()
       };
 
-      if (!user.helperApplications) user.helperApplications = [];
       user.helperApplications.push(application);
       await user.save();
 
       const logChannelId = guild.helperConfig.logChannel;
       const logChannel = interaction.guild.channels.cache.get(logChannelId);
 
-      const embed = new EmbedBuilder()
-        .setTitle(`🙋 New Helper Application #${appId}`)
-        .setColor(0x5865f2)
-        .setThumbnail(interaction.user.displayAvatarURL())
-        .addFields(
-          { name: '👤 Applicant', value: `${interaction.user.tag}`, inline: true },
-          { name: '🆔 User ID', value: userId, inline: true },
-          { name: '⏰ Applied', value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true },
-          { name: '\u200B', value: '\u200B', inline: false },
-          { name: '1️⃣ Why do you want to be a Helper?', value: whyHelper, inline: false },
-          { name: '2️⃣ How would you assist?', value: howAssist, inline: false },
-          { name: '3️⃣ Experience?', value: experience, inline: false },
-          { name: '4️⃣ Activity', value: activity, inline: true },
-          { name: '5️⃣ Other', value: other, inline: true }
-        )
-        .setFooter({ text: `Application ID: ${appId}` })
-        .setTimestamp();
-
-      const row = new ActionRowBuilder()
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId(`helper_accept_${appId}`)
-            .setLabel('✅ Accept')
-            .setStyle(ButtonStyle.Success),
-          new ButtonBuilder()
-            .setCustomId(`helper_deny_${appId}`)
-            .setLabel('❌ Deny')
-            .setStyle(ButtonStyle.Danger)
-        );
-
       if (logChannel) {
-        const logMsg = await logChannel.send({ embeds: [embed], components: [row] });
+        const logEmbed = new EmbedBuilder()
+          .setTitle(`📬 New Helper Application #${appId}`)
+          .setColor(0x5865F2) // blurple
+          .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+          .addFields(
+            { name: '👤 Applicant', value: interaction.user.toString(), inline: true },
+            { name: '🆔 User ID', value: userId, inline: true },
+            { name: '⏰ Applied', value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true },
+            { name: '📋 **1. Why Helper?**', value: whyHelper.slice(0, 1024), inline: false },
+            { name: '💬 **2. How Assist?**', value: howAssist.slice(0, 1024), inline: false },
+            { name: '🎓 **3. Experience**', value: experience.slice(0, 1024), inline: false },
+            { name: '⏳ **4. Activity**', value: activity, inline: true },
+            { name: '📌 **5. Other**', value: other, inline: true }
+          )
+          .setFooter({ text: `Application ID: ${appId}` })
+          .setTimestamp();
+
+        const row = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId(`helper_accept_${appId}`)
+              .setLabel('✅ Accept')
+              .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+              .setCustomId(`helper_deny_${appId}`)
+              .setLabel('❌ Deny')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+        const logMsg = await logChannel.send({ embeds: [logEmbed], components: [row] });
         application.messageId = logMsg.id;
         application.channelId = logChannel.id;
         await user.save();
       }
 
-      await interaction.reply({ content: `✅ Your application submitted! ID: \`${appId}\``, ephemeral: true });
+      await interaction.reply({ 
+        content: `✅ Your application has been submitted! ID: \`${appId}\`\nPlease wait for staff to review.`, 
+        ephemeral: true 
+      });
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       if (!interaction.replied && !interaction.deferred) {
@@ -222,6 +249,7 @@ module.exports = {
     }
   },
 
+  // ==================== HANDLE ACCEPT ====================
   handleAccept: async (interaction, client) => {
     try {
       const guildId = interaction.guildId;
@@ -235,17 +263,19 @@ module.exports = {
 
       const staffRoleId = guild.helperConfig.staffRole;
       if (!interaction.member.roles.cache.has(staffRoleId) && !interaction.member.permissions.has('Administrator')) {
-        await interaction.reply({ content: '❌ You cannot review!', ephemeral: true });
+        await interaction.reply({ content: '❌ You cannot review applications.', ephemeral: true });
         return;
       }
 
       const users = await User.find({ 'helperApplications.guildId': guildId, 'helperApplications.id': appId });
-      let targetUser = null;
-      let targetApp = null;
-
+      let targetUser, targetApp;
       for (const u of users) {
         const app = u.helperApplications.find(a => a.id === appId);
-        if (app) { targetUser = u; targetApp = app; break; }
+        if (app) {
+          targetUser = u;
+          targetApp = app;
+          break;
+        }
       }
 
       if (!targetUser || !targetApp) {
@@ -254,7 +284,7 @@ module.exports = {
       }
 
       if (targetApp.status !== 'pending') {
-        await interaction.reply({ content: '❌ Already processed!', ephemeral: true });
+        await interaction.reply({ content: '❌ Application already processed.', ephemeral: true });
         return;
       }
 
@@ -266,27 +296,29 @@ module.exports = {
       const discordUser = await client.users.fetch(targetUser.userId).catch(() => null);
       if (discordUser) {
         try {
-          await discordUser.send({ embeds: [new EmbedBuilder()
-            .setTitle('✅ Helper Application Accepted!')
-            .setDescription('Your helper application has been accepted! Welcome! 🎉')
-            .setColor(0x2ecc71)
-          ]});
+          await discordUser.send({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle('✅ Helper Application Accepted!')
+                .setDescription(`Congratulations! Your helper application in **${interaction.guild.name}** has been accepted! Welcome to the team 🎉`)
+                .setColor(0x57F287)
+            ]
+          });
         } catch (e) {}
       }
 
       const acceptedRoleId = guild.helperConfig.acceptedRole;
-      const discordGuild = interaction.guild;
-      const guildMember = discordGuild.members.cache.get(targetUser.userId);
-      if (guildMember && acceptedRoleId) {
-        try { await guildMember.roles.add(acceptedRoleId); } catch (e) {}
+      const member = interaction.guild.members.cache.get(targetUser.userId);
+      if (member && acceptedRoleId) {
+        try { await member.roles.add(acceptedRoleId); } catch (e) {}
       }
 
       const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
-        .setColor(0x2ecc71)
+        .setColor(0x57F287)
         .addFields({ name: '✅ Status', value: `**ACCEPTED** by ${interaction.user.tag}`, inline: true });
 
       await interaction.message.edit({ embeds: [newEmbed], components: [] });
-      await interaction.reply({ content: '✅ Accepted!', ephemeral: true });
+      await interaction.reply({ content: '✅ Application accepted!', ephemeral: true });
     } catch (error) {
       console.error('Error in handleAccept:', error);
       if (!interaction.replied && !interaction.deferred) {
@@ -295,6 +327,7 @@ module.exports = {
     }
   },
 
+  // ==================== HANDLE DENY ====================
   handleDeny: async (interaction, client) => {
     try {
       const guildId = interaction.guildId;
@@ -308,17 +341,19 @@ module.exports = {
 
       const staffRoleId = guild.helperConfig.staffRole;
       if (!interaction.member.roles.cache.has(staffRoleId) && !interaction.member.permissions.has('Administrator')) {
-        await interaction.reply({ content: '❌ You cannot review!', ephemeral: true });
+        await interaction.reply({ content: '❌ You cannot review applications.', ephemeral: true });
         return;
       }
 
       const users = await User.find({ 'helperApplications.guildId': guildId, 'helperApplications.id': appId });
-      let targetUser = null;
-      let targetApp = null;
-
+      let targetUser, targetApp;
       for (const u of users) {
         const app = u.helperApplications.find(a => a.id === appId);
-        if (app) { targetUser = u; targetApp = app; break; }
+        if (app) {
+          targetUser = u;
+          targetApp = app;
+          break;
+        }
       }
 
       if (!targetUser || !targetApp) {
@@ -327,7 +362,7 @@ module.exports = {
       }
 
       if (targetApp.status !== 'pending') {
-        await interaction.reply({ content: '❌ Already processed!', ephemeral: true });
+        await interaction.reply({ content: '❌ Application already processed.', ephemeral: true });
         return;
       }
 
@@ -339,20 +374,23 @@ module.exports = {
       const discordUser = await client.users.fetch(targetUser.userId).catch(() => null);
       if (discordUser) {
         try {
-          await discordUser.send({ embeds: [new EmbedBuilder()
-            .setTitle('❌ Helper Application Denied')
-            .setDescription('Your helper application has been denied. Thank you for applying!')
-            .setColor(0xe74c3c)
-          ]});
+          await discordUser.send({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle('❌ Helper Application Denied')
+                .setDescription(`Your helper application in **${interaction.guild.name}** has been denied. Thank you for your interest!`)
+                .setColor(0xED4245)
+            ]
+          });
         } catch (e) {}
       }
 
       const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
-        .setColor(0xe74c3c)
+        .setColor(0xED4245)
         .addFields({ name: '❌ Status', value: `**DENIED** by ${interaction.user.tag}`, inline: true });
 
       await interaction.message.edit({ embeds: [newEmbed], components: [] });
-      await interaction.reply({ content: '✅ Denied!', ephemeral: true });
+      await interaction.reply({ content: '✅ Application denied!', ephemeral: true });
     } catch (error) {
       console.error('Error in handleDeny:', error);
       if (!interaction.replied && !interaction.deferred) {

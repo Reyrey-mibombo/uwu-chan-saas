@@ -52,14 +52,7 @@ module.exports = {
 
   handleApply: async (interaction, client) => {
     try {
-      const guildId = interaction.guildId;
-
-      const guild = await Guild.findOne({ guildId });
-      if (!guild?.helperConfig?.enabled) {
-        await interaction.reply({ content: '❌ Helper system not configured.', ephemeral: true });
-        return;
-      }
-
+      // Show modal immediately – no database query here!
       const modal = new ModalBuilder()
         .setCustomId('helper_modal')
         .setTitle('🙋 Helper Application');
@@ -121,6 +114,7 @@ module.exports = {
       const guildId = interaction.guildId;
       const userId = interaction.user.id;
 
+      // Now check the database (after modal submission)
       const guild = await Guild.findOne({ guildId });
       if (!guild?.helperConfig?.enabled) {
         await interaction.reply({ content: '❌ Helper system not configured.', ephemeral: true });

@@ -6,9 +6,7 @@ const embedConfigs = {
   MONTHLY:    { color: '#ffd700', emoji: '🏆', prefix: 'Staff of the Month' },
   MOD:        { color: '#3498db', emoji: '🛡', prefix: 'Moderation Excellence' },
   SUPPORT:    { color: '#2ecc71', emoji: '🎫', prefix: 'Support Hero' },
-  ACTIVITY:   { color: '#e67e22', emoji: '🚀', prefix: 'Activity Legend' },
-  LEADERSHIP: { color: '#9b59b6', emoji: '👑', prefix: 'Leadership Award' },
-  SPECIAL:    { color: '#e91e63', emoji: '💎', prefix: 'Special Recognition' }
+  ACTIVITY:   { color: '#e67e22', emoji: '🚀', prefix: 'Activity Legend' }
 };
 
 module.exports = {
@@ -58,17 +56,7 @@ module.exports = {
           { name: 'Hyper Active Staff',    value: 'ACTIVITY:Hyper Active Staff' },
           { name: 'Voice Chat Legend',     value: 'ACTIVITY:Voice Chat Legend' },
           { name: 'Message Marathon',      value: 'ACTIVITY:Message Marathon' },
-          { name: 'Event Regular',         value: 'ACTIVITY:Event Regular' },
-
-          // LEADERSHIP
-          { name: 'Outstanding Leadership',value: 'LEADERSHIP:Outstanding Leadership' },
-          { name: 'Team Inspirer',         value: 'LEADERSHIP:Team Inspirer' },
-          { name: 'Mentor Supreme',        value: 'LEADERSHIP:Mentor Supreme' },
-
-          // SPECIAL
-          { name: 'Special Recognition',   value: 'SPECIAL:Special Recognition' },
-          { name: 'Meme Lord of Staff',    value: 'SPECIAL:Meme Lord of Staff' },
-          { name: 'Discord Savior',        value: 'SPECIAL:Discord Savior' }
+          { name: 'Event Regular',         value: 'ACTIVITY:Event Regular' }
         )),
 
   async execute(interaction) {
@@ -90,7 +78,7 @@ module.exports = {
 
       if (user.staff.achievements.includes(formattedAchievement)) {
         return interaction.reply({
-          content: `⚠️ **\( {targetUser.tag}** already has: ** \){formattedAchievement}**`,
+          content: `⚠️ **${targetUser.tag}** already has: **${formattedAchievement}**`,
           ephemeral: true
         });
       }

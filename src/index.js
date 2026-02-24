@@ -54,7 +54,6 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  // Dynamic Tier Loading based on Railway/Hosting Environment
   const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8'];
   const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
@@ -141,19 +140,29 @@ client.on('interactionCreate', async interaction => {
       await applyPanel.handleDeny(interaction, client);
       return;
     }
-    // Handle helper application buttons
-    const helperPanel = require('./commands/v2/helper_panel'); // FIXED: changed from helperPanel to helper_panel
-    if (interaction.customId === 'helper_apply') {
-      await helperPanel.handleApply(interaction, client);
-      return;
-    }
-    if (interaction.customId.startsWith('helper_accept_')) {
-      await helperPanel.handleAccept(interaction, client);
-      return;
-    }
-    if (interaction.customId.startsWith('helper_deny_')) {
-      await helperPanel.handleDeny(interaction, client);
-      return;
+    // Handle helper application buttons with error handling
+    try {
+      const helperPanel = require('./commands/v2/helper_panel');
+      if (interaction.customId === 'helper_apply') {
+        await helperPanel.handleApply(interaction, client);
+        return;
+      }
+      if (interaction.customId.startsWith('helper_accept_')) {
+        await helperPanel.handleAccept(interaction, client);
+        return;
+      }
+      if (interaction.customId.startsWith('helper_deny_')) {
+        await helperPanel.handleDeny(interaction, client);
+        return;
+      }
+    } catch (error) {
+      console.error('❌ Helper button error:', error);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ 
+          content: '❌ An error occurred while processing the helper button. Check bot logs.', 
+          ephemeral: true 
+        }).catch(() => {});
+      }
     }
   }
 
@@ -164,11 +173,18 @@ client.on('interactionCreate', async interaction => {
     return;
   }
 
-  // Handle helper application modals
-  if (interaction.isModalSubmit() && interaction.customId === 'helper_modal') {
-    const helperPanel = require('./commands/v2/helper_panel'); // FIXED: same correction
-    await helperPanel.handleSubmit(interaction, client);
-    return;
+  // Handle helper application modals with error handling
+  try {
+    if (interaction.isModalSubmit() && interaction.customId === 'helper_modal') {
+      const helperPanel = require('./commands/v2/helper_panel');
+      await helperPanel.handleSubmit(interaction, client);
+      return;
+    }
+  } catch (error) {
+    console.error('❌ Helper modal error:', error);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: '❌ Error submitting application.', ephemeral: true }).catch(() => {});
+    }
   }
 
   // Handle ticket modals
@@ -279,14 +295,12 @@ mongoose.connect(process.env.MONGODB_URI)
     process.exit(1);
   });
 
-// Set the client inside the app so API routers can access commands
 app.set('client', client);
 
-// API Routes
 app.use('/api/licenses', require('./api/licenses'));
 app.use('/api/guilds', require('./api/guilds'));
-app.use('/api/stats', require('./api/stats')); // New stats API route
-app.use('/api/commands', require('./api/commands')); // Dynamic commands API route
+app.use('/api/stats', require('./api/stats'));
+app.use('/api/commands', require('./api/commands'));
 app.use('/webhooks', require('./webhook/paymentWebhook'));
 
 const PORT = process.env.PORT || 3001;

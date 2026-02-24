@@ -142,7 +142,7 @@ client.on('interactionCreate', async interaction => {
       return;
     }
     // Handle helper application buttons
-    const helperPanel = require('./commands/v2/helperPanel');
+    const helperPanel = require('./commands/v2/helper_panel'); // FIXED: changed from helperPanel to helper_panel
     if (interaction.customId === 'helper_apply') {
       await helperPanel.handleApply(interaction, client);
       return;
@@ -166,7 +166,7 @@ client.on('interactionCreate', async interaction => {
 
   // Handle helper application modals
   if (interaction.isModalSubmit() && interaction.customId === 'helper_modal') {
-    const helperPanel = require('./commands/v2/helperPanel');
+    const helperPanel = require('./commands/v2/helper_panel'); // FIXED: same correction
     await helperPanel.handleSubmit(interaction, client);
     return;
   }

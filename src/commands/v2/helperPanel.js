@@ -77,6 +77,7 @@ module.exports = {
 
   // ==================== HANDLE APPLY BUTTON ====================
   handleApply: async (interaction, client) => {
+    console.log('✅ handleApply triggered by', interaction.user.tag); // Log for debugging
     try {
       const modal = new ModalBuilder()
         .setCustomId('helper_modal')

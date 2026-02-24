@@ -1,0 +1,34 @@
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { User, Activity } = require('../../database/mongo');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('activity_report')
+    .setDescription('[Analytics] Generate activity report'),
+
+  async execute(interaction, client) {
+    await interaction.deferReply();
+
+    const activities = await Activity.find({ guildId: interaction.guildId })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    const typeCount = {};
+    activities.forEach(a => {
+      typeCount[a.type] = (typeCount[a.type] || 0) + 1;
+    });
+
+    const list = Object.entries(typeCount)
+      .map(([type, count]) => `**${type}**: ${count}`)
+      .join('\n');
+
+    const embed = new EmbedBuilder()
+      .setTitle('📈 Activity Report')
+      .setDescription(list || 'No activity data')
+      .setColor(0x5865f2)
+      .setTimestamp();
+
+    await interaction.editReply({ embeds: [embed] });
+  }
+};

@@ -28,7 +28,7 @@ module.exports = {
 
       return interaction.reply({
         embeds: [{
-          description: `\( {emoji} ** \){verb}** activity alerts.`,
+          description: `${emoji} **${verb}** activity alerts.`,
           color: color
         }],
         ephemeral: false
@@ -42,7 +42,7 @@ module.exports = {
 
     await interaction.reply({
       embeds: [{
-        description: `\( {emoji} Activity alerts are currently ** \){status}**.`,
+        description: `${emoji} Activity alerts are currently **${status}**.`,
         color: color
       }],
       ephemeral: false

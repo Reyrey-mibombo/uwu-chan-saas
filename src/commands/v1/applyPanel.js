@@ -1,211 +1,239 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { Guild } = require('../../database/mongo');
+const { 
+  SlashCommandBuilder, 
+  EmbedBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  PermissionFlagsBits
+} = require('discord.js');
+const { Guild, User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('apply_panel')
-    .setDescription('Create the application panel')
-    .addChannelOption(opt => opt.setName('channel').setDescription('Channel to send panel').setRequired(true)),
+    .setDescription('Create application panel')
+    .addStringOption(opt => 
+      opt.setName('type')
+        .setDescription('Type of applications')
+        .setRequired(true)
+        .addChoices(
+          { name: '👮 Staff', value: 'staff' },
+          { name: '🌟 Helper', value: 'helper' }
+        ))
+    .addChannelOption(opt => opt.setName('channel').setDescription('Channel to send panel').setRequired(true))
+    .addStringOption(opt => opt.setName('custom_title').setDescription('Override title').setRequired(false))
+    .addStringOption(opt => opt.setName('custom_desc').setDescription('Override description').setRequired(false)),
 
   async execute(interaction, client) {
     await interaction.deferReply({ ephemeral: true });
 
     const guildId = interaction.guildId;
+    const type = interaction.options.getString('type');
     const channel = interaction.options.getChannel('channel');
 
     const guild = await Guild.findOne({ guildId });
-    if (!guild?.applicationConfig?.enabled) {
-      return interaction.editReply('❌ Application system not configured. Use `/apply_setup` first!');
+    
+    if (!guild?.applicationConfig?.types?.[type]?.enabled) {
+      return interaction.editReply(`❌ ${type} application system not configured. Use \`/apply_setup type:${type}\` first!`);
     }
 
+    const config = guild.applicationConfig.types[type];
+    const title = interaction.options.getString('custom_title') || config.customTitle;
+    const description = interaction.options.getString('custom_desc') || config.customDesc;
+    
+    const emoji = type === 'staff' ? '👮' : '🌟';
+    const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
+
     const embed = new EmbedBuilder()
-      .setTitle('📋 Staff Applications')
-      .setDescription('Click the button below to apply for the staff team!')
+      .setTitle(title)
+      .setDescription(description)
       .addFields(
-        { name: '📝 Requirements', value: '• Be active\n• Have good communication\n• Want to help the community', inline: false },
-        { name: '💡 Note', value: 'One application per 24 hours. Make sure to answer all questions carefully!', inline: false }
+        { 
+          name: '📝 Requirements', 
+          value: '• Be active in the community\n• Have good communication skills\n• Follow all server rules', 
+          inline: false 
+        },
+        { name: '⏱️ Cooldown', value: 'One application per 24 hours', inline: true },
+        { name: '📋 Note', value: 'Answer all questions carefully!', inline: true }
       )
-      .setColor(0x5865f2)
+      .setColor(color)
       .setThumbnail(interaction.guild.iconURL())
-      .setTimestamp();
+      .setTimestamp()
+      .setFooter({ text: `${interaction.guild.name} • ${type.toUpperCase()} Applications` });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
-          .setCustomId('apply_now')
-          .setLabel('📝 Apply Now')
-          .setStyle(ButtonStyle.Primary)
+          .setCustomId(`apply_now_${type}`)
+          .setLabel(`${emoji} Apply Now`)
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId(`apply_stats_${type}`)
+          .setLabel('📊 View Stats')
+          .setStyle(ButtonStyle.Secondary)
       );
 
     await channel.send({ embeds: [embed], components: [row] });
 
-    await interaction.editReply({ content: `✅ Application panel sent to ${channel}!`, ephemeral: true });
+    await interaction.editReply({ content: `✅ ${type} application panel sent to ${channel}!`, ephemeral: true });
   }
 };
 
 module.exports.handleApply = async (interaction, client) => {
+  const type = interaction.customId.replace('apply_now_', '');
   const guildId = interaction.guildId;
   const userId = interaction.user.id;
 
   const guild = await Guild.findOne({ guildId });
-  if (!guild?.applicationConfig?.enabled) {
-    await interaction.reply({ content: '❌ Application system not configured.', ephemeral: true });
-    return;
+  
+  if (!guild?.applicationConfig?.types?.[type]?.enabled) {
+    return interaction.reply({ content: `❌ ${type} application system not configured.`, ephemeral: true });
   }
 
-  const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+  const config = guild.applicationConfig.types[type];
+
+  if (guild.applicationConfig.blacklist?.some(entry => entry.userId === userId)) {
+    return interaction.reply({ content: '❌ You are blacklisted from submitting applications.', ephemeral: true });
+  }
+
+  const user = await User.findOne({ userId });
+  if (user?.applications) {
+    const lastApp = user.applications
+      .filter(a => a.guildId === guildId && a.type === type)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    
+    if (lastApp) {
+      const hoursSince = (Date.now() - new Date(lastApp.createdAt)) / (1000 * 60 * 60);
+      if (hoursSince < 24) {
+        return interaction.reply({
+          content: `⏳ You must wait **${Math.round(24 - hoursSince)} hours** before applying again for ${type}.`,
+          ephemeral: true
+        });
+      }
+      if (lastApp.status === 'pending') {
+        return interaction.reply({ 
+          content: `❌ You already have a pending ${type} application!`, 
+          ephemeral: true 
+        });
+      }
+    }
+  }
+
+  const questions = config.questions || [
+    { question: 'Why do you want this role?', required: true, type: 'paragraph' },
+    { question: 'Previous experience?', required: true, type: 'paragraph' },
+    { question: 'How active are you?', required: true, type: 'short' }
+  ];
 
   const modal = new ModalBuilder()
-    .setCustomId('apply_modal')
-    .setTitle('📋 Staff Application');
+    .setCustomId(`apply_modal_${type}`)
+    .setTitle(`${type.toUpperCase()} Application`);
 
-  const whyJoin = new TextInputBuilder()
-    .setCustomId('why_join')
-    .setLabel('1. Why do you want to join staff?')
-    .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder('Tell us why you want to be staff...')
-    .setRequired(true);
-
-  const experience = new TextInputBuilder()
-    .setCustomId('experience')
-    .setLabel('2. Previous experience?')
-    .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder('Any previous staff experience? (moderator, helper, etc.)')
-    .setRequired(true);
-
-  const activity = new TextInputBuilder()
-    .setCustomId('activity')
-    .setLabel('3. How active are you?')
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder('Hours per day/week')
-    .setRequired(true);
-
-  const age = new TextInputBuilder()
-    .setCustomId('age')
-    .setLabel('4. Your age')
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder('Your age')
-    .setRequired(true);
-
-  const other = new TextInputBuilder()
-    .setCustomId('other')
-    .setLabel('5. Anything else?')
-    .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder('Any additional info...')
-    .setRequired(false);
-
-  modal.addComponents(
-    new ActionRowBuilder().addComponents(whyJoin),
-    new ActionRowBuilder().addComponents(experience),
-    new ActionRowBuilder().addComponents(activity),
-    new ActionRowBuilder().addComponents(age),
-    new ActionRowBuilder().addComponents(other)
-  );
+  questions.slice(0, 5).forEach((q, index) => {
+    const input = new TextInputBuilder()
+      .setCustomId(`question_${index}`)
+      .setLabel(q.question.slice(0, 45))
+      .setStyle(q.type === 'paragraph' ? TextInputStyle.Paragraph : TextInputStyle.Short)
+      .setRequired(q.required)
+      .setPlaceholder(q.question)
+      .setMaxLength(q.type === 'paragraph' ? 1000 : 100);
+      
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
+  });
 
   await interaction.showModal(modal);
 };
 
 module.exports.handleApplySubmit = async (interaction, client) => {
-  const { Guild } = require('../../database/mongo');
+  const type = interaction.customId.replace('apply_modal_', '');
   const guildId = interaction.guildId;
   const userId = interaction.user.id;
 
   const guild = await Guild.findOne({ guildId });
-  if (!guild?.applicationConfig?.enabled) {
-    await interaction.reply({ content: '❌ Application system not configured.', ephemeral: true });
-    return;
+  if (!guild?.applicationConfig?.types?.[type]?.enabled) {
+    return interaction.reply({ content: `❌ ${type} system not configured.`, ephemeral: true });
   }
 
-  const { User } = require('../../database/mongo');
-  
+  const config = guild.applicationConfig.types[type];
+
   let user = await User.findOne({ userId });
   if (!user) {
-    user = new User({ userId, username: interaction.user.tag });
+    user = new User({ userId, username: interaction.user.tag, applications: [] });
   }
 
-  if (!user.applications) {
-    user.applications = [];
+  const answers = [];
+  for (let i = 0; i < 5; i++) {
+    try {
+      const value = interaction.fields.getTextInputValue(`question_${i}`);
+      if (value) answers.push(value);
+    } catch (e) {}
   }
 
-  const lastApplication = user.applications
-    .filter(a => a.guildId === guildId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(new Date(a.createdAt)))[0];
-
-  if (lastApplication) {
-    const hoursSinceLastApp = (Date.now() - new Date(lastApplication.createdAt).getTime()) / (1000 * 60 * 60);
-    if (hoursSinceLastApp < 24) {
-      await interaction.reply({ 
-        content: `❌ You must wait **${Math.round(24 - hoursSinceLastApp)} hours** before applying again.`, 
-        ephemeral: true 
-      });
-      return;
-    }
-  }
-
-  if (lastApplication && lastApplication.status === 'pending') {
-    await interaction.reply({ content: '❌ You already have a pending application!', ephemeral: true });
-    return;
-  }
-
-  const whyJoin = interaction.fields.getTextInputValue('why_join');
-  const experience = interaction.fields.getTextInputValue('experience');
-  const activity = interaction.fields.getTextInputValue('activity');
-  const age = interaction.fields.getTextInputValue('age');
-  const other = interaction.fields.getTextInputValue('other') || 'None';
-
-  const applicationId = Date.now().toString(36).toUpperCase();
+  const appId = `${type.toUpperCase().slice(0,3)}-${Date.now().toString(36).toUpperCase()}`;
+  const questions = config.questions.map(q => typeof q === 'string' ? q : q.question);
 
   const application = {
-    id: applicationId,
+    id: appId,
+    type: type,
     guildId: guildId,
     username: interaction.user.tag,
     userId: userId,
-    whyJoin,
-    experience,
-    activity,
-    age,
-    other,
+    answers: answers,
+    questions: questions,
     status: 'pending',
-    createdAt: new Date()
+    createdAt: new Date(),
+    notes: [],
+    interview: null
   };
 
-  if (!user.applications) user.applications = [];
   user.applications.push(application);
   await user.save();
 
-  const logChannelId = guild.applicationConfig.logChannel;
+  const logChannelId = config.logChannel;
   const logChannel = interaction.guild.channels.cache.get(logChannelId);
+  const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
+  const emoji = type === 'staff' ? '👮' : '🌟';
 
   const embed = new EmbedBuilder()
-    .setTitle(`📋 New Staff Application #${applicationId}`)
-    .setColor(0x5865f2)
+    .setTitle(`${emoji} New ${type.toUpperCase()} Application #${appId}`)
+    .setColor(color)
     .setThumbnail(interaction.user.displayAvatarURL())
     .addFields(
-      { name: '👤 Applicant', value: `${interaction.user.tag}`, inline: true },
-      { name: '🆔 User ID', value: userId, inline: true },
+      { name: '👤 Applicant', value: `<@${userId}> (${interaction.user.tag})`, inline: true },
       { name: '⏰ Applied', value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true },
-      { name: '\u200B', value: '\u200B', inline: false },
-      { name: '1️⃣ Why do you want to join staff?', value: whyJoin, inline: false },
-      { name: '2️⃣ Previous experience?', value: experience, inline: false },
-      { name: '3️⃣ How active are you?', value: activity, inline: true },
-      { name: '4️⃣ Age', value: age, inline: true },
-      { name: '5️⃣ Anything else?', value: other, inline: false }
-    )
-    .setFooter({ text: `Application ID: ${applicationId}` })
-    .setTimestamp();
+      { name: '🆔 ID', value: appId, inline: true }
+    );
 
-  const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+  questions.forEach((q, idx) => {
+    if (answers[idx]) {
+      embed.addFields({ 
+        name: `${idx + 1}. ${q}`, 
+        value: answers[idx].substring(0, 1024) || 'No answer', 
+        inline: false 
+      });
+    }
+  });
+
+  embed.setFooter({ text: `Type: ${type} • Use /apply_note to add staff notes` })
+       .setTimestamp();
 
   const row = new ActionRowBuilder()
     .addComponents(
       new ButtonBuilder()
-        .setCustomId(`apply_accept_${applicationId}`)
+        .setCustomId(`apply_accept_${type}_${appId}`)
         .setLabel('✅ Accept')
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
-        .setCustomId(`apply_deny_${applicationId}`)
+        .setCustomId(`apply_deny_${type}_${appId}`)
         .setLabel('❌ Deny')
-        .setStyle(ButtonStyle.Danger)
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId(`apply_interview_${type}_${appId}`)
+        .setLabel('📅 Interview')
+        .setStyle(ButtonStyle.Primary)
     );
 
   if (logChannel) {
@@ -215,50 +243,43 @@ module.exports.handleApplySubmit = async (interaction, client) => {
     await user.save();
   }
 
-  await interaction.reply({ content: `✅ Your application has been submitted! Application ID: \`${applicationId}\``, ephemeral: true });
+  await interaction.reply({ 
+    content: `✅ Your ${type} application has been submitted! ID: \`${appId}\``, 
+    ephemeral: true 
+  });
 };
 
 module.exports.handleAccept = async (interaction, client) => {
-  const { Guild, User } = require('../../database/mongo');
+  const parts = interaction.customId.split('_');
+  const type = parts[2];
+  const appId = parts.slice(3).join('_');
+
   const guildId = interaction.guildId;
-  const applicationId = interaction.customId.replace('apply_accept_', '');
-
   const guild = await Guild.findOne({ guildId });
-  if (!guild?.applicationConfig) {
-    await interaction.reply({ content: '❌ Application system not configured.', ephemeral: true });
-    return;
+  
+  if (!guild?.applicationConfig?.types?.[type]) {
+    return interaction.reply({ content: '❌ System not configured.', ephemeral: true });
   }
 
-  const staffRoleId = guild.applicationConfig.staffRole;
+  const config = guild.applicationConfig.types[type];
+  
+  const staffRoleId = config.staffRole;
   const member = interaction.member;
-
-  if (!member.roles.cache.has(staffRoleId) && !member.permissions.has('Administrator')) {
-    await interaction.reply({ content: '❌ You cannot review applications!', ephemeral: true });
-    return;
+  if (!member.roles.cache.has(staffRoleId) && !member.permissions.has(PermissionFlagsBits.Administrator)) {
+    return interaction.reply({ content: '❌ You cannot review applications!', ephemeral: true });
   }
 
-  const users = await User.find({ 'applications.guildId': guildId, 'applications.id': applicationId });
-  
-  let targetUser = null;
-  let targetApplication = null;
-  
+  const users = await User.find({ 'applications.guildId': guildId, 'applications.id': appId });
+  let targetUser = null, targetApplication = null;
+
   for (const user of users) {
-    const app = user.applications.find(a => a.id === applicationId);
-    if (app) {
-      targetUser = user;
-      targetApplication = app;
-      break;
-    }
+    const app = user.applications.find(a => a.id === appId && a.type === type);
+    if (app) { targetUser = user; targetApplication = app; break; }
   }
 
-  if (!targetUser || !targetApplication) {
-    await interaction.reply({ content: '❌ Application not found!', ephemeral: true });
-    return;
-  }
-
+  if (!targetApplication) return interaction.reply({ content: '❌ Application not found!', ephemeral: true });
   if (targetApplication.status !== 'pending') {
-    await interaction.reply({ content: '❌ This application has already been processed!', ephemeral: true });
-    return;
+    return interaction.reply({ content: '❌ This application has already been processed!', ephemeral: true });
   }
 
   targetApplication.status = 'accepted';
@@ -269,75 +290,62 @@ module.exports.handleAccept = async (interaction, client) => {
   const discordUser = await client.users.fetch(targetUser.userId).catch(() => null);
   if (discordUser) {
     try {
+      const color = type === 'staff' ? 0x2ecc71 : 0x57f287;
       const dmEmbed = new EmbedBuilder()
-        .setTitle('✅ Application Accepted!')
-        .setDescription(`Your staff application has been accepted! Welcome to the team! 🎉`)
-        .setColor(0x2ecc71)
+        .setTitle(`✅ ${type.toUpperCase()} Application Accepted!`)
+        .setDescription(`Congratulations! Your ${type} application in **${interaction.guild.name}** has been accepted!`)
+        .setColor(color)
         .setTimestamp();
       await discordUser.send({ embeds: [dmEmbed] });
     } catch (e) {}
   }
 
-  const acceptedRoleId = guild.applicationConfig.acceptedRole;
-  const discordGuild = interaction.guild;
-  const guildMember = discordGuild.members.cache.get(targetUser.userId);
-
+  const acceptedRoleId = config.acceptedRole;
+  const guildMember = interaction.guild.members.cache.get(targetUser.userId);
   if (guildMember && acceptedRoleId) {
-    try {
-      await guildMember.roles.add(acceptedRoleId);
-    } catch (e) {}
+    try { await guildMember.roles.add(acceptedRoleId); } catch (e) {}
   }
 
+  const color = type === 'staff' ? 0x2ecc71 : 0x57f287;
   const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
-    .setColor(0x2ecc71)
-    .addFields({ name: '✅ Status', value: `**ACCEPTED** by ${interaction.user.tag}`, inline: true });
+    .setColor(color)
+    .addFields({ name: '✅ Status', value: `**ACCEPTED** by ${interaction.user.tag}`, inline: false });
 
   await interaction.message.edit({ embeds: [newEmbed], components: [] });
-
-  await interaction.reply({ content: `✅ Application accepted! User has been notified.`, ephemeral: true });
+  await interaction.reply({ content: `✅ ${type} application accepted! User has been notified.`, ephemeral: true });
 };
 
 module.exports.handleDeny = async (interaction, client) => {
-  const { Guild, User } = require('../../database/mongo');
+  const parts = interaction.customId.split('_');
+  const type = parts[2];
+  const appId = parts.slice(3).join('_');
+
   const guildId = interaction.guildId;
-  const applicationId = interaction.customId.replace('apply_deny_', '');
-
   const guild = await Guild.findOne({ guildId });
-  if (!guild?.applicationConfig) {
-    await interaction.reply({ content: '❌ Application system not configured.', ephemeral: true });
-    return;
+  
+  if (!guild?.applicationConfig?.types?.[type]) {
+    return interaction.reply({ content: '❌ System not configured.', ephemeral: true });
   }
 
-  const staffRoleId = guild.applicationConfig.staffRole;
+  const config = guild.applicationConfig.types[type];
+  
+  const staffRoleId = config.staffRole;
   const member = interaction.member;
-
-  if (!member.roles.cache.has(staffRoleId) && !member.permissions.has('Administrator')) {
-    await interaction.reply({ content: '❌ You cannot review applications!', ephemeral: true });
-    return;
+  if (!member.roles.cache.has(staffRoleId) && !member.permissions.has(PermissionFlagsBits.Administrator)) {
+    return interaction.reply({ content: '❌ You cannot review applications!', ephemeral: true });
   }
 
-  const users = await User.find({ 'applications.guildId': guildId, 'applications.id': applicationId });
-  
-  let targetUser = null;
-  let targetApplication = null;
-  
+  const users = await User.find({ 'applications.guildId': guildId, 'applications.id': appId });
+  let targetUser = null, targetApplication = null;
+
   for (const user of users) {
-    const app = user.applications.find(a => a.id === applicationId);
-    if (app) {
-      targetUser = user;
-      targetApplication = app;
-      break;
-    }
+    const app = user.applications.find(a => a.id === appId && a.type === type);
+    if (app) { targetUser = user; targetApplication = app; break; }
   }
 
-  if (!targetUser || !targetApplication) {
-    await interaction.reply({ content: '❌ Application not found!', ephemeral: true });
-    return;
-  }
-
+  if (!targetApplication) return interaction.reply({ content: '❌ Application not found!', ephemeral: true });
   if (targetApplication.status !== 'pending') {
-    await interaction.reply({ content: '❌ This application has already been processed!', ephemeral: true });
-    return;
+    return interaction.reply({ content: '❌ This application has already been processed!', ephemeral: true });
   }
 
   targetApplication.status = 'denied';
@@ -349,8 +357,8 @@ module.exports.handleDeny = async (interaction, client) => {
   if (discordUser) {
     try {
       const dmEmbed = new EmbedBuilder()
-        .setTitle('❌ Application Denied')
-        .setDescription(`Your staff application has been denied. Thank you for applying!`)
+        .setTitle(`❌ ${type.toUpperCase()} Application Denied`)
+        .setDescription(`Your ${type} application has been denied. Thank you for applying!`)
         .setColor(0xe74c3c)
         .setTimestamp();
       await discordUser.send({ embeds: [dmEmbed] });
@@ -359,9 +367,8 @@ module.exports.handleDeny = async (interaction, client) => {
 
   const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
     .setColor(0xe74c3c)
-    .addFields({ name: '❌ Status', value: `**DENIED** by ${interaction.user.tag}`, inline: true });
+    .addFields({ name: '❌ Status', value: `**DENIED** by ${interaction.user.tag}`, inline: false });
 
   await interaction.message.edit({ embeds: [newEmbed], components: [] });
-
-  await interaction.reply({ content: `✅ Application denied. User has been notified.`, ephemeral: true });
+  await interaction.reply({ content: `✅ ${type} application denied. User has been notified.`, ephemeral: true });
 };

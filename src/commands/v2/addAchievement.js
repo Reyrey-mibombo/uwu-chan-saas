@@ -1,43 +1,100 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { User } = require('../../database/mongo');
 
+// ───── CONFIG: Different embed style per CATEGORY ─────
+const embedConfigs = {
+  MONTHLY:    { color: '#ffd700', emoji: '🏆', titlePrefix: 'Staff of the Month' },
+  MOD:        { color: '#3498db', emoji: '🛡', titlePrefix: 'Moderation Excellence' },
+  SUPPORT:    { color: '#2ecc71', emoji: '🎫', titlePrefix: 'Support Hero' },
+  ACTIVITY:   { color: '#e67e22', emoji: '🚀', titlePrefix: 'Activity Legend' },
+  LEADERSHIP: { color: '#9b59b6', emoji: '👑', titlePrefix: 'Leadership Award' },
+  SPECIAL:    { color: '#e91e63', emoji: '💎', titlePrefix: 'Special Recognition' }
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('add_achievement')
-    .setDescription('[Premium] Add an achievement to a user')
+    .setDescription('[Premium] Award a specific staff achievement')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-    .addUserOption(opt =>
-      opt.setName('user')
-        .setDescription('User')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('The staff member to award')
         .setRequired(true))
-    .addStringOption(opt =>
-      opt.setName('achievement')
-        .setDescription('Achievement title')
-        .setRequired(true))
-    .addStringOption(opt =>
-      opt.setName('category')
-        .setDescription('Achievement category')
-        .addChoices(
-          { name: '🏆 Monthly Award', value: 'MONTHLY' },
-          { name: '🛡 Moderation', value: 'MOD' },
-          { name: '🎫 Support', value: 'SUPPORT' },
-          { name: '🚀 Activity', value: 'ACTIVITY' },
-          { name: '👑 Leadership', value: 'LEADERSHIP' },
-          { name: '💎 Special', value: 'SPECIAL' }
-        )
+    .addStringOption(option =>
+      option
+        .setName('category')
+        .setDescription('Main category of the achievement')
         .setRequired(true)
-    ),
+        .addChoices(
+          { name: '🏆 Monthly Award',     value: 'MONTHLY'    },
+          { name: '🛡 Moderation',        value: 'MOD'        },
+          { name: '🎫 Support',           value: 'SUPPORT'    },
+          { name: '🚀 Activity',          value: 'ACTIVITY'   },
+          { name: '👑 Leadership',        value: 'LEADERSHIP' },
+          { name: '💎 Special',           value: 'SPECIAL'    }
+        ))
+    .addStringOption(option =>
+      option
+        .setName('achievement')
+        .setDescription('Specific achievement to award')
+        .setRequired(true)
+        .addChoices(
+          // MONTHLY
+          { name: 'Staff of the Month – January',   value: 'MONTHLY:Staff of the Month – January' },
+          { name: 'Staff of the Month – February',  value: 'MONTHLY:Staff of the Month – February' },
+          { name: 'Staff of the Month – March',     value: 'MONTHLY:Staff of the Month – March' },
+          { name: 'Staff of the Month – April',     value: 'MONTHLY:Staff of the Month – April' },
+          { name: 'Staff of the Month – May',       value: 'MONTHLY:Staff of the Month – May' },
+          { name: 'Staff of the Month – June',      value: 'MONTHLY:Staff of the Month – June' },
+          { name: 'Staff of the Month – July',      value: 'MONTHLY:Staff of the Month – July' },
+          { name: 'Staff of the Month – August',    value: 'MONTHLY:Staff of the Month – August' },
+          { name: 'Staff of the Month – September', value: 'MONTHLY:Staff of the Month – September' },
+          { name: 'Staff of the Month – October',   value: 'MONTHLY:Staff of the Month – October' },
+          { name: 'Staff of the Month – November',  value: 'MONTHLY:Staff of the Month – November' },
+          { name: 'Staff of the Month – December',  value: 'MONTHLY:Staff of the Month – December' },
+
+          // MODERATION
+          { name: 'Exemplary Moderator',    value: 'MOD:Exemplary Moderator' },
+          { name: 'Rule Enforcer Elite',    value: 'MOD:Rule Enforcer Elite' },
+          { name: 'Peacekeeper',            value: 'MOD:Peacekeeper' },
+          { name: 'Spam Slayer',            value: 'MOD:Spam Slayer' },
+          { name: 'Conflict Resolver',      value: 'MOD:Conflict Resolver' },
+
+          // SUPPORT
+          { name: 'Support Legend',         value: 'SUPPORT:Support Legend' },
+          { name: 'Ticket Master',          value: 'SUPPORT:Ticket Master' },
+          { name: 'Patience Champion',      value: 'SUPPORT:Patience Champion' },
+          { name: 'Welcome Wizard',         value: 'SUPPORT:Welcome Wizard' },
+
+          // ACTIVITY
+          { name: 'Hyper Active Staff',     value: 'ACTIVITY:Hyper Active Staff' },
+          { name: 'Voice Chat Legend',      value: 'ACTIVITY:Voice Chat Legend' },
+          { name: 'Message Marathon',       value: 'ACTIVITY:Message Marathon' },
+          { name: 'Event Regular',          value: 'ACTIVITY:Event Regular' },
+
+          // LEADERSHIP
+          { name: 'Outstanding Leadership', value: 'LEADERSHIP:Outstanding Leadership' },
+          { name: 'Team Inspirer',          value: 'LEADERSHIP:Team Inspirer' },
+          { name: 'Mentor Supreme',         value: 'LEADERSHIP:Mentor Supreme' },
+
+          // SPECIAL
+          { name: 'Special Recognition',    value: 'SPECIAL:Special Recognition' },
+          { name: 'Meme Lord of Staff',     value: 'SPECIAL:Meme Lord of Staff' },
+          { name: 'Discord Savior',         value: 'SPECIAL:Discord Savior' }
+        )),
 
   async execute(interaction) {
     try {
       const targetUser = interaction.options.getUser('user');
-      const title = interaction.options.getString('achievement').trim();
-      const category = interaction.options.getString('category');
-
+      const fullChoice = interaction.options.getString('achievement');
+      const [category, title] = fullChoice.split(':', 2);
       const formattedAchievement = `[${category}] ${title}`;
 
-      let user = await User.findOne({ userId: targetUser.id });
+      // Get category-specific embed style
+      const cfg = embedConfigs[category] || { color: '#f1c40f', emoji: '🏆', titlePrefix: 'Achievement' };
 
+      let user = await User.findOne({ userId: targetUser.id });
       if (!user) {
         user = new User({
           userId: targetUser.id,
@@ -51,7 +108,7 @@ module.exports = {
 
       if (user.staff.achievements.includes(formattedAchievement)) {
         return interaction.reply({
-          content: `⚠️ User already has this achievement.`,
+          content: `⚠️ **\( {targetUser.tag}** already has: ** \){formattedAchievement}**`,
           ephemeral: true
         });
       }
@@ -59,22 +116,28 @@ module.exports = {
       user.staff.achievements.push(formattedAchievement);
       await user.save();
 
+      // ───── UNIQUE EMBED PER ACHIEVEMENT / CATEGORY ─────
       const embed = new EmbedBuilder()
-        .setColor('#f1c40f')
-        .setTitle('🏆 Staff Award Granted')
+        .setColor(cfg.color)
+        .setTitle(`${cfg.emoji} ${cfg.titlePrefix} — ${title}`)
+        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 1024 }))
         .addFields(
-          { name: '👤 User', value: `<@${targetUser.id}>`, inline: true },
-          { name: '🏅 Award', value: formattedAchievement, inline: false },
-          { name: '📊 Total Awards', value: `${user.staff.achievements.length}`, inline: true }
+          { name: '👤 Recipient',         value: `<@${targetUser.id}>`, inline: true },
+          { name: '🏅 Achievement',        value: `\`${formattedAchievement}\``, inline: false },
+          { name: '📊 Total Achievements', value: `${user.staff.achievements.length}`, inline: true },
+          { name: 'Granted by',           value: interaction.user.tag, inline: true }
         )
-        .setFooter({ text: `Granted by ${interaction.user.tag}` })
+        .setFooter({ text: `User ID: ${targetUser.id} • ${category}` })
         .setTimestamp();
 
       await interaction.reply({ embeds: [embed] });
 
     } catch (error) {
-      console.error(error);
-      await interaction.reply({ content: '❌ Error adding achievement.', ephemeral: true });
+      console.error('Error adding achievement:', error);
+      await interaction.reply({
+        content: '❌ Failed to award achievement.',
+        ephemeral: true
+      });
     }
   }
 };

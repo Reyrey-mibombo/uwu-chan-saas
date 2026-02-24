@@ -1,21 +1,35 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('apply_setup')
-    .setDescription('[Admin] Setup the application system')
-    .addRoleOption(opt => opt.setName('staff_role').setDescription('Role that can review applications').setRequired(true))
+    .setDescription('Setup application system for Staff or Helpers')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addStringOption(opt => 
+      opt.setName('type')
+        .setDescription('Application type')
+        .setRequired(true)
+        .addChoices(
+          { name: '👮 Staff (Moderators/Admins)', value: 'staff' },
+          { name: '🌟 Helper (Trial/Assistant)', value: 'helper' }
+        ))
+    .addRoleOption(opt => opt.setName('reviewer_role').setDescription('Role that can review applications').setRequired(true))
     .addChannelOption(opt => opt.setName('log_channel').setDescription('Channel where applications are sent').setRequired(true))
-    .addRoleOption(opt => opt.setName('accepted_role').setDescription('Role given when accepted').setRequired(true)),
+    .addRoleOption(opt => opt.setName('accepted_role').setDescription('Role given when accepted').setRequired(true))
+    .addStringOption(opt => opt.setName('custom_title').setDescription('Custom panel title (optional)').setRequired(false))
+    .addStringOption(opt => opt.setName('custom_desc').setDescription('Custom panel description (optional)').setRequired(false)),
 
-  async execute(interaction, client) {
+  async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
     const guildId = interaction.guildId;
-    const staffRole = interaction.options.getRole('staff_role');
+    const type = interaction.options.getString('type');
+    const reviewerRole = interaction.options.getRole('reviewer_role');
     const logChannel = interaction.options.getChannel('log_channel');
     const acceptedRole = interaction.options.getRole('accepted_role');
+    const customTitle = interaction.options.getString('custom_title');
+    const customDesc = interaction.options.getString('custom_desc');
 
     let guild = await Guild.findOne({ guildId });
     if (!guild) {
@@ -23,24 +37,48 @@ module.exports = {
     }
 
     if (!guild.applicationConfig) {
-      guild.applicationConfig = {};
+      guild.applicationConfig = { enabled: true, types: {} };
+    }
+    if (!guild.applicationConfig.types) {
+      guild.applicationConfig.types = {};
     }
 
-    guild.applicationConfig.enabled = true;
-    guild.applicationConfig.staffRole = staffRole.id;
-    guild.applicationConfig.logChannel = logChannel.id;
-    guild.applicationConfig.acceptedRole = acceptedRole.id;
+    guild.applicationConfig.types[type] = {
+      enabled: true,
+      staffRole: reviewerRole.id,
+      logChannel: logChannel.id,
+      acceptedRole: acceptedRole.id,
+      customTitle: customTitle || (type === 'staff' ? '👮 Staff Applications' : '🌟 Helper Applications'),
+      customDesc: customDesc || `Apply to become a ${type}!`,
+      questions: type === 'staff' ? [
+        { question: 'Why do you want to join staff?', required: true, type: 'paragraph' },
+        { question: 'Previous experience?', required: true, type: 'paragraph' },
+        { question: 'How active are you?', required: true, type: 'short' },
+        { question: 'Your age', required: true, type: 'short' },
+        { question: 'Anything else?', required: false, type: 'paragraph' }
+      ] : [
+        { question: 'Why do you want to be a Helper?', required: true, type: 'paragraph' },
+        { question: 'How would you assist the community?', required: true, type: 'paragraph' },
+        { question: 'Any experience as helper/mod?', required: true, type: 'paragraph' },
+        { question: 'How active are you?', required: true, type: 'short' },
+        { question: 'Anything else?', required: false, type: 'paragraph' }
+      ]
+    };
+
     await guild.save();
 
+    const emoji = type === 'staff' ? '👮' : '🌟';
+    const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
+
     const embed = new EmbedBuilder()
-      .setTitle('✅ Application System Configured')
-      .setColor(0x2ecc71)
+      .setTitle(`${emoji} ${type.toUpperCase()} Application System Configured`)
+      .setColor(color)
       .addFields(
-        { name: '👥 Staff Role', value: staffRole.name, inline: true },
-        { name: '📝 Log Channel', value: logChannel.name, inline: true },
-        { name: '✅ Accepted Role', value: acceptedRole.name, inline: true }
+        { name: '👥 Reviewer Role', value: reviewerRole.toString(), inline: true },
+        { name: '📝 Log Channel', value: logChannel.toString(), inline: true },
+        { name: '✅ Accepted Role', value: acceptedRole.toString(), inline: true }
       )
-      .setDescription('Now use `/apply_panel` to create the application form!')
+      .setDescription(`Use \`/apply_panel type:${type}\` to create the application panel!`)
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });

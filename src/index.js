@@ -126,69 +126,61 @@ client.on('interactionCreate', async interaction => {
       await ticketSetup.handleCloseTicket(interaction, client);
       return;
     }
-    // Handle application buttons
-    const applyPanel = require('./commands/v1/applyPanel');
-    if (interaction.customId === 'apply_now') {
-      await applyPanel.handleApply(interaction, client);
-      return;
-    }
-    if (interaction.customId.startsWith('apply_accept_')) {
-      await applyPanel.handleAccept(interaction, client);
-      return;
-    }
-    if (interaction.customId.startsWith('apply_deny_')) {
-      await applyPanel.handleDeny(interaction, client);
-      return;
-    }
-    // Handle helper application buttons with error handling
+    
+    // ============================================
+    // COMBINED STAFF/HELPER APPLICATION SYSTEM
+    // ============================================
     try {
-      const helperPanel = require('./commands/v2/helper_panel');
-      if (interaction.customId === 'helper_apply') {
-        await helperPanel.handleApply(interaction, client);
+      const { handleApply, handleAccept, handleDeny } = require('./commands/v1/applyPanel');
+      
+      // Apply Now buttons: apply_now_staff or apply_now_helper
+      if (interaction.customId.startsWith('apply_now_')) {
+        await handleApply(interaction, client);
         return;
       }
-      if (interaction.customId.startsWith('helper_accept_')) {
-        await helperPanel.handleAccept(interaction, client);
+      // Accept buttons: apply_accept_staff_ID or apply_accept_helper_ID
+      else if (interaction.customId.startsWith('apply_accept_')) {
+        await handleAccept(interaction, client);
         return;
       }
-      if (interaction.customId.startsWith('helper_deny_')) {
-        await helperPanel.handleDeny(interaction, client);
+      // Deny buttons: apply_deny_staff_ID or apply_deny_helper_ID
+      else if (interaction.customId.startsWith('apply_deny_')) {
+        await handleDeny(interaction, client);
         return;
       }
     } catch (error) {
-      console.error('❌ Helper button error:', error);
+      logger.error('[APPLY BUTTON ERROR]', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ 
-          content: '❌ An error occurred while processing the helper button. Check bot logs.', 
+          content: '❌ An error occurred processing this application button!', 
           ephemeral: true 
         }).catch(() => {});
       }
     }
   }
 
-  // Handle application modals
-  if (interaction.isModalSubmit() && interaction.customId === 'apply_modal') {
-    const applyPanel = require('./commands/v1/applyPanel');
-    await applyPanel.handleApplySubmit(interaction, client);
-    return;
-  }
-
-  // Handle helper application modals with error handling
-  try {
-    if (interaction.isModalSubmit() && interaction.customId === 'helper_modal') {
-      const helperPanel = require('./commands/v2/helper_panel');
-      await helperPanel.handleSubmit(interaction, client);
-      return;
-    }
-  } catch (error) {
-    console.error('❌ Helper modal error:', error);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: '❌ Error submitting application.', ephemeral: true }).catch(() => {});
-    }
-  }
-
-  // Handle ticket modals
+  // ============================================
+  // COMBINED MODAL SUBMISSIONS
+  // ============================================
   if (interaction.isModalSubmit()) {
+    // Application modals: apply_modal_staff or apply_modal_helper
+    if (interaction.customId.startsWith('apply_modal_')) {
+      try {
+        const { handleApplySubmit } = require('./commands/v1/applyPanel');
+        await handleApplySubmit(interaction, client);
+        return;
+      } catch (error) {
+        logger.error('[APPLY MODAL ERROR]', error);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ 
+            content: '❌ Failed to submit application!', 
+            ephemeral: true 
+          }).catch(() => {});
+        }
+      }
+    }
+
+    // Ticket modals
     const ticketSetup = require('./commands/v1/ticketSetup');
     if (interaction.customId === 'modal_report_staff') {
       await ticketSetup.handleReportSubmit(interaction, client);

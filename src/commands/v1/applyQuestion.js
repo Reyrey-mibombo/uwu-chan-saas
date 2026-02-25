@@ -46,6 +46,22 @@ module.exports = {
     guild.markModified('applicationConfig');
     await guild.save();
 
-    await interaction.editReply(`✅ Custom questions saved for ${type} applications!`);
+    const emoji = type === 'staff' ? '👮' : '🌟';
+    const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${emoji} ${type.toUpperCase()} Questions Updated`)
+      .setDescription('The following questions have been configured for future applications:')
+      .setColor(color)
+      .setTimestamp();
+
+    questions.forEach((q, i) => {
+      embed.addFields({
+        name: `Question ${i + 1} ${q.required ? '(Required)' : '(Optional)'}`,
+        value: `>>> ${q.question}`
+      });
+    });
+
+    await interaction.editReply({ embeds: [embed] });
   }
 };

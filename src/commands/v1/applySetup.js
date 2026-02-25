@@ -18,7 +18,8 @@ module.exports = {
     .addChannelOption(opt => opt.setName('log_channel').setDescription('Channel where applications are sent').setRequired(true))
     .addRoleOption(opt => opt.setName('accepted_role').setDescription('Role given when accepted').setRequired(true))
     .addStringOption(opt => opt.setName('custom_title').setDescription('Custom panel title (optional)').setRequired(false))
-    .addStringOption(opt => opt.setName('custom_desc').setDescription('Custom panel description (optional)').setRequired(false)),
+    .addStringOption(opt => opt.setName('custom_desc').setDescription('Custom panel description (optional)').setRequired(false))
+    .addStringOption(opt => opt.setName('banner_url').setDescription('Custom panel banner image URL (optional)').setRequired(false)),
 
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
@@ -30,6 +31,7 @@ module.exports = {
     const acceptedRole = interaction.options.getRole('accepted_role');
     const customTitle = interaction.options.getString('custom_title');
     const customDesc = interaction.options.getString('custom_desc');
+    const bannerUrl = interaction.options.getString('banner_url');
 
     let guild = await Guild.findOne({ guildId });
     if (!guild) {
@@ -50,6 +52,7 @@ module.exports = {
       acceptedRole: acceptedRole.id,
       customTitle: customTitle || (type === 'staff' ? '👮 Staff Applications' : '🌟 Helper Applications'),
       customDesc: customDesc || `Apply to become a ${type}!`,
+      bannerUrl: bannerUrl || null,
       questions: type === 'staff' ? [
         { question: 'Why do you want to join staff?', required: true, type: 'paragraph' },
         { question: 'Previous experience?', required: true, type: 'paragraph' },
@@ -75,12 +78,17 @@ module.exports = {
       .setTitle(`${emoji} ${type.toUpperCase()} Application System Configured`)
       .setColor(color)
       .addFields(
-        { name: '👥 Reviewer Role', value: reviewerRole.toString(), inline: true },
-        { name: '📝 Log Channel', value: logChannel.toString(), inline: true },
-        { name: '✅ Accepted Role', value: acceptedRole.toString(), inline: true }
+        { name: '👥 Reviewer Role', value: `<@&${reviewerRole.id}>`, inline: true },
+        { name: '📝 Log Channel', value: `<#${logChannel.id}>`, inline: true },
+        { name: '✅ Accepted Role', value: `<@&${acceptedRole.id}>`, inline: true }
       )
-      .setDescription(`Use \`/apply_panel type:${type}\` to create the application panel!`)
+      .setDescription(`The application system for **${type}** has been successfully set up and is ready to use!\n\nUse \`/apply_panel type:${type}\` in your desired channel to generate the application panel.`)
+      .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
       .setTimestamp();
+
+    if (bannerUrl && bannerUrl.startsWith('http')) {
+      embed.setImage(bannerUrl);
+    }
 
     await interaction.editReply({ embeds: [embed] });
   }

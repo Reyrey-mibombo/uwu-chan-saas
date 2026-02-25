@@ -6,7 +6,7 @@ module.exports = {
     .setName('apply_setup')
     .setDescription('Setup application system for Staff or Helpers')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addStringOption(opt => 
+    .addStringOption(opt =>
       opt.setName('type')
         .setDescription('Application type')
         .setRequired(true)
@@ -65,6 +65,7 @@ module.exports = {
       ]
     };
 
+    guild.markModified('applicationConfig');
     await guild.save();
 
     const emoji = type === 'staff' ? '👮' : '🌟';

@@ -6,7 +6,7 @@ module.exports = {
     .setName('apply_questions')
     .setDescription('Customize application questions')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addStringOption(opt => 
+    .addStringOption(opt =>
       opt.setName('type')
         .setDescription('Which application type')
         .setRequired(true)
@@ -22,29 +22,30 @@ module.exports = {
 
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
-    
+
     const type = interaction.options.getString('type');
     const guild = await Guild.findOne({ guildId: interaction.guildId });
-    
+
     if (!guild?.applicationConfig?.types?.[type]) {
       return interaction.editReply(`❌ ${type} system not set up yet!`);
     }
-    
+
     const questions = [];
     for (let i = 1; i <= 5; i++) {
       const q = interaction.options.getString(`q${i}`);
       if (q) {
-        questions.push({ 
-          question: q, 
+        questions.push({
+          question: q,
           required: i <= 3,
           type: i <= 2 ? 'paragraph' : 'short'
         });
       }
     }
-    
+
     guild.applicationConfig.types[type].questions = questions;
+    guild.markModified('applicationConfig');
     await guild.save();
-    
+
     await interaction.editReply(`✅ Custom questions saved for ${type} applications!`);
   }
 };

@@ -46,6 +46,8 @@ const guildSchema = new mongoose.Schema({
     logChannel: { type: String, default: null },
     acceptedRole: { type: String, default: null }
   },
+  // Dynamic application system config
+  applicationConfig: { type: mongoose.Schema.Types.Mixed, default: {} },
   // Full 10-field promotion requirements (customizable by tier)
   // v1 (free): points, shifts, consistency
   // v2 (free): + maxWarnings, shiftHours

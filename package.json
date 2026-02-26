@@ -21,7 +21,8 @@
     "winston": "^3.11.0",
     "express-rate-limit": "^7.1.0",
     "helmet": "^7.1.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "quickchart-js": "^1.4.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

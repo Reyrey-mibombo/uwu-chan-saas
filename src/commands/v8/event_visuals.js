@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -25,16 +25,19 @@ module.exports = {
       : '📭 No events this week.';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎭 Event Visuals — Last 7 Days')
-      .setColor(0x9b59b6)
+      
       .addFields(
         { name: '⬆️ Promotions', value: promotions.length.toString(), inline: true },
         { name: '⚠️ Warnings', value: warnings.length.toString(), inline: true },
         { name: '📋 Total Events', value: events.length.toString(), inline: true },
         { name: '📅 Event Timeline', value: timeline }
       )
-      .setFooter({ text: `${interaction.guild.name} • Event Visual Log` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

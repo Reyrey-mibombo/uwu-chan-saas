@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -29,18 +29,24 @@ module.exports = {
       const list = guild.applicationConfig.blacklist;
       if (list.length === 0) {
         return interaction.editReply({
-          embeds: [new EmbedBuilder().setTitle('✅ Blacklist Clean').setDescription('No users are currently blacklisted from applying.').setColor(0x2ecc71)]
+          embeds: [new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp().setTitle('✅ Blacklist Clean').setDescription('No users are currently blacklisted from applying.')]
         });
       }
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🚫 Application Blacklist')
         .setDescription(list.map((entry, i) =>
           `**${i + 1}.** <@${entry.userId}> - ${entry.reason}\n└ Added by ${entry.addedBy} on <t:${Math.floor(new Date(entry.addedAt).getTime() / 1000)}:d>`
         ).join('\n\n'))
-        .setColor(0xe74c3c)
-        .setFooter({ text: `${interaction.guild.name} • Blacklisted Users` })
-        .setTimestamp();
+        
+        
+        ;
       return interaction.editReply({ embeds: [embed] });
     }
 
@@ -52,9 +58,12 @@ module.exports = {
       await guild.save();
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('✅ User Unblacklisted')
         .setDescription(`<@${target.id}> (\`${target.tag}\`) has been removed from the application blacklist.`)
-        .setColor(0x2ecc71);
+        ;
       return interaction.editReply({ embeds: [embed] });
     }
 
@@ -75,11 +84,14 @@ module.exports = {
       await guild.save();
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🚫 User Blacklisted')
         .setDescription(`<@${target.id}> (\`${target.tag}\`) has been blacklisted from applying.`)
         .addFields({ name: 'Reason', value: reason })
-        .setColor(0xe74c3c)
-        .setTimestamp();
+        
+        ;
 
       await interaction.editReply({ embeds: [embed] });
     }

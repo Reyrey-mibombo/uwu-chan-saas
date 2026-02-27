@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -23,8 +23,11 @@ module.exports = {
     const engBar = '▓'.repeat(Math.round(engRate / 10)) + '░'.repeat(10 - Math.round(engRate / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Activity Summary Dashboard')
-      .setColor(0x1abc9c)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '⚡ Today\'s Activity', value: todayActs.length.toString(), inline: true },
@@ -35,8 +38,8 @@ module.exports = {
         { name: '⚠️ Warnings (all time)', value: (guild?.stats?.warnings || 0).toString(), inline: true },
         { name: '👥 Total Members', value: interaction.guild.memberCount.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Live Activity Summary` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

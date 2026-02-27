@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -34,15 +34,18 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔮 Prediction Graph — Next 7 Days')
-      .setColor(0x8e44ad)
+      
       .setDescription(`\`\`\`${lines.join('\n')}\`\`\``)
       .addFields(
         { name: '📊 14d Avg/Day', value: avg.toFixed(1), inline: true },
         { name: '📈 Recent Trend Factor', value: trendFactor.toFixed(2) + 'x', inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Prediction Graph` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

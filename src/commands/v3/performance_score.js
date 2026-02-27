@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -56,8 +56,11 @@ module.exports = {
     const grade = getGrade(performanceScore);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📊 Performance Score - ${targetUser.username}`)
-      .setColor(getGradeColor(grade))
+      )
       .setThumbnail(targetUser.displayAvatarURL());
 
     embed.addFields(

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -34,8 +34,11 @@ module.exports = {
     };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💡 Weekly Insights')
-      .setColor(0x16a085)
+      
       .addFields(
         { name: 'Messages', value: getInsight(thisWeekByType.message, lastWeekByType.message, 'messages'), inline: true },
         { name: 'Commands', value: getInsight(thisWeekByType.command, lastWeekByType.command, 'commands'), inline: true },
@@ -43,7 +46,7 @@ module.exports = {
         { name: 'Warnings', value: getInsight(thisWeekByType.warning, lastWeekByType.warning, 'warnings'), inline: true },
         { name: 'Active Users', value: `${thisWeekUsers} (${getInsight(thisWeekUsers, lastWeekUsers, 'users')})`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

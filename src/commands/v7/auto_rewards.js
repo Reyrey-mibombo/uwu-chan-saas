@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 const REWARD_TIERS = [
   { threshold: 50, label: '🥉 Bronze', reward: 'Bronze Role + 10 bonus points' },
@@ -38,13 +38,16 @@ module.exports = {
       : `${interaction.guild.name} • All rewards unlocked! 👑`;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎁 Auto-Reward Tiers — ${target.username}`)
-      .setColor(0xe74c3c)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields({ name: '⭐ Current Points', value: points.toString(), inline: true })
       .addFields(fields)
-      .setFooter({ text: footer })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

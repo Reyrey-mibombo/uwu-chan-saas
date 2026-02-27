@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -11,8 +11,11 @@ module.exports = {
     const guild = await Guild.findOne({ guildId });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Data Insights')
-      .setColor(0x3498db)
+      
       .setDescription('Advanced data insights for your server')
       .addFields(
         { name: 'Guild ID', value: guildId, inline: true },

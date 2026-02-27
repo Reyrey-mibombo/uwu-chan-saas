@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,8 +15,11 @@ module.exports = {
         const enterpriseUrl = process.env.ENTERPRISE_CHECKOUT_URL || premiumUrl || null;
 
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
             .setTitle('🛒 Upgrade Your Server')
-            .setColor(0x5865f2)
+            
             .setThumbnail(interaction.guild.iconURL())
             .addFields(
                 {
@@ -48,8 +51,8 @@ module.exports = {
                     inline: true
                 }
             )
-            .setFooter({ text: 'Upgrades apply instantly across all Strata bots' })
-            .setTimestamp();
+            
+            ;
 
         await interaction.reply({ embeds: [embed] });
     }

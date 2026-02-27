@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const { Activity } = require('../../database/mongo.js');
 
 module.exports = {
@@ -169,6 +169,9 @@ async function sendWeeklyChart(interaction, days) {
 
   // Build embed
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle(`📊 Activity Overview - Last ${days} Days`)
     .setDescription([
       `**${totalCurrent.toLocaleString()}** total messages • **${avgCurrent}** avg/day`,
@@ -196,11 +199,9 @@ async function sendWeeklyChart(interaction, days) {
       }
     )
     .setImage(chartUrl)
-    .setColor(trendColor)
-    .setTimestamp()
-    .setFooter({ 
-      text: `Requested by ${interaction.user.tag}`, 
-      iconURL: interaction.user.displayAvatarURL() 
+    
+    
+     
     });
 
   // Interactive buttons
@@ -292,9 +293,12 @@ async function sendWeeklyChart(interaction, days) {
 
 async function sendMemberGrowth(interaction) {
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle('👥 Member Growth')
     .setDescription('Member analytics feature coming soon!')
-    .setColor('#3498db');
+    ;
     
   await interaction.editReply({ embeds: [embed] });
 }
@@ -364,10 +368,13 @@ async function sendChannelActivity(interaction) {
   const chartUrl = generateChartUrl(chartConfig);
 
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle('💬 Channel Activity')
     .setDescription('Top 10 most active channels this week')
     .setImage(chartUrl)
-    .setColor('#3498db')
+    
     .addFields(
       sortedChannels.slice(0, 5).map(([channelId, count], i) => {
         const channel = interaction.guild.channels.cache.get(channelId);
@@ -378,7 +385,7 @@ async function sendChannelActivity(interaction) {
         };
       })
     )
-    .setTimestamp();
+    ;
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -470,11 +477,14 @@ async function sendHourlyHeatmap(interaction) {
   const chartUrl = generateChartUrl(chartConfig);
 
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle('⏰ Activity Heatmap')
     .setDescription(`Peak activity: **${peakTime}** with **${maxActivity}** messages\nAverage: **${avgActivity}** messages/hour`)
     .setImage(chartUrl)
-    .setColor('#9b59b6')
-    .setTimestamp();
+    
+    ;
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()

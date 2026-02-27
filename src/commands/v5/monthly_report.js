@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -29,8 +29,11 @@ module.exports = {
     const sortedMonths = Object.entries(monthlyData).sort((a, b) => b[0].localeCompare(a[0]));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📅 Monthly Report')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: 'Messages', value: messages.toLocaleString(), inline: true },
         { name: 'Commands', value: commands.toLocaleString(), inline: true },
@@ -40,7 +43,7 @@ module.exports = {
         { name: 'Period', value: `${months} month(s)`, inline: true }
       )
       .setDescription(sortedMonths.map(([month, count]) => `${month}: ${count} activities`).join('\n'))
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

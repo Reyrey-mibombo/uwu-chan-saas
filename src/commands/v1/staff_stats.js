@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,6 +25,9 @@ module.exports = {
     const minutes = Math.floor((totalShiftTime % 3600) / 60);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📊 ${user.username}'s Stats`)
       .setThumbnail(user.displayAvatarURL())
       .addFields(
@@ -35,8 +38,8 @@ module.exports = {
         { name: '⚠️ Warnings', value: `${warnings.total}`, inline: true },
         { name: '📅 Total Shifts', value: `${shifts.length}`, inline: true }
       )
-      .setColor('#3498db')
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

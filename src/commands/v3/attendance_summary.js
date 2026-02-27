@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -42,8 +42,11 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📅 Attendance Summary')
-      .setColor(0x2ecc71)
+      
       .setDescription(`Attendance for the last 30 days`);
 
     if (targetUser) {

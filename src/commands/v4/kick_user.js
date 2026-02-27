@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -43,14 +43,17 @@ module.exports = {
       await modSystem.createCase(guild.id, target.id, 'kick', reason, interaction.user.id);
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('👢 User Kicked')
-        .setColor(0xe74c3c)
+        
         .addFields(
           { name: '👤 User', value: `${target.tag} (${target.id})`, inline: true },
           { name: '📋 Reason', value: reason, inline: true }
         )
-        .setFooter({ text: `Kicked by ${interaction.user.username}` })
-        .setTimestamp();
+        
+        ;
 
       await interaction.reply({ embeds: [embed] });
 

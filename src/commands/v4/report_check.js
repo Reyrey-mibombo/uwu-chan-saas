@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -47,11 +47,14 @@ module.exports = {
     };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📨 Reports (${status})`)
-      .setColor(status === 'pending' ? 0xf39c12 : 0x2ecc71)
+      
       .setDescription(reports.map(formatReport).join('\n\n'))
-      .setFooter({ text: `Showing ${reports.length} reports` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

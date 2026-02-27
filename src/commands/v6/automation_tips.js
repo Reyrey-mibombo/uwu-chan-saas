@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -50,16 +50,19 @@ module.exports = {
     const configured = tips.filter(t => t.enabled).length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💡 Automation Tips')
-      .setColor(0xf39c12)
+      
       .setDescription(`Your server has **${configured}/4** automation modules enabled.`)
       .addFields(fields)
       .addFields({
         name: '🔧 Quick Actions',
         value: '• Use `/automation_settings` to toggle modules\n• Use `/automation_suggestions` for personalized advice\n• Use `/server_health` to check overall status'
       })
-      .setFooter({ text: `${interaction.guild.name} • Automation Tips` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

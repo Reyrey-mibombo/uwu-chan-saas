@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,8 +14,11 @@ module.exports = {
         const premiumUrl = process.env.STRIPE_CHECKOUT_URL || process.env.PAYPAL_CHECKOUT_URL || null;
 
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
             .setTitle('💎 Premium Tier')
-            .setColor(isActive ? 0x2ecc71 : 0x5865f2)
+            
             .addFields(
                 { name: '📊 Status', value: isActive ? '✅ **Active on this server**' : '❌ Not active', inline: true },
                 { name: '💰 Tier', value: currentTier.toUpperCase(), inline: true },
@@ -38,8 +41,8 @@ module.exports = {
                             : 'Contact the server owner to upgrade.'
                 }
             )
-            .setFooter({ text: 'Premium is per-server. Use /buy to see all options.' })
-            .setTimestamp();
+            
+            ;
 
         await interaction.reply({ embeds: [embed] });
     }

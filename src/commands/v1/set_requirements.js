@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -69,11 +69,14 @@ module.exports = {
     if (cleanRecordDays !== null) fields.push({ name: '9️⃣ ✅ Min Clean Record Days', value: cleanRecordDays.toString(), inline: true });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`⚙️ Requirements Set — ${rank.toUpperCase()}`)
-      .setColor(0x3498db)
+      
       .addFields(...fields)
-      .setFooter({ text: 'Auto-promotion will check all requirements' })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

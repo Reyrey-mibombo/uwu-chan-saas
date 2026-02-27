@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -21,16 +21,19 @@ module.exports = {
     const totalPts = users.reduce((s, u) => s + (u.staff?.points || 0), 0);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💰 Bonus Points Visual')
-      .setColor(0xf1c40f)
+      
       .setDescription(`\`\`\`${chart}\`\`\``)
       .addFields(
         { name: '⭐ Total Points (Top 8)', value: totalPts.toString(), inline: true },
         { name: '🏆 Highest', value: (users[0]?.staff?.points || 0).toString(), inline: true },
         { name: '📊 Average', value: (totalPts / users.length).toFixed(0), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Bonus Points Visual` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

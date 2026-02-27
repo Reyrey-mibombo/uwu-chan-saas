@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -32,15 +32,18 @@ module.exports = {
       : 'No auto-assign roles configured.';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚙️ Auto-Assign Role Configuration')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: '📋 Auto-Assign Roles', value: roleList },
         { name: '✅ Status', value: currentRoles.length > 0 ? `Active — ${currentRoles.length} role(s)` : 'Inactive', inline: true },
         { name: '📌 How it works', value: 'Listed roles are automatically assigned to new members when they join.' }
       )
-      .setFooter({ text: roleToAdd ? `Added ${roleToAdd.name} to auto-assign list` : `${interaction.guild.name} • Auto-Assign Config` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

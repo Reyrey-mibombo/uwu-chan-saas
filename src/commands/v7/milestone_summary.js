@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 const MILESTONES = [
   { label: '👥 50 Members', type: 'members', target: 50 },
@@ -47,8 +47,11 @@ module.exports = {
     const nextMilestone = MILESTONES.find(m => getValue(m.type) < m.target);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎯 Server Milestone Progress')
-      .setColor(0x3498db)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '👥 Current Members', value: memberCount.toString(), inline: true },
@@ -56,8 +59,8 @@ module.exports = {
         { name: '🎯 Next Milestone', value: nextMilestone?.label || '🏆 All achieved!', inline: true },
         ...fields
       )
-      .setFooter({ text: `${interaction.guild.name} • Milestone Tracker` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

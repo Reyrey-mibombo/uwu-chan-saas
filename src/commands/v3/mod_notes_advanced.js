@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -34,8 +34,11 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📝 Advanced Mod Notes')
-      .setColor(0x3498db)
+      
       .setDescription(targetUser ? `Notes for ${targetUser.username}` : `Recent ${limit} notes`);
 
     const noteEntries = await Promise.all(notes.map(async note => {

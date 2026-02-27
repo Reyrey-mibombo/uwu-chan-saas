@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -63,19 +63,25 @@ module.exports = {
 
     if (!eligible.length) {
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('📋 Next Promotion Queue')
         .setDescription('No one is currently eligible for promotion.')
-        .setColor(0x95a5a6)
-        .setTimestamp();
+        
+        ;
 
       return interaction.editReply({ embeds: [embed] });
     }
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Next Promotion Queue')
       .setDescription(`**${eligible.length}** staff members ready for promotion!`)
-      .setColor(0x5865f2)
-      .setTimestamp();
+      
+      ;
 
     const top5 = eligible.slice(0, 10);
     const list = top5.map((e, i) => {
@@ -91,7 +97,7 @@ module.exports = {
       return rankOrder.indexOf(uRank) < 5;
     }).length - eligible.length;
 
-    embed.setFooter({ text: `${pending} more staff working toward promotion` });
+    embed;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -42,14 +42,17 @@ module.exports = {
     await guild.save();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔨 Auto-Ban Settings')
-      .setColor(enabled ? 0x2ecc71 : 0xe74c3c)
+      
       .addFields(
         { name: 'Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
         { name: 'Strike Threshold', value: strikes.toString(), inline: true },
         { name: 'Default Reason', value: reason, inline: false }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

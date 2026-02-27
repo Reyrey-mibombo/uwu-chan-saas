@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -27,8 +27,11 @@ module.exports = {
     const consBar = '▓'.repeat(Math.round(consistency / 10)) + '░'.repeat(10 - Math.round(consistency / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📱 Interactive Summary — ${target.username}`)
-      .setColor(0x9b59b6)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '🎖️ Rank', value: rank.toUpperCase(), inline: true },
@@ -39,8 +42,8 @@ module.exports = {
         { name: '⏱️ Shift Hours (30d)', value: totalShiftHrs.toFixed(1), inline: true },
         { name: '⚡ Actions (30d)', value: recentActs.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Personal Summary` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

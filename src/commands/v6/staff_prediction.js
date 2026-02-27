@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 const RANK_THRESHOLDS = {
@@ -52,12 +52,15 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔮 Staff Promotion Predictions')
-      .setColor(0x9b59b6)
+      
       .setDescription('Staff members close to their next rank promotion:')
       .addFields(fields)
-      .setFooter({ text: `${interaction.guild.name} • Promotion Forecast` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

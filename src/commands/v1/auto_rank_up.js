@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 const RANK_ORDER = ['trial', 'staff', 'senior', 'manager', 'admin', 'owner'];
@@ -41,15 +41,18 @@ module.exports = {
     ).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⬆️ Automatic Rank-Up Eligible Staff')
-      .setColor(0x2ecc71)
+      
       .setDescription(listText)
       .addFields(
         { name: '✅ Eligible Count', value: eligible.length.toString(), inline: true },
         { name: '📌 Next Step', value: 'Use `/rank_announce` to officially promote them', inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Rank-Up System` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

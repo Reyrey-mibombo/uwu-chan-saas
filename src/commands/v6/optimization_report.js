@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -43,8 +43,11 @@ module.exports = {
     const topText = topPerformers.map(u => `• **${u.username || 'Unknown'}** — ${u.staff?.points || 0} pts`).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔧 Optimization Report')
-      .setColor(0xe67e22)
+      
       .addFields(
         { name: '👥 Staff Tracked', value: users.length.toString(), inline: true },
         { name: '📊 Average Points', value: avgPoints, inline: true },
@@ -52,8 +55,8 @@ module.exports = {
         { name: '⬇️ Needs Attention', value: lowText },
         { name: '🏆 Top Performers', value: topText }
       )
-      .setFooter({ text: `${interaction.guild.name} • Optimization Report` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

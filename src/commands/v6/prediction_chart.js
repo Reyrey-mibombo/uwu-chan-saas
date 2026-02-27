@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -43,16 +43,19 @@ module.exports = {
     const trend = rolling[rolling.length - 1] > rolling[0] ? '📈 Upward' : rolling[rolling.length - 1] < rolling[0] ? '📉 Downward' : '➡️ Flat';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Activity Prediction Chart — 14 Days')
-      .setColor(0x16a085)
+      
       .setDescription(`\`\`\`${chartLines}\`\`\``)
       .addFields(
         { name: '📈 Overall Trend', value: trend, inline: true },
         { name: '🔝 Peak Day', value: entries[counts.indexOf(max)]?.[0] || 'N/A', inline: true },
         { name: '📊 7d Rolling Avg', value: rolling.slice(-7).reduce((s, v) => s + v, 0) / 7 > 0 ? (rolling.slice(-7).reduce((s, v) => s + v, 0) / 7).toFixed(1) : '0', inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • █ = Actual | ▒ = Rolling Avg` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

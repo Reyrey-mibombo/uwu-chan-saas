@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -29,8 +29,11 @@ module.exports = {
     };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📈 Server Trends')
-      .setColor(0x1abc9c)
+      
       .addFields(
         { name: 'Messages', value: `${currentMessages} (${calcTrend(currentMessages, previousMessages)})`, inline: true },
         { name: 'Active Users', value: `${currentUsers} (${calcTrend(currentUsers, previousUsers)})`, inline: true },
@@ -39,7 +42,7 @@ module.exports = {
       .setDescription(
         currentMessages >= previousMessages ? '📈 Trending Up' : '📉 Trending Down'
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

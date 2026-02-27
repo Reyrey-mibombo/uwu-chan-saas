@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -32,11 +32,14 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📈 Engagement Trends Visual')
-      .setColor(thisWeek.length >= lastWeek.length ? 0x2ecc71 : 0xe74c3c)
+      
       .setDescription(rows)
-      .setFooter({ text: `${interaction.guild.name} • Week-over-Week Trends` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

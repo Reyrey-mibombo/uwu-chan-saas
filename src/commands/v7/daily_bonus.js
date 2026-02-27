@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -31,16 +31,19 @@ module.exports = {
     ).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🌟 Daily Activity Standings — ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`)
-      .setColor(0xf1c40f)
+      
       .addFields(
         { name: '🌟 Today\'s Top Earner', value: `<@${topUser[0]}> with **${topUser[1]}** actions`, inline: false },
         { name: '📊 Total Actions Today', value: todayActivity.length.toString(), inline: true },
         { name: '👥 Active Users', value: sorted.length.toString(), inline: true },
         { name: '🏆 Daily Standings', value: leaderboard }
       )
-      .setFooter({ text: `${interaction.guild.name} • Resets at midnight` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

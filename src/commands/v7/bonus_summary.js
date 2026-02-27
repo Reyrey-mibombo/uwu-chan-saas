@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -34,16 +34,19 @@ module.exports = {
     ).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎁 Bonus Point Summary — This Month')
-      .setColor(0x27ae60)
+      
       .addFields(
         { name: '🎁 Total Bonus Events', value: bonusActivities.length.toString(), inline: true },
         { name: '⭐ Total Bonus Points', value: totalBonus.toString(), inline: true },
         { name: '👥 Recipients', value: sorted.length.toString(), inline: true },
         { name: '🏆 Bonus Leaderboard', value: leaderboard }
       )
-      .setFooter({ text: `${interaction.guild.name} • Monthly Bonus Summary` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

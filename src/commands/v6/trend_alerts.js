@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -41,16 +41,19 @@ module.exports = {
     const status = alerts.some(a => a.type.includes('DROP')) ? '⚠️ Alerts Active' : '✅ All Clear';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🚨 Trend Alert Monitor')
-      .setColor(alerts.some(a => a.type.includes('DROP')) ? 0xe74c3c : 0x2ecc71)
+      ) ? 0xe74c3c : 0x2ecc71)
       .addFields(
         { name: '📊 Status', value: status, inline: true },
         { name: '⚡ This Week Activity', value: thisWeek.length.toString(), inline: true },
         { name: '📅 Last Week Activity', value: lastWeek.length.toString(), inline: true },
         { name: '🔔 Trend Alerts', value: alertText }
       )
-      .setFooter({ text: `${interaction.guild.name} • Trend Monitor (>20% drop = alert)` })
-      .setTimestamp();
+      ` })
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

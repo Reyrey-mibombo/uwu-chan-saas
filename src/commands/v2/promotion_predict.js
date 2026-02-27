@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Guild, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -29,11 +29,14 @@ module.exports = {
 
     if (!nextRank) {
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`👑 ${user.username} - Max Rank!`)
         .setDescription('🎉 Already at maximum rank!')
-        .setColor(0xf1c40f)
+        
         .setThumbnail(user.displayAvatarURL())
-        .setTimestamp();
+        ;
 
       return interaction.editReply({ embeds: [embed] });
     }
@@ -73,9 +76,12 @@ module.exports = {
     const progressBar = '█'.repeat(Math.floor(avgProgress / 10)) + '░'.repeat(10 - Math.floor(avgProgress / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🔮 Promotion Prediction - ${user.username}`)
       .setThumbnail(user.displayAvatarURL())
-      .setColor(avgProgress >= 75 ? 0x2ecc71 : avgProgress >= 50 ? 0xf39c12 : 0xe74c3c)
+      
       .addFields(
         { name: '🏆 Current Rank', value: currentRank.toUpperCase(), inline: true },
         { name: '⬆️ Next Rank', value: nextRank.toUpperCase(), inline: true },
@@ -85,8 +91,8 @@ module.exports = {
         { name: '📈 Consistency', value: `${consistency}% / ${reqConsistency}%`, inline: true },
         { name: '⏱️ Estimated Time', value: predictedWeeks === 0 ? '🎉 Ready now!' : `~${predictedWeeks} weeks`, inline: true }
       )
-      .setFooter({ text: 'Based on recent activity patterns' })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

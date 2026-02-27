@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -44,8 +44,11 @@ module.exports = {
     const pointsToNext = pointsForNextRank ? pointsForNextRank - points : 0;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📈 Staff Rank - ${targetUser.username}`)
-      .setColor(getRankColor(currentRank))
+      )
       .setThumbnail(targetUser.displayAvatarURL());
 
     embed.addFields(

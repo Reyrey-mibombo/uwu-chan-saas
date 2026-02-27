@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -38,8 +38,11 @@ module.exports = {
     const statusIcon = v => v ? '✅ Enabled' : '❌ Disabled';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚙️ Automation Settings')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: '🛡️ Moderation', value: statusIcon(modules.moderation), inline: true },
         { name: '📊 Analytics', value: statusIcon(modules.analytics), inline: true },
@@ -47,8 +50,8 @@ module.exports = {
         { name: '🎫 Tickets', value: statusIcon(modules.tickets), inline: true },
         { name: '📌 How to Toggle', value: 'Use `/automation_settings module:analytics enabled:true` to enable a module.' }
       )
-      .setFooter({ text: moduleChoice ? `Updated ${moduleChoice} module` : `${interaction.guild.name} • Module Settings` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const {
+﻿const {
   SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
@@ -48,6 +48,9 @@ module.exports = {
     const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${emoji} ${title}`)
       .setDescription(`${description}\n\n**Before you apply:**\n> • Ensure your DMs are open so we can contact you.\n> • Be detailed and honest in your responses.\n> • Troll or spam applications will result in a blacklist.`)
       .addFields(
@@ -56,10 +59,10 @@ module.exports = {
         { name: '📋 Note', value: 'Answer all questions carefully!', inline: true },
         { name: '📅 Updated', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
       )
-      .setColor(color)
+      
       .setThumbnail(interaction.guild.iconURL({ dynamic: true, size: 512 }))
-      .setTimestamp()
-      .setFooter({ text: `${interaction.guild.name} • ${type.toUpperCase()} Applications`, iconURL: interaction.guild.iconURL() });
+      
+      } Applications`, iconURL: interaction.guild.iconURL() });
 
     if (config.bannerUrl && config.bannerUrl.startsWith('http')) {
       embed.setImage(config.bannerUrl);
@@ -203,8 +206,11 @@ module.exports.handleApplySubmit = async (interaction, client) => {
   const joinedAtStr = member ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown';
 
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle(`${emoji} New ${type.toUpperCase()} Application #${appId}`)
-    .setColor(color)
+    
     .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 256 }))
     .addFields(
       { name: '👤 Applicant', value: `<@${userId}>\n\`${interaction.user.tag}\``, inline: true },
@@ -227,8 +233,8 @@ module.exports.handleApplySubmit = async (interaction, client) => {
     }
   });
 
-  embed.setFooter({ text: `Type: ${type} • Use /apply_note to add staff notes`, iconURL: interaction.guild.iconURL() })
-    .setTimestamp();
+  embed })
+    ;
 
   const row = new ActionRowBuilder()
     .addComponents(
@@ -257,11 +263,14 @@ module.exports.handleApplySubmit = async (interaction, client) => {
   }
 
   const userDmEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle('📨 Application Submitted Successfully')
     .setDescription(`Your **${type}** application in **${interaction.guild.name}** has been received.\n\nOur staff team will review it shortly. Please be patient, as this process can take some time.`)
     .addFields({ name: '🎫 Application ID', value: `\`${appId}\`` })
-    .setColor(0x3498db)
-    .setTimestamp();
+    
+    ;
 
   try {
     await interaction.user.send({ embeds: [userDmEmbed] });
@@ -316,10 +325,13 @@ module.exports.handleAccept = async (interaction, client) => {
     try {
       const color = type === 'staff' ? 0x2ecc71 : 0x57f287;
       const dmEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`✅ ${type.toUpperCase()} Application Accepted!`)
         .setDescription(`Congratulations! Your ${type} application in **${interaction.guild.name}** has been accepted!`)
-        .setColor(color)
-        .setTimestamp();
+        
+        ;
       await discordUser.send({ embeds: [dmEmbed] });
     } catch (e) { }
   }
@@ -332,7 +344,7 @@ module.exports.handleAccept = async (interaction, client) => {
 
   const color = type === 'staff' ? 0x2ecc71 : 0x57f287; // Green
   const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
-    .setColor(color)
+    
     .addFields({
       name: '✅ Application Accepted',
       value: `Reviewed by <@${interaction.user.id}> (<t:${Math.floor(Date.now() / 1000)}:R>)`,
@@ -386,16 +398,19 @@ module.exports.handleDeny = async (interaction, client) => {
   if (discordUser) {
     try {
       const dmEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`❌ ${type.toUpperCase()} Application Denied`)
         .setDescription(`Your ${type} application has been denied. Thank you for applying!`)
-        .setColor(0xe74c3c)
-        .setTimestamp();
+        
+        ;
       await discordUser.send({ embeds: [dmEmbed] });
     } catch (e) { }
   }
 
   const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
-    .setColor(0xe74c3c) // Red
+     // Red
     .addFields({
       name: '❌ Application Denied',
       value: `Reviewed by <@${interaction.user.id}> (<t:${Math.floor(Date.now() / 1000)}:R>)`,

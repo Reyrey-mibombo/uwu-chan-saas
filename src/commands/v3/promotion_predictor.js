@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -48,8 +48,11 @@ module.exports = {
     const prediction = getPrediction(promotionScore, rank);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🔮 Promotion Predictor - ${targetUser.username}`)
-      .setColor(prediction.color)
+      
       .setThumbnail(targetUser.displayAvatarURL());
 
     embed.addFields(

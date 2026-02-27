@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { Guild, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -48,14 +48,17 @@ module.exports = {
       });
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🔊 User Unmuted')
-        .setColor(0x2ecc71)
+        
         .addFields(
           { name: 'User', value: target.tag, inline: true },
           { name: 'Reason', value: reason, inline: true }
         )
-        .setFooter({ text: `Unmuted by ${interaction.user.username}` })
-        .setTimestamp();
+        
+        ;
 
       await interaction.reply({ embeds: [embed] });
 

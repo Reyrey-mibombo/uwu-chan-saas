@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -33,15 +33,18 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Visual Summary')
-      .setColor(0x8e44ad)
+      
       .setDescription(bars)
       .addFields(
         { name: 'Total Activities', value: total.toString(), inline: true },
         { name: 'Tracked Users', value: users.toString(), inline: true },
         { name: 'Period', value: `${days} days`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

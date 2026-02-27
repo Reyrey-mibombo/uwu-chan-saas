@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -19,11 +19,14 @@ module.exports = {
     ];
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Promotion Requirements')
-      .setColor(0x5865f2)
+      
       .setDescription('Requirements to promote to each rank')
       .setThumbnail(interaction.guild.iconURL())
-      .setTimestamp();
+      ;
 
     for (const rank of ranks) {
       const req = guild?.promotionRequirements?.[rank.key] || {};
@@ -48,7 +51,7 @@ module.exports = {
       });
     }
 
-    embed.setFooter({ text: 'Use /set_requirements to customize' });
+    embed;
 
     await interaction.editReply({ embeds: [embed] });
   }

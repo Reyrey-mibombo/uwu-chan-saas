@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
@@ -32,6 +32,9 @@ module.exports = {
     const result = await staffSystem.addWarning(user.id, interaction.guildId, reason, interaction.user.id, severity);
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚠️ User Warned')
       .addFields(
         { name: 'User', value: `${user.tag}`, inline: true },
@@ -39,15 +42,18 @@ module.exports = {
         { name: 'Points Deducted', value: `${result.points}`, inline: true },
         { name: 'Reason', value: reason, inline: false }
       )
-      .setColor('#e74c3c')
-      .setTimestamp();
+      
+      ;
 
     try {
       await user.send({ 
         embeds: [new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
           .setTitle('⚠️ You have been warned')
           .setDescription(`**Server:** ${interaction.guild.name}\n**Reason:** ${reason}\n**Severity:** ${severity}`)
-          .setColor('#e74c3c')
+          
         ] 
       }).catch(() => {});
     } catch (e) {}

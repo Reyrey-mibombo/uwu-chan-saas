@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -16,15 +16,18 @@ module.exports = {
     const activeUsers = users.filter(u => u.staff?.points > 0).length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📊 ${guild.name} - Member Stats`)
-      .setColor(0x5865f2)
+      
       .addFields(
         { name: '👥 Total Members', value: memberCount.toString(), inline: true },
         { name: '👨‍💼 Staff Members', value: staffCount.toString(), inline: true },
         { name: '⭐ Active Users', value: activeUsers.toString(), inline: true }
       )
       .setThumbnail(guild.iconURL())
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

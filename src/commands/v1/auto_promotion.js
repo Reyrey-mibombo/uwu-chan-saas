@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 const RANK_THRESHOLDS = {
@@ -34,8 +34,11 @@ module.exports = {
       .join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⬆️ Auto-Promotion Settings')
-      .setColor(autoEnabled ? 0x2ecc71 : 0x95a5a6)
+      
       .addFields(
         { name: '⚙️ Status', value: autoEnabled ? '✅ Enabled' : '❌ Disabled', inline: true },
         { name: '📌 Trigger', value: 'Automatic on point milestones', inline: true },
@@ -43,8 +46,8 @@ module.exports = {
         { name: '📊 Rank Point Thresholds', value: `\`\`\`${thresholdTable}\`\`\`` },
         { name: '💡 Tip', value: 'Use `/progress_tracker` to see who is close to promotion.' }
       )
-      .setFooter({ text: enabledOpt !== null ? 'Setting updated!' : `${interaction.guild.name} • Auto-Promotion` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

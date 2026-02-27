@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild, Warning, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -33,8 +33,11 @@ module.exports = {
       suggestions.push({ name: '✅ Everything Looks Good!', value: 'Your server automation is well-configured. Keep monitoring your trends.' });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🤖 Automation Suggestions')
-      .setColor(0x3498db)
+      
       .setDescription('Based on your server\'s data, here are the top recommendations:')
       .addFields(suggestions)
       .addFields(
@@ -42,8 +45,8 @@ module.exports = {
         { name: '🕐 Stuck Shifts', value: stuckShifts.toString(), inline: true },
         { name: '⚡ Commands Used', value: (stats.commandsUsed || 0).toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • AI Suggestions` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

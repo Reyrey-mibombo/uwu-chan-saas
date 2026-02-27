@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -34,13 +34,16 @@ module.exports = {
       const statusColor = app.status === 'pending' ? 0xf39c12 : app.status === 'accepted' ? 0x2ecc71 : 0xe74c3c;
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`📋 Application #${app.id}`)
-        .setColor(statusColor)
+        
         .addFields(
           { name: '📊 Status', value: `${statusEmoji} ${app.status.toUpperCase()}`, inline: true },
           { name: '📅 Applied', value: `<t:${Math.floor(new Date(app.createdAt).getTime()/1000)}:R>`, inline: true }
         )
-        .setTimestamp();
+        ;
 
       if (app.reviewedBy) {
         embed.addFields({ name: '👤 Reviewed By', value: app.reviewedBy, inline: true });
@@ -54,8 +57,11 @@ module.exports = {
     const statusEmoji = latestApp.status === 'pending' ? '⏳' : latestApp.status === 'accepted' ? '✅' : '❌';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Your Latest Application')
-      .setColor(latestApp.status === 'pending' ? 0xf39c12 : latestApp.status === 'accepted' ? 0x2ecc71 : 0xe74c3c)
+      
       .addFields(
         { name: '🎫 Application ID', value: latestApp.id, inline: true },
         { name: '📊 Status', value: `${statusEmoji} ${latestApp.status.toUpperCase()}`, inline: true },

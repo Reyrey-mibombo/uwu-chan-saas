@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder } = require('discord.js');
 const { Ticket, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -14,14 +14,17 @@ module.exports = {
     const title = interaction.options.getString('title') || '🎫 Support Tickets';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(title)
       .setDescription('Choose the type of ticket you want to create:')
       .addFields(
         { name: '📋 Report Staff', value: 'Report a staff member with evidence/images', inline: false },
         { name: '💬 Feedback', value: 'Submit feedback or suggestions for the server', inline: false }
       )
-      .setColor(0x5865f2)
-      .setTimestamp();
+      
+      ;
 
     const row = new ActionRowBuilder()
       .addComponents(
@@ -131,8 +134,11 @@ module.exports.handleReportSubmit = async (interaction, client) => {
   const ticketNum = Date.now().toString(36).toUpperCase();
 
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle(`📋 Staff Report #${ticketNum}`)
-    .setColor(0xe74c3c)
+    
     .addFields(
       { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
       { name: '👤 Reported By', value: `${interaction.user.tag}`, inline: true },
@@ -142,7 +148,7 @@ module.exports.handleReportSubmit = async (interaction, client) => {
       { name: '📎 Evidence/Details', value: evidence, inline: false }
     )
     .setThumbnail(interaction.user.displayAvatarURL())
-    .setTimestamp();
+    ;
 
   const row = new ActionRowBuilder()
     .addComponents(
@@ -202,15 +208,18 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
   const ticketNum = Date.now().toString(36).toUpperCase();
 
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle(`💬 Feedback #${ticketNum}`)
-    .setColor(0x2ecc71)
+    
     .addFields(
       { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
       { name: '👤 Submitted By', value: `${interaction.user.tag}`, inline: true },
       { name: '💭 Feedback', value: feedback, inline: false }
     )
     .setThumbnail(interaction.user.displayAvatarURL())
-    .setTimestamp();
+    ;
 
   if (imageUrl) {
     embed.setImage(imageUrl);
@@ -281,8 +290,11 @@ module.exports.handleClaimTicket = async (interaction, client) => {
   const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
 
   const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle(`📋 Staff Report #${ticketNum}`)
-    .setColor(0xf39c12)
+    
     .addFields(
       { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
       { name: '👤 Reported By', value: ticket.username, inline: true },
@@ -291,7 +303,7 @@ module.exports.handleClaimTicket = async (interaction, client) => {
       { name: '📝 Reason', value: ticket.reason, inline: false },
       { name: '📎 Evidence/Details', value: ticket.evidence, inline: false }
     )
-    .setTimestamp();
+    ;
 
   const row = new ActionRowBuilder()
     .addComponents(
@@ -312,14 +324,17 @@ module.exports.handleClaimTicket = async (interaction, client) => {
   if (reporter) {
     try {
       const dmEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('📋 Your Report Has Been Claimed!')
         .setDescription(`Your report #${ticketNum} has been picked up by ${claimer.tag}`)
         .addFields(
           { name: 'Staff Member', value: ticket.staffName, inline: true },
           { name: 'Reason', value: ticket.reason, inline: false }
         )
-        .setColor(0xf39c12)
-        .setTimestamp();
+        
+        ;
       await reporter.send({ embeds: [dmEmbed] });
     } catch (e) {}
   }
@@ -385,10 +400,13 @@ module.exports.handleDMReply = async (interaction, client) => {
   if (reporter) {
     try {
       const dmEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('💬 New Message About Your Report')
         .setDescription(`**Message:** ${message}\n\n📝 From: ${interaction.user.tag}\n📋 Ticket: #${ticketNum}`)
-        .setColor(0x3498db)
-        .setTimestamp();
+        
+        ;
       await reporter.send({ embeds: [dmEmbed] });
       await interaction.reply({ content: `✅ Message sent to ${ticket.username}!`, ephemeral: true });
     } catch (e) {
@@ -431,10 +449,13 @@ module.exports.handleCloseTicket = async (interaction, client) => {
   if (reporter) {
     try {
       const dmEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🔒 Your Ticket Has Been Closed')
         .setDescription(`Your report/feedback #${ticketNum} has been closed by ${interaction.user.tag}`)
-        .setColor(0x95a5a6)
-        .setTimestamp();
+        
+        ;
       await reporter.send({ embeds: [dmEmbed] });
     } catch (e) {}
   }
@@ -446,15 +467,18 @@ module.exports.handleCloseTicket = async (interaction, client) => {
   const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
 
   const closedEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
     .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report #${ticketNum} (Closed)` : `💬 Feedback #${ticketNum} (Closed)`)
-    .setColor(0x95a5a6)
+    
     .addFields(
       { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
       { name: '👤 Submitted By', value: ticket.username, inline: true },
       { name: '🔒 Closed By', value: interaction.user.tag, inline: true },
       { name: '📊 Status', value: '✅ **Closed**', inline: true }
     )
-    .setTimestamp();
+    ;
 
   if (ticketChannel) {
     await ticketChannel.send({ embeds: [closedEmbed] });

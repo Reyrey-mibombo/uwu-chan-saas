@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -16,16 +16,19 @@ module.exports = {
     const medals = ['🥇', '🥈', '🥉'];
     const list = top.map((u, i) => `${medals[i]} **${u.username || '?'}** — ${u.staff?.points || 0} pts`).join('\n') || 'No data yet.';
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${season} Season Rewards — ${year}`)
-      .setColor(0x1abc9c)
+      
       .addFields(
         { name: '🗓️ Current Season', value: season, inline: true },
         { name: '📅 Year', value: year.toString(), inline: true },
         { name: '🏆 Season Top 3', value: list },
         { name: '🎁 Season Rewards', value: '🥇 1st Place: **Legend Badge + 200 bonus pts**\n🥈 2nd Place: **Diamond Badge + 100 bonus pts**\n🥉 3rd Place: **Gold Badge + 50 bonus pts**' }
       )
-      .setFooter({ text: `${interaction.guild.name} • Season Rewards` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

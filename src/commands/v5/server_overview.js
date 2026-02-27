@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild, User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -17,8 +17,11 @@ module.exports = {
     const recentActivity = await Activity.countDocuments({ guildId, createdAt: { $gte: weekAgo } });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📊 Server Overview: ${guild.name}`)
-      .setColor(0x3498db)
+      
       .setThumbnail(guild.iconURL())
       .addFields(
         { name: 'Members', value: guild.memberCount.toString(), inline: true },
@@ -32,7 +35,7 @@ module.exports = {
         { name: 'Created', value: guild.createdAt.toLocaleDateString(), inline: true },
         { name: 'Owner', value: `<@${guild.ownerId}>`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

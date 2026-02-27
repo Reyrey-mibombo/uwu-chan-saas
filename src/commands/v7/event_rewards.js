@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 const WEEKLY_EVENTS = [
   { name: '⚡ Speed Challenge', desc: 'Complete 20 commands in one day', reward: '+30 bonus pts', active: true },
@@ -32,15 +32,18 @@ module.exports = {
     }));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎉 Event Rewards — Week of ${weekLabel}`)
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: '📅 Event Period', value: weekLabel, inline: true },
         { name: '🎁 Active Events', value: WEEKLY_EVENTS.filter(e => e.active).length.toString(), inline: true },
         ...fields
       )
-      .setFooter({ text: `${interaction.guild.name} • Weekly Events Reset on Sunday` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

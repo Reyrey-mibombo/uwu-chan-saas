@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,13 +11,19 @@ module.exports = {
     
     if (commandName) {
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`Help: /${commandName}`)
         .setDescription('Command details')
-        .setColor('#3498db');
+        ;
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📚 Uwu-chan Bot Commands')
       .setDescription('Use `/buy` or `/premium` to upgrade!')
       .addFields(
@@ -27,8 +33,8 @@ module.exports = {
         { name: '🛡️ Moderation', value: '`/warn` `/mod_notes`', inline: false },
         { name: '💎 Premium', value: 'Use `/premium` to unlock v3, v4, v5 commands!', inline: false }
       )
-      .setColor('#2ecc71')
-      .setTimestamp();
+      
+      ;
     
     await interaction.reply({ embeds: [embed] });
   }

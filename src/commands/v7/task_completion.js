@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -28,8 +28,11 @@ module.exports = {
       : '0';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Task Completion Report')
-      .setColor(parseFloat(rate) >= 80 ? 0x2ecc71 : parseFloat(rate) >= 50 ? 0xf39c12 : 0xe74c3c)
+       >= 80 ? 0x2ecc71 : parseFloat(rate) >= 50 ? 0xf39c12 : 0xe74c3c)
       .addFields(
         { name: '🔄 Total Shifts', value: shifts.length.toString(), inline: true },
         { name: '✅ Completed', value: completed.toString(), inline: true },
@@ -39,8 +42,8 @@ module.exports = {
         { name: '⏱️ Avg Duration', value: `${avgDuration}h`, inline: true },
         { name: '👥 Staff Involved', value: uniqueStaff.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • 30-Day Task Completion` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -32,15 +32,18 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Rank Roles Configuration')
-      .setColor(0x5865f2)
+      
       .setDescription('These roles will be automatically assigned when users are promoted.')
       .addFields(...roleList)
       .addFields(
         { name: '💡 Tip', value: 'Use `/set_rank_roles` to change which role each rank gives.', inline: false }
       )
-      .setFooter({ text: interaction.guild.name })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

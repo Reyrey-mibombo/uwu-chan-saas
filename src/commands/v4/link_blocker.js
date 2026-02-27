@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -38,13 +38,16 @@ module.exports = {
     await guild.save();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔗 Link Blocker Settings')
-      .setColor(enabled ? 0x2ecc71 : 0xe74c3c)
+      
       .addFields(
         { name: 'Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
         { name: 'Mode', value: whitelist ? 'Whitelist' : 'Blacklist', inline: true }
       )
-      .setTimestamp();
+      ;
 
     if (links) {
       embed.addFields({ name: 'Allowed Links', value: links, inline: false });

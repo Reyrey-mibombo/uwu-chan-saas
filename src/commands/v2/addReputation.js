@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -22,14 +22,17 @@ module.exports = {
     await user.save();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Reputation Added')
-      .setColor(0x2ecc71)
+      
       .addFields(
         { name: '👤 User', value: targetUser.tag, inline: true },
         { name: '➕ Added', value: `+${amount}`, inline: true },
         { name: '💫 Total', value: user.staff.reputation.toString(), inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

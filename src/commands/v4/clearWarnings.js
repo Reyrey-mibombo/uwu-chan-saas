@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -16,10 +16,13 @@ module.exports = {
     const result = await Warning.deleteMany({ userId: user.id, guildId: interaction.guildId });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Warnings Cleared')
       .setDescription(`Cleared ${result.deletedCount} warnings for ${user.tag}`)
-      .setColor(0x2ecc71)
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

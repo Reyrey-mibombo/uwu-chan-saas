@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -42,11 +42,14 @@ module.exports = {
     };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📜 History: ${target.username}`)
-      .setColor(0x3498db)
+      
       .setDescription(history.map(formatEntry).join('\n'))
-      .setFooter({ text: `Showing ${history.length} entries` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

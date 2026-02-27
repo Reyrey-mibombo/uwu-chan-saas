@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -36,8 +36,11 @@ module.exports = {
     const bar = '▓'.repeat(Math.round(parseFloat(completionRate) / 10)) + '░'.repeat(10 - Math.round(parseFloat(completionRate) / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⏰ Task & Shift Insights')
-      .setColor(0x1abc9c)
+      
       .addFields(
         { name: '✅ Completed Shifts', value: completed.length.toString(), inline: true },
         { name: '⏳ Incomplete Shifts', value: incomplete.length.toString(), inline: true },
@@ -49,8 +52,8 @@ module.exports = {
         { name: '🔄 Total Shifts', value: shifts.length.toString(), inline: true },
         { name: '📈 Completion Bar', value: `\`${bar}\` ${completionRate}%`, inline: false }
       )
-      .setFooter({ text: `${interaction.guild.name} • 30-Day Shift Insights` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

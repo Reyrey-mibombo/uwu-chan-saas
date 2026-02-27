@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -27,16 +27,19 @@ module.exports = {
       : '🏅 No elite badge holders yet. Earn 500+ points to qualify!';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🏅 Elite Badge Holders')
-      .setColor(0xf1c40f)
+      
       .setDescription(list)
       .addFields(
         { name: '👑 Legend (2000+ pts)', value: badgeHolders.filter(h => h.pts >= 2000).length.toString(), inline: true },
         { name: '💎 Diamond (1000+ pts)', value: badgeHolders.filter(h => h.pts >= 1000).length.toString(), inline: true },
         { name: '🥇 Gold (500+ pts)', value: badgeHolders.filter(h => h.pts >= 500).length.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Elite Badges` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

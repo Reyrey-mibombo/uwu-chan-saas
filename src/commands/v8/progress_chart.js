@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -22,11 +22,14 @@ module.exports = {
       return `**${u.username || '?'}**: \`${bar}\` ${pct}% → ${nextRank}`;
     }).join('\n');
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Staff Progress Chart')
-      .setColor(0x2980b9)
+      
       .setDescription(lines)
-      .setFooter({ text: `${interaction.guild.name} • Next-Rank Progress` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

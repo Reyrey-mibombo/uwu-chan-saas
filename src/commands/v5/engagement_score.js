@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -26,15 +26,18 @@ module.exports = {
                   score >= 40 ? 'Fair' : 'Low';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💫 Engagement Score')
-      .setColor(0x9b59b6)
+      
       .addFields(
         { name: 'Score', value: `${score}/100`, inline: true },
         { name: 'Level', value: level, inline: true },
         { name: 'Active Users', value: `${uniqueUsers}/${memberCount}`, inline: true },
         { name: 'Messages (7d)', value: messages.toLocaleString(), inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

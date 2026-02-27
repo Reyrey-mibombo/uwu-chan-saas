@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -22,8 +22,11 @@ module.exports = {
     const bar = '▓'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
     const steps = RANK_ORDER.map(r => `${r === rank ? `**→ ${rankEmojis[r]} ${r.toUpperCase()}** ←` : `${rankEmojis[r]} ${r}`}`).join(' | ');
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎭 Rank Animation — ${target.username}`)
-      .setColor(0xf1c40f)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '🎖️ Rank Path', value: steps },
@@ -31,8 +34,8 @@ module.exports = {
         { name: '⬆️ Next Rank', value: nextRank ? `${rankEmojis[nextRank]} ${nextRank}` : '👑 MAX', inline: true },
         { name: '📊 Progress', value: `\`${bar}\` **${pct}%**` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Rank Animation` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

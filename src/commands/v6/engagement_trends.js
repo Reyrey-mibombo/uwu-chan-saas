@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -31,8 +31,11 @@ module.exports = {
     const trend = (tw, lw) => lw === 0 ? '➡️' : tw > lw ? '📈' : tw < lw ? '📉' : '➡️';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📈 Engagement Trends')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: '📊 Activity This Week', value: thisWeek.length.toString(), inline: true },
         { name: '📅 Activity Last Week', value: lastWeek.length.toString(), inline: true },
@@ -42,8 +45,8 @@ module.exports = {
         { name: `${trend(warnLast, warnNow)} Warnings`, value: `${warnNow} vs ${warnLast}`, inline: true },
         { name: '👥 User Change', value: userChange === 'N/A' ? 'N/A' : `${userChange}%`, inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Engagement Trends` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

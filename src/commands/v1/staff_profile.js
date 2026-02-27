@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,6 +17,9 @@ module.exports = {
     const warnings = await staffSystem.getUserWarnings(user.id, interaction.guildId);
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`👤 ${user.username}'s Profile`)
       .setThumbnail(user.displayAvatarURL())
       .addFields(
@@ -28,8 +31,8 @@ module.exports = {
         { name: '📈 Score', value: `${score}/100`, inline: true },
         { name: '⚠️ Warnings', value: `${warnings.total}`, inline: true }
       )
-      .setColor('#3498db')
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

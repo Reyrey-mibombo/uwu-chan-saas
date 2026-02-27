@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -22,8 +22,11 @@ module.exports = {
     const top = users.map((u, i) => `${['🥇', '🥈', '🥉'][i]} **${u.username || '?'}** — ${u.staff?.points || 0} pts`).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${season} Season Summary — ${now.getFullYear()}`)
-      .setColor(0xf39c12)
+      
       .addFields(
         { name: '📅 Season', value: season, inline: true },
         { name: '📊 Season Events', value: acts.length.toString(), inline: true },
@@ -31,8 +34,8 @@ module.exports = {
         { name: '👥 Active Users', value: [...new Set(acts.map(a => a.userId))].length.toString(), inline: true },
         { name: '🏆 Season Top 3', value: top || 'No data yet.' }
       )
-      .setFooter({ text: `${interaction.guild.name} • Season Summary` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -24,8 +24,11 @@ module.exports = {
     const consistency = user?.staff?.consistency || 100;
     const achievements = user?.staff?.achievements || [];
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⭐ Staff Highlight of the Week!')
-      .setColor(0xf1c40f)
+      
       .setThumbnail(target.displayAvatarURL({ size: 256 }))
       .setDescription(`🎉 Congratulations to **${target.username}** for this week's outstanding performance!`)
       .addFields(
@@ -34,8 +37,8 @@ module.exports = {
         { name: '📈 Consistency', value: `${consistency}%`, inline: true },
         { name: '🏅 Achievements', value: achievements.length ? achievements.slice(0, 3).join(', ') : 'Working on it!' }
       )
-      .setFooter({ text: `${interaction.guild.name} • Staff Spotlight` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

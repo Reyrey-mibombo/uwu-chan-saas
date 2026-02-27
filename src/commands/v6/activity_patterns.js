@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -36,8 +36,11 @@ module.exports = {
     const weekends = dayCounts[0] + dayCounts[6];
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📅 Activity Patterns — Last 30 Days')
-      .setColor(0x9b59b6)
+      
       .addFields(
         { name: '📊 Total Events', value: activities.length.toString(), inline: true },
         { name: '📅 Weekday Activity', value: weekdays.toString(), inline: true },
@@ -47,8 +50,8 @@ module.exports = {
         { name: '🏆 Promotions', value: typeCounts.promotion.toString(), inline: true },
         { name: '📆 Weekly Pattern', value: `\`\`\`${dayBars}\`\`\`` }
       )
-      .setFooter({ text: `${interaction.guild.name} • 30-Day Analysis` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

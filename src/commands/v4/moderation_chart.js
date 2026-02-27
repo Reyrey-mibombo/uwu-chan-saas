@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -66,8 +66,11 @@ module.exports = {
     const total = Object.values(stats).reduce((a, b) => a + b, 0);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Moderation Statistics')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: 'Warnings', value: stats.warn.toString(), inline: true },
         { name: 'Bans', value: stats.ban.toString(), inline: true },
@@ -76,8 +79,8 @@ module.exports = {
         { name: 'Strikes', value: stats.strike.toString(), inline: true },
         { name: 'Total', value: total.toString(), inline: true }
       )
-      .setFooter({ text: `Period: ${period}` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

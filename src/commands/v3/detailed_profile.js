@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -44,8 +44,11 @@ module.exports = {
     const totalHours = recentShifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 60;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`👤 ${targetUser.username}'s Detailed Profile`)
-      .setColor(0x9b59b6)
+      
       .setThumbnail(targetUser.displayAvatarURL());
 
     const rank = user.staff?.rank || 'member';

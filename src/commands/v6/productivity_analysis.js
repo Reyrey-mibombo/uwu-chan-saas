@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -52,16 +52,19 @@ module.exports = {
       : 'No data.';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚡ Productivity Analysis')
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: '🔄 Total Shifts (30d)', value: shifts.length.toString(), inline: true },
         { name: '⏱️ Avg Shift Length', value: `${avgHours.toFixed(1)}h`, inline: true },
         { name: '⚡ Avg Commands/Staff', value: avgCmds.toFixed(1), inline: true },
         { name: '🏆 Productivity Ranking (cmds/hour)', value: leaderboard }
       )
-      .setFooter({ text: `${interaction.guild.name} • Productivity Analysis` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

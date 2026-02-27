@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -31,8 +31,11 @@ module.exports = {
     }));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎭 Role Distribution')
-      .setColor(0x9b59b6)
+      
       .setDescription(
         roleDescriptions.map(r => `${r.name}: ${r.count}`).join('\n') || 'No role data found'
       )
@@ -40,7 +43,7 @@ module.exports = {
         { name: 'Total Tracked Users', value: users.length.toString(), inline: true },
         { name: 'Unique Roles', value: sortedRoles.length.toString(), inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -39,8 +39,11 @@ module.exports = {
       : 0;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📈 Trend Report')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: 'This Week', value: `${currentWeek.length} activities`, inline: true },
         { name: 'Last Week', value: `${lastWeek.length} activities`, inline: true },
@@ -49,7 +52,7 @@ module.exports = {
         { name: 'Last Month', value: `${lastMonth.length} activities`, inline: true },
         { name: 'Monthly Change', value: `${monthChange > 0 ? '+' : ''}${monthChange}%`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

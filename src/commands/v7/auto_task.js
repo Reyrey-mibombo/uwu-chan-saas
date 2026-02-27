@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -19,10 +19,13 @@ module.exports = {
 
     if (!openShifts.length) {
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('✅ Auto-Task Monitor')
-        .setColor(0x2ecc71)
+        
         .setDescription('No open tasks or stuck shifts detected. Everything is running smoothly!')
-        .setTimestamp();
+        ;
       return interaction.editReply({ embeds: [embed] });
     }
 
@@ -36,16 +39,19 @@ module.exports = {
     const critical = openShifts.filter(s => (Date.now() - new Date(s.startTime).getTime()) > 8 * 3600000).length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚙️ Open Tasks & Shifts')
-      .setColor(critical > 0 ? 0xe74c3c : 0xf39c12)
+      
       .addFields(
         { name: '📋 Open Shifts', value: openShifts.length.toString(), inline: true },
         { name: '🔴 Critical (8h+)', value: critical.toString(), inline: true },
         { name: '📌 Action Needed', value: 'Use `/shift_end` to close these shifts', inline: true },
         { name: '🕐 Open Shift List', value: taskList }
       )
-      .setFooter({ text: `${interaction.guild.name} • Auto-Task Monitor` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

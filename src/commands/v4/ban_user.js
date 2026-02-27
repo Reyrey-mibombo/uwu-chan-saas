@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -51,15 +51,18 @@ module.exports = {
       await modSystem.createCase(guild.id, target.id, 'ban', reason, interaction.user.id);
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🔨 User Banned')
-        .setColor(0xe74c3c)
+        
         .addFields(
           { name: '👤 User', value: `${target.tag} (${target.id})`, inline: true },
           { name: '📋 Reason', value: reason, inline: true },
           { name: '🗑️ Messages Deleted', value: `${deleteDays} days`, inline: true }
         )
-        .setFooter({ text: `Banned by ${interaction.user.username}` })
-        .setTimestamp();
+        
+        ;
 
       await interaction.reply({ embeds: [embed] });
 

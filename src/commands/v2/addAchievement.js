@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -58,14 +58,17 @@ module.exports = {
       
       // Simple response without database
       const embed = new EmbedBuilder()
-        .setColor('#ffd700')
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
+        
         .setTitle(`🏆 Achievement Awarded`)
         .setDescription(`**${title}** awarded to ${targetUser}`)
         .addFields(
           { name: 'Category', value: category, inline: true },
           { name: 'Awarded by', value: interaction.user.tag, inline: true }
         )
-        .setTimestamp();
+        ;
 
       await interaction.reply({ embeds: [embed] });
       

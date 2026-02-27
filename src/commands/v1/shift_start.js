@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -23,13 +23,16 @@ module.exports = {
     const result = await staffSystem.startShift(userId, guildId);
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Shift Started')
       .setDescription(`Your shift has started!\nStarted at: <t:${Math.floor(Date.now() / 1000)}:T>`)
       .addFields(
         { name: 'Shift ID', value: result.shiftId.toString(), inline: true }
       )
-      .setColor('#2ecc71')
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -38,14 +38,17 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📨 Report Submitted')
-      .setColor(0x2ecc71)
+      
       .addFields(
         { name: 'Reported User', value: target.tag, inline: true },
         { name: 'Reason', value: reason, inline: false }
       )
-      .setFooter({ text: `Reported by ${interaction.user.username}` })
-      .setTimestamp();
+      
+      ;
 
     if (evidence) {
       embed.addFields({ name: 'Evidence', value: evidence, inline: false });

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -37,15 +37,18 @@ module.exports = {
     const summary = Array.isArray(data) ? `${data.length} records` : '1 record';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📤 Analytics Export')
-      .setColor(0x27ae60)
+      
       .addFields(
         { name: 'Type', value: type.charAt(0).toUpperCase() + type.slice(1), inline: true },
         { name: 'Records', value: summary, inline: true },
         { name: 'Period', value: `${days} days`, inline: true }
       )
       .setDescription(`Data exported to \`${filename}\``)
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

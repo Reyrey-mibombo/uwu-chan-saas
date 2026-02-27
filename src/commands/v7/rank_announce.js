@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -44,8 +44,11 @@ module.exports = {
     const rankEmojis = { trial: '🔰', staff: '⭐', senior: '🌟', manager: '💎', admin: '👑' };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎉 Rank Promotion Announcement!')
-      .setColor(0xf1c40f)
+      
       .setThumbnail(target.displayAvatarURL())
       .setDescription(`Congratulations to <@${target.id}> on their promotion!`)
       .addFields(
@@ -53,8 +56,8 @@ module.exports = {
         { name: `${rankEmojis[newRank] || '⭐'} New Rank`, value: newRank.toUpperCase(), inline: true },
         { name: '👮 Promoted By', value: `<@${interaction.user.id}>`, inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Staff Promotion` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

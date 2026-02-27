@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -27,15 +27,18 @@ module.exports = {
     const trend = weeks[3].count >= weeks[0].count ? '📈 Growing' : '📉 Declining';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 4-Week Engagement Chart')
-      .setColor(0x3498db)
+      
       .setDescription(`\`\`\`${chart}\n\n(W-0 = this week, W-3 = 3 weeks ago)\`\`\``)
       .addFields(
         { name: '📈 Trend', value: trend, inline: true },
         { name: '🔝 Best Week', value: `${weeks.find(w => w.count === Math.max(...weeks.map(x => x.count)))?.label}: ${Math.max(...weeks.map(w => w.count))} events`, inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • 4-Week Comparison` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

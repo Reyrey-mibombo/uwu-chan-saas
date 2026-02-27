@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -59,8 +59,11 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💰 Bonus Points Allocated')
-      .setColor(0xf1c40f)
+      
       .setThumbnail(targetUser.displayAvatarURL())
       .addFields(
         { name: 'User', value: targetUser.username, inline: true },
@@ -68,7 +71,7 @@ module.exports = {
         { name: 'New Total', value: user.staff.points.toString(), inline: true },
         { name: 'Reason', value: reason, inline: false }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

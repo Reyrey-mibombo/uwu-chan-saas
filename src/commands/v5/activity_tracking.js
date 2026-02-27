@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,8 +23,11 @@ module.exports = {
     const staffData = user?.staff || { points: 0, warnings: 0, shiftTime: 0 };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📈 Activity Tracking: ${targetUser.username}`)
-      .setColor(0x2ecc71)
+      
       .addFields(
         { name: 'Messages (30d)', value: messages.toString(), inline: true },
         { name: 'Commands (30d)', value: commands.toString(), inline: true },
@@ -33,7 +36,7 @@ module.exports = {
         { name: 'Warnings', value: staffData.warnings.toString(), inline: true },
         { name: 'Total Shift Time', value: `${Math.round(staffData.shiftTime / 60)}h`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

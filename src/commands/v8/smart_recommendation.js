@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -16,16 +16,19 @@ module.exports = {
     const rankEmojis = { owner: '👑', admin: '💜', manager: '💎', senior: '🌟', staff: '⭐', trial: '🔰', member: '👤' };
     const alt = users.slice(1, 3).map(u => `• **${u.username || '?'}** (${u.staff?.rank || 'member'}) — ${u.staff?.points || 0} pts`).join('\n');
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🤖 Smart Staff Recommendation')
-      .setColor(0x3498db)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '📋 Task', value: taskDesc, inline: false },
         { name: '🏆 Top Recommendation', value: `**${top.username || '?'}** ${rankEmojis[top.staff?.rank] || ''}\n⭐ ${top.staff?.points || 0} pts | 📈 ${top.staff?.consistency || 100}% consistency | 🌟 ${top.staff?.reputation || 0} rep` },
         { name: '👥 Alternatives', value: alt || 'No alternatives.' }
       )
-      .setFooter({ text: `${interaction.guild.name} • Smart Recommendation` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

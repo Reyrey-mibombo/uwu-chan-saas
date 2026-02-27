@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -31,15 +31,18 @@ module.exports = {
     const warnings = events.filter(e => e.type === 'warning').length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📋 Notification Log — Last ${limit} Events`)
-      .setColor(0x95a5a6)
+      
       .addFields(
         { name: '⬆️ Promotions', value: promotions.toString(), inline: true },
         { name: '⚠️ Warnings', value: warnings.toString(), inline: true },
         { name: '📋 Log', value: logLines }
       )
-      .setFooter({ text: `${interaction.guild.name} • Notification Log` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

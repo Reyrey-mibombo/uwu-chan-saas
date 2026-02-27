@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -41,16 +41,19 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📅 Weekly Activity Forecast')
-      .setColor(0x2ecc71)
+      
       .setDescription(`\`\`\`${nextWeekLines.join('\n')}\`\`\``)
       .addFields(
         { name: '📊 Last Week Total', value: lastWeek.length.toString(), inline: true },
         { name: '📈 Week-over-Week Growth', value: `${growth}%`, inline: true },
         { name: '🔮 Predicted Next Week', value: predictedTotal.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Weekly Forecast` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

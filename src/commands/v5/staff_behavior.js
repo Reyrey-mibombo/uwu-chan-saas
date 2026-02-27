@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -29,8 +29,11 @@ module.exports = {
                      warnings > 2 ? 'Acceptable' : 'Excellent';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`👀 Staff Behavior: ${targetUser?.username || 'All Staff'}`)
-      .setColor(warnings > 5 ? 0xe74c3c : warnings > 2 ? 0xf39c12 : 0x2ecc71)
+      
       .addFields(
         { name: 'Warnings', value: warnings.toString(), inline: true },
         { name: 'Shifts', value: shifts.toString(), inline: true },
@@ -39,7 +42,7 @@ module.exports = {
         { name: 'Behavior Rating', value: behavior, inline: true },
         { name: 'Period', value: `${days} days`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,6 +9,9 @@ module.exports = {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📈 ${user.username}'s Progress`)
       .setDescription('Weekly progress summary:')
       .addFields(
@@ -16,7 +19,7 @@ module.exports = {
         { name: 'Shifts Worked', value: '5/7', inline: true },
         { name: 'Points Earned', value: '+45', inline: true }
       )
-      .setColor('#2ecc71');
+      ;
     
     await interaction.reply({ embeds: [embed] });
   }

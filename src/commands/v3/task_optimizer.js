@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -64,8 +64,11 @@ module.exports = {
       .sort((a, b) => b.efficiency - a.efficiency);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎯 Task Optimizer')
-      .setColor(0x9b59b6)
+      
       .setDescription(`Task analysis for the last ${period} days`);
 
     embed.addFields(

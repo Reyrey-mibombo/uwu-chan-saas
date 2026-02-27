@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -22,14 +22,17 @@ module.exports = {
     const list = forecast.map(f => `${f.status} **${f.rank}**: ${f.needed} more needed`).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔮 Staff Forecast')
       .setDescription(list)
       .addFields(
         { name: '📊 Active Staff', value: activeCount.toString(), inline: true },
         { name: '⭐ Avg Points', value: Math.round(avgPoints).toString(), inline: true }
       )
-      .setColor(0x5865f2)
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

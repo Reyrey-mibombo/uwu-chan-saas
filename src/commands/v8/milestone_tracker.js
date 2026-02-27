@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -31,12 +31,15 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎯 Milestone Tracker')
-      .setColor(0x3498db)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(fields)
-      .setFooter({ text: `${interaction.guild.name} • Server Milestones` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

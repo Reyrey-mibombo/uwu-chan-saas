@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -36,11 +36,14 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('👥 Staff List')
       .setDescription(list || 'No staff found')
-      .setColor(0x5865f2)
-      .setFooter({ text: `Page ${page}/${totalPages} • Total: ${users.length} staff` })
-      .setTimestamp();
+      
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -27,15 +27,18 @@ module.exports = {
       : 0;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Growth Tracking')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: 'New Members (7d)', value: `+${newMembers}`, inline: true },
         { name: 'Messages (7d)', value: thisWeekMessages.toLocaleString(), inline: true },
         { name: 'Active Users', value: activeUsers.toString(), inline: true },
         { name: 'Growth', value: `${growth > 0 ? '+' : ''}${growth}%`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,8 +23,11 @@ module.exports = {
     const bar = (v, max, len = 10) => '▓'.repeat(Math.round(Math.min(v, max) / max * len)) + '░'.repeat(len - Math.round(Math.min(v, max) / max * len));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📊 Performance Visual — ${target.username}`)
-      .setColor(color)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '📊 Score', value: `**${score}/100** (${grade})`, inline: true },
@@ -33,8 +36,8 @@ module.exports = {
         { name: '📈 Consistency', value: `\`${bar(consistency, 100)}\` ${consistency}%` },
         { name: '🌟 Reputation', value: `\`${bar(reputation, 100)}\` ${reputation}` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Performance Visual` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

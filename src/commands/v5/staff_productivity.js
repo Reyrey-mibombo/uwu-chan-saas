@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -36,8 +36,11 @@ module.exports = {
       .slice(0, 10);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💼 Staff Productivity')
-      .setColor(0x27ae60)
+      
       .setDescription(
         topProductive.map((u, i) =>
           `${i + 1}. <@${u.userId}> - ${u.points} pts, ${u.shiftHours.toFixed(1)}h, ${u.consistency}% consistency`
@@ -47,7 +50,7 @@ module.exports = {
         { name: 'Staff Count', value: users.length.toString(), inline: true },
         { name: 'Period', value: `${days} days`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

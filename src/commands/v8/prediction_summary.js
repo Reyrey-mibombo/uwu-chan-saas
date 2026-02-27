@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -29,16 +29,19 @@ module.exports = {
     );
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔮 Prediction Summary')
-      .setColor(0x9b59b6)
+      
       .addFields(
         { name: '📊 This Week Total', value: thisWeek.length.toString(), inline: true },
         { name: '📅 Last Week Total', value: lastWeek.length.toString(), inline: true },
         { name: '🔮 Next Week Predicted', value: `~${totalPred.val} (${totalPred.change > 0 ? '+' : ''}${totalPred.change}%)`, inline: true },
         { name: '⚡ Commands Predicted', value: `~${cmdPred.val} next week`, inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Prediction Summary` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

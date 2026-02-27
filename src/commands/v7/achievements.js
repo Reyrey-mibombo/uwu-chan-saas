@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -33,14 +33,17 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🏅 Achievements - ${user.username}`)
       .setDescription(list)
       .addFields(
         { name: '⭐ Points', value: points.toString(), inline: true },
         { name: '🏆 Earned', value: `${earned.length}/${allAchievements.length}`, inline: true }
       )
-      .setColor(0xf1c40f)
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

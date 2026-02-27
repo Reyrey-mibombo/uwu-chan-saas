@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild, Warning, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -38,8 +38,11 @@ module.exports = {
     const minutes = Math.floor((uptime % 3600) / 60);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${healthEmoji} Server Health Report`)
-      .setColor(score >= 80 ? 0x2ecc71 : score >= 50 ? 0xf39c12 : 0xe74c3c)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '💊 Health Score', value: `\`${healthBar}\` ${score}/100`, inline: false },
@@ -53,8 +56,8 @@ module.exports = {
         { name: '⚠️ Total Warnings', value: (stats.warnings || 0).toString(), inline: true },
         { name: '📨 Messages Processed', value: (stats.messagesProcessed || 0).toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Health Check` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

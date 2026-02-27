@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -37,16 +37,19 @@ module.exports = {
     if (fields.length === 0) fields.push({ name: 'No data', value: 'No staff recorded yet.', inline: false });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⭐ Staff Recommendation Summary')
-      .setColor(0xf1c40f)
+      
       .setDescription('Top staff based on points, consistency, and reputation:')
       .addFields(fields)
       .addFields({
         name: '📊 Selection Criteria',
         value: '• 50% Points weight\n• 30% Consistency weight\n• 20% Reputation weight'
       })
-      .setFooter({ text: `${interaction.guild.name} • Staff Recommendations` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

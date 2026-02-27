@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -16,6 +16,9 @@ module.exports = {
     const warnings = await staffSystem.getUserWarnings(user.id, interaction.guildId);
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎯 ${user.username}'s Staff Score`)
       .setDescription(`Overall Score: **${score}/100**`)
       .addFields(
@@ -23,7 +26,7 @@ module.exports = {
         { name: 'Quality', value: `${Math.max(0, 100 - warnings.total * 5)}`, inline: true },
         { name: 'Consistency', value: `${consistency}`, inline: true }
       )
-      .setColor(score >= 70 ? '#2ecc71' : '#e74c3c');
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

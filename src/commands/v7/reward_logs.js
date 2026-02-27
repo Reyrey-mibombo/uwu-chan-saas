@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -26,14 +26,17 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🎁 Recent Reward Log')
-      .setColor(0x27ae60)
+      
       .addFields(
         { name: '📋 Showing', value: `Last ${rewards.length} reward events`, inline: true },
         { name: '🎁 Log', value: logLines }
       )
-      .setFooter({ text: `${interaction.guild.name} • Reward Logs` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

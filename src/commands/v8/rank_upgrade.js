@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -18,16 +18,19 @@ module.exports = {
     await Activity.create({ guildId: interaction.guildId, userId: target.id, type: 'promotion', data: { newRank, promotedBy: interaction.user.id } });
     const rankEmojis = { staff: '⭐', senior: '🌟', manager: '💎', admin: '👑' };
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🚀 RANK UPGRADE!')
-      .setColor(0x2ecc71)
+      
       .setThumbnail(target.displayAvatarURL())
       .setDescription(`🎊 **${target.username}** has been upgraded to **${rankEmojis[newRank] || '⭐'} ${newRank.toUpperCase()}**! 🎊\n\n*Keep up the outstanding work!* 💪`)
       .addFields(
         { name: '👤 Staff', value: `<@${target.id}>`, inline: true },
         { name: '🆙 New Rank', value: `${rankEmojis[newRank] || ''} ${newRank.toUpperCase()}`, inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Rank Upgraded by ${interaction.user.username}` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 // v6 (ENTERPRISE) — All 10 requirements
@@ -54,8 +54,11 @@ module.exports = {
         const off = (v) => v > 0 ? v.toString() : 'Disabled';
 
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
             .setTitle(`👑 Enterprise Full Requirements Set — ${rank.toUpperCase()}`)
-            .setColor(0xf1c40f)
+            
             .setDescription('**Enterprise tier: All 10 requirements configured.**\nThis is the maximum customization level.')
             .addFields(
                 { name: '1️⃣ ⭐ Min Points', value: points.toString(), inline: true },
@@ -69,7 +72,7 @@ module.exports = {
                 { name: '9️⃣ 🔒 Clean Record Days', value: off(cleanRecordDays), inline: true },
                 { name: '🔟 📝 Custom Note (in DM)', value: customNote || 'None set', inline: false }
             )
-            .setFooter({ text: 'Enterprise — Full custom auto-promotion active every 15 min' });
+            ;
 
         await interaction.editReply({ embeds: [embed] });
     }

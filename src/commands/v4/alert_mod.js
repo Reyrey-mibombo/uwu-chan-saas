@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -32,13 +32,16 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🚨 Moderator Alert')
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: 'Alerted By', value: interaction.user.tag, inline: true },
         { name: 'Message', value: message, inline: false }
       )
-      .setTimestamp();
+      ;
 
     if (user) {
       embed.addFields({ name: 'Related User', value: user.tag, inline: true });

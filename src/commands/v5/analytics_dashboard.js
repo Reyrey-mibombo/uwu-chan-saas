@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -35,8 +35,11 @@ module.exports = {
     const monthCommands = monthActivities.filter(a => a.type === 'command').length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Analytics Dashboard')
-      .setColor(0x9b59b6)
+      
       .addFields(
         { name: 'This Week', value: '---', inline: false },
         { name: 'Messages', value: weekMessages.toLocaleString(), inline: true },
@@ -47,7 +50,7 @@ module.exports = {
         { name: 'Commands', value: monthCommands.toLocaleString(), inline: true },
         { name: 'Total Users', value: totalUsers.toString(), inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

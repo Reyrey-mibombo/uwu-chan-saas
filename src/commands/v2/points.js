@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,13 +14,16 @@ module.exports = {
     const rank = await staffSystem.getRank(user.id, interaction.guildId);
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💰 Points')
       .setDescription(`${user.username} has **${userPoints}** points`)
       .addFields(
         { name: 'Rank', value: rank, inline: true }
       )
-      .setColor('#f1c40f')
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

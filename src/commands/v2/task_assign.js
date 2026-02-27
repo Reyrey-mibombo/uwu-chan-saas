@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -39,9 +39,12 @@ module.exports = {
       }));
       
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('📋 Pending Tasks')
         .setDescription(list.join('\n'))
-        .setColor('#3498db');
+        ;
       
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }

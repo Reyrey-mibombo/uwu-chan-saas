@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -36,16 +36,19 @@ module.exports = {
     const avgPerStaff = users.length > 0 ? (totalAchievements / users.length).toFixed(1) : '0';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🏅 Achievement Distribution Chart')
-      .setColor(0xf1c40f)
+      
       .addFields(
         { name: '🎖️ Total Achievements Earned', value: totalAchievements.toString(), inline: true },
         { name: '👥 Staff with Achievements', value: users.length.toString(), inline: true },
         { name: '📊 Avg per Staff', value: avgPerStaff, inline: true },
         { name: '📈 Top Achievements', value: chart }
       )
-      .setFooter({ text: `${interaction.guild.name} • Achievement Chart` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

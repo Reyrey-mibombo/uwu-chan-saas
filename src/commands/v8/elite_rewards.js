@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -26,16 +26,19 @@ module.exports = {
     }));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('👑 Elite Rewards Program')
-      .setColor(points >= 2000 ? 0xffd700 : points >= 1000 ? 0x00bfff : points >= 500 ? 0xf1c40f : 0x95a5a6)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '⭐ Your Points', value: points.toString(), inline: true },
         { name: '🎖️ Your Rank', value: rank.toUpperCase(), inline: true },
         ...fields
       )
-      .setFooter({ text: `${interaction.guild.name} • Elite Rewards Program` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

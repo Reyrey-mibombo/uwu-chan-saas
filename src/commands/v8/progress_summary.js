@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -19,8 +19,11 @@ module.exports = {
     const shiftHrs = shifts.reduce((s, sh) => s + (sh.duration || (new Date(sh.endTime) - new Date(sh.startTime)) / 3600000), 0);
     const bar = (v, max, len = 10) => '▓'.repeat(Math.round(Math.min(v, max) / max * len)) + '░'.repeat(len - Math.round(Math.min(v, max) / max * len));
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📋 Progress Summary — ${target.username}`)
-      .setColor(0x1abc9c)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '🎖️ Rank', value: rank.toUpperCase(), inline: true },
@@ -31,8 +34,8 @@ module.exports = {
         { name: '📊 Consistency', value: `\`${bar(consistency, 100)}\` ${consistency}%` },
         { name: '⭐ Points (vs 1000 max)', value: `\`${bar(pts, 1000)}\` ${pts}/1000` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Progress Summary` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -31,8 +31,11 @@ module.exports = {
     const weekText = weeks.map((c, i) => `Week ${4 - i}: **${c}** events`).reverse().join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Automation Report — Last 30 Days')
-      .setColor(0x9b59b6)
+      
       .addFields(
         { name: '⬆️ Promotions', value: promotions.toString(), inline: true },
         { name: '🔄 Shifts Tracked', value: shifts.toString(), inline: true },
@@ -42,8 +45,8 @@ module.exports = {
         { name: '📊 Total Events', value: activities.length.toString(), inline: true },
         { name: '📅 Weekly Breakdown', value: weekText }
       )
-      .setFooter({ text: `${interaction.guild.name} • Monthly Automation Report` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

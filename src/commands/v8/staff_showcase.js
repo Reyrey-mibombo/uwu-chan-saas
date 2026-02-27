@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -17,12 +17,15 @@ module.exports = {
       inline: false
     }));
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('👥 Staff Showcase')
-      .setColor(0x3498db)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(fields)
-      .setFooter({ text: `${interaction.guild.name} • Top ${users.length} Staff` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

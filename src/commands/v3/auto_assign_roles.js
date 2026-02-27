@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -41,8 +41,11 @@ module.exports = {
     await guild.save();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚙️ Auto Role Assignment')
-      .setColor(enable ? 0x2ecc71 : 0xe74c3c)
+      
       .setDescription(enable ? 'Auto role assignment enabled' : 'Auto role assignment disabled');
 
     if (role && enable) {

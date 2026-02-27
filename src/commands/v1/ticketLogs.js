@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { Ticket } = require('../../database/mongo');
 
 module.exports = {
@@ -61,14 +61,17 @@ module.exports = {
     if (pendingTickets.length > 0) {
       for (const ticket of pendingTickets.slice(0, 5)) {
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
           .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report` : `💬 Feedback`)
-          .setColor(ticket.category === 'report_staff' ? 0xe74c3c : 0x2ecc71)
+          
           .addFields(
             { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
             { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true },
             { name: '📊 Status', value: '⏳ **Pending** - Not claimed yet', inline: true }
           )
-          .setTimestamp();
+          ;
 
         if (ticket.category === 'report_staff') {
           embed.addFields(
@@ -92,14 +95,17 @@ module.exports = {
     if (claimedTickets.length > 0) {
       for (const ticket of claimedTickets.slice(0, 5)) {
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
           .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report (Claimed)` : `💬 Feedback (Claimed)`)
-          .setColor(0xf39c12)
+          
           .addFields(
             { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
             { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true },
             { name: '📊 Status', value: `✅ Claimed by ${ticket.claimedByName || 'Staff'}`, inline: true }
           )
-          .setTimestamp();
+          ;
 
         if (ticket.category === 'report_staff') {
           embed.addFields(
@@ -120,14 +126,17 @@ module.exports = {
     if (closedTickets.length > 0) {
       for (const ticket of closedTickets.slice(0, 5)) {
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
           .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report (Closed)` : `💬 Feedback (Closed)`)
-          .setColor(0x95a5a6)
+          
           .addFields(
             { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
             { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true },
             { name: '🔒 Closed By', value: ticket.closedByName || 'Staff', inline: true }
           )
-          .setTimestamp();
+          ;
 
         if (ticket.category === 'report_staff') {
           embed.addFields(
@@ -141,15 +150,18 @@ module.exports = {
     }
 
     const summaryEmbed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Ticket Summary')
-      .setColor(0x5865f2)
+      
       .addFields(
         { name: '⏳ Pending', value: `${pendingTickets.length}`, inline: true },
         { name: '✅ Claimed', value: `${claimedTickets.length}`, inline: true },
         { name: '🔒 Closed', value: `${closedTickets.length}`, inline: true }
       )
-      .setFooter({ text: `Total: ${tickets.length} tickets • Use /ticketsetup to create new tickets` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [summaryEmbed, ...embeds].slice(0, 10) });
   }

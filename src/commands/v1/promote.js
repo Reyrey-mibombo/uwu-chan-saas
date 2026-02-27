@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -45,13 +45,16 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ User Promoted')
-      .setColor(0x2ecc71)
+      
       .addFields(
         { name: '👤 User', value: targetUser.tag, inline: true },
         { name: '🎖️ New Rank', value: newRank, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

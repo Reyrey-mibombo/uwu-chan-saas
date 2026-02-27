@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -65,15 +65,18 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Role Assigned')
-      .setColor(0x2ecc71)
+      
       .setDescription(`Role ${role.name} assigned to ${targetUser.username}`)
       .addFields(
         { name: 'User', value: targetUser.username, inline: true },
         { name: 'Role', value: role.name, inline: true },
         { name: 'Assigned By', value: interaction.user.username, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

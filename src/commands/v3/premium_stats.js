@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild, License } = require('../../database/mongo');
 
 module.exports = {
@@ -12,14 +12,17 @@ module.exports = {
 
     if (!guild || !guild.premium?.isActive) {
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('💎 Premium Statistics')
-        .setColor(0x808080)
+        
         .setDescription('This server does not have premium active.')
         .addFields(
           { name: 'Status', value: 'Not Active', inline: true },
           { name: 'Current Tier', value: 'Free', inline: true }
         )
-        .setFooter({ text: 'Use /premium to upgrade!' });
+        ;
 
       return interaction.reply({ embeds: [embed] });
     }
@@ -29,8 +32,11 @@ module.exports = {
       : 'Unlimited';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💎 Premium Statistics')
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: 'Status', value: 'Active', inline: true },
         { name: 'Tier', value: guild.premium.tier.charAt(0).toUpperCase() + guild.premium.tier.slice(1), inline: true },
@@ -38,7 +44,7 @@ module.exports = {
         { name: 'Days Remaining', value: daysRemaining.toString(), inline: true },
         { name: 'License Key', value: guild.premium.licenseKey || 'N/A', inline: false }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

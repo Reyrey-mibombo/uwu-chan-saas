@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 const AVAILABLE_ACHIEVEMENTS = [
@@ -31,8 +31,11 @@ module.exports = {
     }));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🏅 Achievement Rewards — ${target.username}`)
-      .setColor(0xf1c40f)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '🎖️ Earned', value: `${earned.length}/${AVAILABLE_ACHIEVEMENTS.length}`, inline: true },
@@ -40,8 +43,8 @@ module.exports = {
         { name: '📊 Consistency', value: `${consistency}%`, inline: true },
         ...fields
       )
-      .setFooter({ text: `${interaction.guild.name} • Achievement System` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

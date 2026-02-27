@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,8 +23,11 @@ module.exports = {
       const staff = user.staff || {};
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`📊 Performance Stats: ${targetUser.username}`)
-        .setColor(0x2ecc71)
+        
         .addFields(
           { name: 'Points', value: staff.points?.toString() || '0', inline: true },
           { name: 'Warnings', value: staff.warnings?.toString() || '0', inline: true },
@@ -33,7 +36,7 @@ module.exports = {
           { name: 'Reputation', value: staff.reputation?.toString() || '0', inline: true },
           { name: 'Rank', value: staff.rank || 'member', inline: true }
         )
-        .setTimestamp();
+        ;
 
       await interaction.reply({ embeds: [embed] });
     } else {
@@ -47,8 +50,11 @@ module.exports = {
         : 100;
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('📊 Server Performance Stats')
-        .setColor(0x2ecc71)
+        
         .addFields(
           { name: 'Staff Count', value: users.length.toString(), inline: true },
           { name: 'Total Points', value: totalPoints.toString(), inline: true },
@@ -56,7 +62,7 @@ module.exports = {
           { name: 'Total Shift Time', value: `${Math.round(totalShiftTime / 60)}h`, inline: true },
           { name: 'Avg Consistency', value: `${avgConsistency.toFixed(1)}%`, inline: true }
         )
-        .setTimestamp();
+        ;
 
       await interaction.reply({ embeds: [embed] });
     }

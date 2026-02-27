@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Warning, Shift, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -34,8 +34,11 @@ module.exports = {
       : '✅ No stuck shifts';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🚨 Alerts Dashboard')
-      .setColor(highWarnings.length > 0 ? 0xe74c3c : medWarnings.length > 0 ? 0xf39c12 : 0x2ecc71)
+      
       .addFields(
         { name: '⚠️ Alert Level', value: alertLevel, inline: true },
         { name: '🔴 High Warnings (7d)', value: highWarnings.length.toString(), inline: true },
@@ -46,8 +49,8 @@ module.exports = {
         { name: '🔔 Recent Warnings', value: warningText },
         { name: '⏰ Stuck Shifts', value: shiftText }
       )
-      .setFooter({ text: `${interaction.guild.name} • Live Alert Monitor` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

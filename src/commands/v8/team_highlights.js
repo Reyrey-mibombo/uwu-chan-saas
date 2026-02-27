@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -22,16 +22,19 @@ module.exports = {
     const promotions = weekActs.filter(a => a.type === 'promotion').length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`✨ Team Highlights — Week of ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`)
-      .setColor(0xf1c40f)
+      
       .addFields(
         { name: '👥 Active Staff (7d)', value: activeCount.toString(), inline: true },
         { name: '⬆️ Promotions (7d)', value: promotions.toString(), inline: true },
         { name: '⚡ Total Events (7d)', value: weekActs.length.toString(), inline: true },
         { name: '🏆 Top Performers This Week', value: topList }
       )
-      .setFooter({ text: `${interaction.guild.name} • Weekly Team Highlights` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

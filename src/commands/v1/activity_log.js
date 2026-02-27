@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,10 +27,13 @@ module.exports = {
     }));
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Activity Log')
       .setDescription(activityList.join('\n'))
-      .setColor('#2ecc71')
-      .setFooter({ text: `Showing ${activities.length} entries` });
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

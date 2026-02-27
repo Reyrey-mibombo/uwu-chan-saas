@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -24,8 +24,11 @@ module.exports = {
     }));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📈 Growth Forecast')
-      .setColor(0x2ecc71)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '👥 Current Members', value: memberCount.toString(), inline: true },
@@ -36,8 +39,8 @@ module.exports = {
         { name: '🔮 90-Day Projection', value: forecasts[2].projected.toString(), inline: true },
         { name: '⚡ Activity (30d)', value: acts.length.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Growth Forecast` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

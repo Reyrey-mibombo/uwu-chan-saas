@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -28,8 +28,11 @@ module.exports = {
     }).lean();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⬆️ Promotion History')
-      .setColor(0x9b59b6)
+      
       .setDescription(targetUser ? `Promotions for ${targetUser.username}` : 'Server promotion history');
 
     const promotedUsers = [...new Set(promotions.map(p => p.userId))];

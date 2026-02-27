@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -24,15 +24,18 @@ module.exports = {
     const colors = { free: 0x95a5a6, premium: 0x3498db, enterprise: 0xf1c40f };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💎 Premium Effects & Benefits')
-      .setColor(colors[tier] || 0x95a5a6)
+      
       .addFields(
         { name: '🎖️ Current Tier', value: tier.toUpperCase(), inline: true },
         { name: '⏰ Expires', value: tier === 'free' ? 'N/A' : expiryText, inline: true },
         { name: '✨ Your Benefits', value: benefits }
       )
-      .setFooter({ text: `${interaction.guild.name} • Premium Status` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -44,15 +44,18 @@ module.exports = {
     await guild.save();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('💬 Message Filter Settings')
-      .setColor(enabled ? 0x2ecc71 : 0xe74c3c)
+      
       .addFields(
         { name: 'Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
         { name: 'Bad Words', value: badWords ? 'On' : 'Off', inline: true },
         { name: 'Caps Filter', value: capsFilter ? 'On' : 'Off', inline: true },
         { name: 'Spam Filter', value: spamFilter ? 'On' : 'Off', inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,13 +27,16 @@ module.exports = {
     ]);
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📜 Activity Logs - Last ${days} days`)
       .addFields(
         { name: 'Activities', value: `${activities.length}`, inline: true },
         { name: 'Warnings', value: `${warnings.length}`, inline: true },
         { name: 'Shifts', value: `${shifts.length}`, inline: true }
       )
-      .setColor('#f39c12');
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

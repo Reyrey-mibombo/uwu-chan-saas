@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -56,8 +56,11 @@ module.exports = {
     ].filter(Boolean).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Promotion System Setup Complete!')
-      .setColor(0x2ecc71)
+      
       .setDescription('Your promotion system is now configured!')
       .addFields(
         { name: '📢 Announcement Channel', value: channel.name, inline: true },
@@ -67,8 +70,8 @@ module.exports = {
       .addFields(
         { name: '📊 Default Point Thresholds', value: '```\nStaff: 100pts, 5 shifts, 70%\nSenior: 300pts, 10 shifts, 75%\nManager: 600pts, 20 shifts, 80%\nAdmin: 1000pts, 30 shifts, 85%\n```', inline: false }
       )
-      .setFooter({ text: 'Use /set_requirements to customize • Use /set_rank_roles to change roles' })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

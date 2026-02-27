@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 // v2 (FREE) — 5 requirements: + maxWarnings, shiftHours
@@ -39,8 +39,11 @@ module.exports = {
         await guildData.save();
 
         const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
             .setTitle(`⚙️ Extended Requirements Set — ${rank.toUpperCase()}`)
-            .setColor(0x2ecc71)
+            
             .setDescription('**Free tier: 5 requirements configured.**\n💎 Upgrade to Premium to unlock achievements & reputation requirements.\n🌟 Enterprise unlocks all 10.')
             .addFields(
                 { name: '1️⃣ ⭐ Min Points', value: points.toString(), inline: true },
@@ -49,7 +52,7 @@ module.exports = {
                 { name: '4️⃣ ⚠️ Max Warnings', value: maxWarnings.toString(), inline: true },
                 { name: '5️⃣ ⏱️ Min Shift Hours', value: shiftHours > 0 ? `${shiftHours}h` : 'Disabled', inline: true }
             )
-            .setFooter({ text: 'Auto-promotion checks these every 15 minutes' });
+            ;
 
         await interaction.editReply({ embeds: [embed] });
     }

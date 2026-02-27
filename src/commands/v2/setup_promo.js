@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -58,10 +58,13 @@ module.exports = {
             guildData.markModified('rankRoles');
             await guildData.save();
             return interaction.editReply({
-                embeds: [new EmbedBuilder().setColor(0x2ecc71)
+                embeds: [new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
                     .setTitle('✅ Rank Role Set')
                     .setDescription(`**${rank.toUpperCase()}** → <@&${role.id}>`)
-                    .setFooter({ text: 'Staff who reach this rank will automatically receive this role.' })]
+                    ]
             });
         }
 
@@ -70,7 +73,10 @@ module.exports = {
             guildData.settings.promotionChannel = channel.id;
             await guildData.save();
             return interaction.editReply({
-                embeds: [new EmbedBuilder().setColor(0x2ecc71)
+                embeds: [new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
                     .setTitle('✅ Promotion Channel Set')
                     .setDescription(`Promotions will be announced in <#${channel.id}>`)]
             });
@@ -87,7 +93,10 @@ module.exports = {
             guildData.markModified('promotionRequirements');
             await guildData.save();
             return interaction.editReply({
-                embeds: [new EmbedBuilder().setColor(0x2ecc71)
+                embeds: [new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
                     .setTitle(`✅ Requirements Set for ${rank.toUpperCase()}`)
                     .addFields(
                         { name: '⭐ Points', value: pts.toString(), inline: true },
@@ -111,10 +120,13 @@ module.exports = {
             });
             const ch = guildData.settings?.promotionChannel;
             return interaction.editReply({
-                embeds: [new EmbedBuilder().setColor(0x3498db)
+                embeds: [new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
                     .setTitle('⚙️ Promotion Setup')
                     .addFields({ name: '📢 Announcement Channel', value: ch ? `<#${ch}>` : '❌ Not set' }, ...fields)
-                    .setFooter({ text: 'Use /setup_promo role/channel/requirements to configure' })]
+                    ]
             });
         }
     }

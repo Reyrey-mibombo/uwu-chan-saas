@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,13 +20,16 @@ module.exports = {
     let displayRank = rankNames[rank] || rank;
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🏆 ${user.username}'s Rank`)
       .addFields(
         { name: 'Rank', value: displayRank, inline: true },
         { name: 'Points', value: `${points}`, inline: true },
         { name: 'Next Rank', value: requirements.next, inline: true }
       )
-      .setColor('#f1c40f')
+      
       .setThumbnail(user.displayAvatarURL());
 
     await interaction.reply({ embeds: [embed] });

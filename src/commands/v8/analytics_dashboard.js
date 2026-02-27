@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, Guild, User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,8 +23,11 @@ module.exports = {
     const stats = guild?.stats || {};
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Full Analytics Dashboard')
-      .setColor(0x3498db)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '👥 Members', value: interaction.guild.memberCount.toString(), inline: true },
@@ -37,8 +40,8 @@ module.exports = {
         { name: '🎖️ Tier', value: (guild?.premium?.tier || 'free').toUpperCase(), inline: true },
         { name: '📊 Engagement Meter', value: `\`${bar}\` ${engRate}%` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Analytics Dashboard` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -44,15 +44,18 @@ module.exports = {
     const totalCommands = activities.filter(a => a.type === 'command').length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📈 Engagement Chart')
-      .setColor(0x1abc9c)
+      
       .setDescription(chart)
       .addFields(
         { name: 'Total Messages', value: totalMessages.toString(), inline: true },
         { name: 'Total Commands', value: totalCommands.toString(), inline: true },
         { name: 'Period', value: `${days} days`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

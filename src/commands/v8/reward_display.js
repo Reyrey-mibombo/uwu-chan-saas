@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -16,8 +16,11 @@ module.exports = {
     const earned = BADGES.filter(b => pts >= b.min).map(b => b.badge);
     const next = BADGES.find(b => pts < b.min);
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎁 Reward Display — ${target.username}`)
-      .setColor(earned.length > 0 ? 0xf1c40f : 0x95a5a6)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '⭐ Points', value: pts.toString(), inline: true },
@@ -25,8 +28,8 @@ module.exports = {
         { name: '🎖️ Your Badges', value: earned.length ? earned.join('\n') : '🔒 No badges yet — earn 50+ points!' },
         { name: '🎯 Next Reward', value: next ? `${next.badge} at **${next.min}** pts (need ${next.min - pts} more)` : '👑 All rewards unlocked!' }
       )
-      .setFooter({ text: `${interaction.guild.name} • Reward Display` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

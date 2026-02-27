@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -49,9 +49,12 @@ module.exports = {
       warningCount <= reqMaxWarnings;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(canPromote ? '✅ CAN BE PROMOTED!' : '❌ CANNOT BE PROMOTED')
       .setThumbnail(user.displayAvatarURL())
-      .setColor(canPromote ? 0x2ecc71 : 0xe74c3c)
+      
       .addFields(
         { name: '👤 User', value: user.tag, inline: true },
         { name: '🏆 Current Rank', value: currentRank.toUpperCase(), inline: true },

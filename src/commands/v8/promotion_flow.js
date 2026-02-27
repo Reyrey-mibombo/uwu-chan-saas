@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -26,15 +26,18 @@ module.exports = {
     }).join('\n↓\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⬆️ Promotion Flow')
-      .setColor(0x9b59b6)
+      
       .setDescription(flow)
       .addFields(
         { name: '⭐ Your Points', value: pts.toString(), inline: true },
         { name: '🎖️ Current Rank', value: currentRank.toUpperCase(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • 🔵 = Current | ✅ = Achieved | 🟢 = Unlocked` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

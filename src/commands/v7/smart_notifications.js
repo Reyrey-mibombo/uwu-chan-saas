@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -28,15 +28,18 @@ module.exports = {
     const logChannel = guild?.settings?.logChannel ? `<#${guild.settings.logChannel}>` : 'Not Set';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔔 Smart Notification Config')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: '📣 Log Channel', value: logChannel, inline: true },
         { name: '✅ Active Notifications', value: notifConfig.filter(n => n.active).length.toString(), inline: true },
         ...fields
       )
-      .setFooter({ text: `${interaction.guild.name} • Use /automation_settings to enable modules` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

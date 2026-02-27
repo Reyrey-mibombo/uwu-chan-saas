@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, Shift, User } = require('../../database/mongo');
 
 module.exports = {
@@ -50,10 +50,13 @@ module.exports = {
       : 0;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Monthly Insights')
-      .setColor(0x9b59b6)
+      
       .setDescription(`Statistics for ${interaction.guild.name} - ${now.toLocaleString('default', { month: 'long', year: 'numeric' })}`)
-      .setTimestamp();
+      ;
 
     embed.addFields(
       { name: 'Commands Used', value: commandCount.toString(), inline: true },

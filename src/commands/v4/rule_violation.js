@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -49,16 +49,19 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚠️ Rule Violation Reported')
-      .setColor(severity === 'high' ? 0xe74c3c : severity === 'medium' ? 0xf39c12 : 0x3498db)
+      
       .addFields(
         { name: 'User', value: target.tag, inline: true },
         { name: 'Rule', value: rule, inline: true },
         { name: 'Severity', value: severity.toUpperCase(), inline: true },
         { name: 'Description', value: description, inline: false }
       )
-      .setFooter({ text: `Reported by ${interaction.user.username}` })
-      .setTimestamp();
+      
+      ;
 
     const modChannel = interaction.guild.channels.cache.find(c =>
       c.name.includes('mod') || c.name.includes('log') || c.name.includes('violation')

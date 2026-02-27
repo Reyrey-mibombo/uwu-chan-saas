@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -35,16 +35,19 @@ module.exports = {
     const status = alerts.length ? `⚠️ ${alerts.length} Alert(s) Active` : '✅ Healthy';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🤖 Smart Alert System')
-      .setColor(alerts.length > 0 ? 0xe74c3c : 0x2ecc71)
+      
       .addFields(
         { name: '📊 Status', value: status, inline: true },
         { name: '⚡ This Week', value: recent.length.toString(), inline: true },
         { name: '📅 Last Week', value: previous.length.toString(), inline: true },
         { name: '🔔 Smart Alerts', value: alertText }
       )
-      .setFooter({ text: `${interaction.guild.name} • Triggers on >20% drop` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

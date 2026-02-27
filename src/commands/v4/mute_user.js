@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -72,15 +72,18 @@ module.exports = {
       const timeString = duration >= 60 ? `${duration / 60} hour(s)` : `${duration} minute(s)`;
 
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🔇 User Muted')
-        .setColor(0x808080)
+        
         .addFields(
           { name: '👤 User', value: target.tag, inline: true },
           { name: '📋 Reason', value: reason, inline: true },
           { name: '⏱️ Duration', value: timeString, inline: true }
         )
-        .setFooter({ text: `Muted by ${interaction.user.username}` })
-        .setTimestamp();
+        
+        ;
 
       await interaction.reply({ embeds: [embed] });
 

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -38,8 +38,11 @@ module.exports = {
     const calcChange = (curr, prev) => prev > 0 ? ((curr - prev) / prev * 100).toFixed(1) : (curr > 0 ? 100 : 0);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Activity Comparison')
-      .setColor(0x3498db)
+      
       .addFields(
         { name: 'Metric', value: 'Period 1', inline: true },
         { name: period1, value: `${p1Messages} msgs`, inline: true },
@@ -48,7 +51,7 @@ module.exports = {
         { name: 'Commands', value: `${calcChange(p1Commands, p2Commands)}%`, inline: true },
         { name: 'Active Users', value: `${calcChange(p1Users, p2Users)}%`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

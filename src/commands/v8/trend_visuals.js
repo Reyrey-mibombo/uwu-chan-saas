@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -30,11 +30,14 @@ module.exports = {
     const display = rows.map(([name, cur, prev]) => `${arrow(cur, prev)} **${name}**: ${cur} vs ${prev} (${pct(cur, prev)})`).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Trend Visuals')
-      .setColor(thisWeek.length >= lastWeek.length ? 0x2ecc71 : 0xe74c3c)
+      
       .setDescription(display)
-      .setFooter({ text: `${interaction.guild.name} • This Week vs Last Week` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

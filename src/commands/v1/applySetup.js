@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -75,8 +75,11 @@ module.exports = {
     const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${emoji} ${type.toUpperCase()} Application System Configured`)
-      .setColor(color)
+      
       .addFields(
         { name: '👥 Reviewer Role', value: `<@&${reviewerRole.id}>`, inline: true },
         { name: '📝 Log Channel', value: `<#${logChannel.id}>`, inline: true },
@@ -84,7 +87,7 @@ module.exports = {
       )
       .setDescription(`The application system for **${type}** has been successfully set up and is ready to use!\n\nUse \`/apply_panel type:${type}\` in your desired channel to generate the application panel.`)
       .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-      .setTimestamp();
+      ;
 
     if (bannerUrl && bannerUrl.startsWith('http')) {
       embed.setImage(bannerUrl);

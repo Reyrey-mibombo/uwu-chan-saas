@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -36,15 +36,18 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚡ Strike Added')
-      .setColor(0xf39c12)
+      
       .addFields(
         { name: 'User', value: target.tag, inline: true },
         { name: 'Reason', value: reason, inline: true },
         { name: 'Total Strikes', value: user.staff.warnings.toString(), inline: true }
       )
-      .setFooter({ text: `By ${interaction.user.username}` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

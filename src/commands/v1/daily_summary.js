@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -30,6 +30,9 @@ module.exports = {
     }
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Daily Summary')
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
@@ -37,8 +40,8 @@ module.exports = {
         { name: '⏱️ Total Hours', value: `${Math.round(totalMinutes / 60)}h`, inline: true },
         { name: '⚠️ Warnings Today', value: `${warningsToday}`, inline: true }
       )
-      .setColor('#3498db')
-      .setTimestamp();
+      
+      ;
     
     await interaction.reply({ embeds: [embed] });
   }

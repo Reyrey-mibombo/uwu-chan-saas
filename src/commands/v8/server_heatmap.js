@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -33,8 +33,11 @@ module.exports = {
     const half2 = blocks.slice(12, 24).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🌡️ Server Activity Heatmap — 7 Days')
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: '🌙 Night (00-06)', value: night.toString(), inline: true },
         { name: '🌅 Morning (06-12)', value: morning.toString(), inline: true },
@@ -43,8 +46,8 @@ module.exports = {
         { name: '⏰ Hours 00-11', value: `\`\`\`${half1}\`\`\`` },
         { name: '⏰ Hours 12-23', value: `\`\`\`${half2}\`\`\`` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Hourly Heatmap (7d)` })
-      .setTimestamp();
+      ` })
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

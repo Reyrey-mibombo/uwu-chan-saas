@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -41,12 +41,15 @@ module.exports = {
     }));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`👤 Staff Recommendations — ${taskType.charAt(0).toUpperCase() + taskType.slice(1)}`)
-      .setColor(0x3498db)
+      
       .setDescription('Best staff picks based on rank, points, consistency, and reputation:')
       .addFields(fields)
-      .setFooter({ text: `${interaction.guild.name} • Staff Recommendations` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

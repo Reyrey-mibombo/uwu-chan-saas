@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,8 +25,11 @@ module.exports = {
     const eBar = '▓'.repeat(Math.round(engRate / 10)) + '░'.repeat(10 - Math.round(engRate / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🌱 Growth Visuals')
-      .setColor(0x27ae60)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '👥 Total Members', value: memberCount.toString(), inline: true },
@@ -36,8 +39,8 @@ module.exports = {
         { name: '🌱 Growth Rate', value: `\`${gBar}\` ${growth}%` },
         { name: '📊 Engagement Rate (30d)', value: `\`${eBar}\` ${engRate}%` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Growth Visuals` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

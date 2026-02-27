@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -34,6 +34,9 @@ module.exports = {
 
     if (!nextRank) {
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle(`👑 ${user.username} - Max Rank Reached!`)
         .setThumbnail(user.displayAvatarURL())
         .addFields(
@@ -41,8 +44,8 @@ module.exports = {
           { name: '⭐ Points', value: points.toString(), inline: true },
           { name: '📊 Status', value: '🎉 Maximum rank achieved!', inline: false }
         )
-        .setColor(0xf1c40f)
-        .setTimestamp();
+        
+        ;
 
       return interaction.editReply({ embeds: [embed] });
     }
@@ -87,17 +90,20 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📈 ${user.username}'s Promotion Status`)
       .setThumbnail(user.displayAvatarURL())
-      .setColor(progress >= 75 ? 0x2ecc71 : progress >= 50 ? 0xf39c12 : 0xe74c3c)
+      
       .addFields(
         { name: '🏆 Current Rank', value: currentRank.toUpperCase(), inline: true },
         { name: '⬆️ Next Rank', value: nextRank.toUpperCase(), inline: true },
         { name: '📊 Progress', value: `\`${progressBar}\` **${progress}%**\n${metCount}/${totalCount} requirements met`, inline: false },
         { name: '📋 Requirements', value: reqList, inline: false }
       )
-      .setFooter({ text: progress >= 100 ? '🎉 Ready for promotion!' : 'Keep going!' })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

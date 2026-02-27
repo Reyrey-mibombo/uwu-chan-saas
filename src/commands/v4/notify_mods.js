@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -21,14 +21,17 @@ module.exports = {
     const modList = mods.map(m => `<@${m.userId}>`).join(', ') || 'No mods found';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔔 Moderator Notification')
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: 'Message', value: message, inline: false },
         { name: 'Notified', value: modList, inline: false }
       )
-      .setFooter({ text: `From: ${interaction.user.username}` })
-      .setTimestamp();
+      
+      ;
 
     const modChannel = interaction.guild.channels.cache.find(c =>
       c.name.includes('mod') || c.name.includes('staff') || c.name.includes('alert')

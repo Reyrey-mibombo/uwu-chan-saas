@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, Guild, User } = require('../../database/mongo');
 
 module.exports = {
@@ -53,14 +53,17 @@ module.exports = {
     });
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⏰ Auto Reminder Configured')
-      .setColor(enable ? 0x2ecc71 : 0xe74c3c)
+      
       .addFields(
         { name: 'Status', value: enable ? 'Enabled' : 'Disabled', inline: true },
         { name: 'Type', value: type.charAt(0).toUpperCase() + type.slice(1), inline: true },
         { name: 'Remind Before', value: `${minutes} minutes`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

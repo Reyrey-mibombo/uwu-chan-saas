@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -32,8 +32,11 @@ module.exports = {
     const avgPerDay = (total / days).toFixed(1);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔥 Activity Heatmap')
-      .setColor(0xe74c3c)
+      
       .addFields(
         { name: 'Total Activities', value: total.toString(), inline: true },
         { name: 'Days Tracked', value: days.toString(), inline: true },
@@ -44,7 +47,7 @@ module.exports = {
         const bars = '▓'.repeat(intensity) + '░'.repeat(5 - intensity);
         return `${date}: ${bars} ${count}`;
       }).join('\n'))
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

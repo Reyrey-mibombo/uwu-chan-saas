@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -49,15 +49,18 @@ module.exports = {
     } else {
       const alerts = guild.settings.alerts;
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🔔 Data Alerts Configuration')
-        .setColor(0xf39c12)
+        
         .addFields(
           { name: 'Low Activity', value: alerts.lowActivity?.enabled ? '✅ Enabled' : '❌ Disabled', inline: true },
           { name: 'High Warnings', value: alerts.highWarnings?.enabled ? '✅ Enabled' : '❌ Disabled', inline: true },
           { name: 'New Members', value: alerts.newMembers?.enabled ? '✅ Enabled' : '❌ Disabled', inline: true }
         )
         .setDescription('Use `/data_alert alert_type:... enabled:...` to configure alerts.')
-        .setTimestamp();
+        ;
 
       await interaction.reply({ embeds: [embed] });
     }

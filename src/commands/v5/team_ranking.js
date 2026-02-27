@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -34,8 +34,11 @@ module.exports = {
       .lean();
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🏆 Team Ranking (by ${sortBy})`)
-      .setColor(0xf1c40f)
+      
       .setDescription(
         users.map((u, i) => {
           const guildData = u.guilds?.find(g => g.guildId === guildId);
@@ -46,7 +49,7 @@ module.exports = {
           return `${i + 1}. ${name} - ${value}`;
         }).join('\n') || 'No ranking data found'
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

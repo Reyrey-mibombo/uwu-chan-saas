@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -50,10 +50,13 @@ module.exports = {
     const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${emoji} ${type.toUpperCase()} Questions Updated`)
       .setDescription('The following questions have been configured for future applications:')
-      .setColor(color)
-      .setTimestamp();
+      
+      ;
 
     questions.forEach((q, i) => {
       embed.addFields({

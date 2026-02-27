@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -29,8 +29,11 @@ module.exports = {
       .slice(0, 5);
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📋 Report Summary')
-      .setColor(0x34495e)
+      
       .addFields(
         { name: 'Total Activities', value: activities.length.toString(), inline: true },
         { name: 'Messages', value: (typeCounts.message || 0).toString(), inline: true },
@@ -40,7 +43,7 @@ module.exports = {
         { name: 'Period', value: `${days} days`, inline: true }
       )
       .setDescription(`Top 5 Active Users:\n${topUsers.map(([uid, count], i) => `${i + 1}. <@${uid}>: ${count}`).join('\n')}`)
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -33,9 +33,12 @@ module.exports = {
       const alerts = guildData.alerts.map(a => `• ${a.name}: ${a.condition}`).join('\n') || 'No alerts configured';
       
       const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
         .setTitle('🔔 Custom Alerts')
         .setDescription(alerts)
-        .setColor('#9b59b6');
+        ;
       
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }

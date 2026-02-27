@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity, Shift, User } = require('../../database/mongo');
 
 module.exports = {
@@ -20,6 +20,9 @@ module.exports = {
     const avgHours = activeStaff > 0 ? (totalHours / activeStaff).toFixed(1) : 0;
     
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📊 Weekly Report')
       .addFields(
         { name: 'Total Shifts', value: `${shifts.length}`, inline: true },
@@ -28,8 +31,8 @@ module.exports = {
         { name: 'Total Activities', value: `${activities.length}`, inline: true },
         { name: 'Staff Members', value: `${users.length}`, inline: true }
       )
-      .setColor('#3498db')
-      .setTimestamp();
+      
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

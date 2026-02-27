@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -17,8 +17,11 @@ module.exports = {
     const rankEmojis = { owner: '👑', admin: '💜', manager: '💎', senior: '🌟', staff: '⭐', trial: '🔰', member: '👤' };
     const colors = { owner: 0xffd700, admin: 0x9b59b6, manager: 0x00bfff, senior: 0x2ecc71, staff: 0x3498db, trial: 0x95a5a6, member: 0x7f8c8d };
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${rankEmojis[rank] || '👤'} Rank Display — ${target.username}`)
-      .setColor(colors[rank] || 0x95a5a6)
+      
       .setThumbnail(target.displayAvatarURL({ size: 256 }))
       .setDescription(`**${rankEmojis[rank] || ''} ${rank.toUpperCase()}**`)
       .addFields(
@@ -26,8 +29,8 @@ module.exports = {
         { name: '📈 Consistency', value: `${consistency}%`, inline: true },
         { name: '🏅 Achievements', value: (user?.staff?.achievements?.length || 0).toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Staff Rank Display` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

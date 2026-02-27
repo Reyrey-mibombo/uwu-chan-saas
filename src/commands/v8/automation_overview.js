@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -30,14 +30,17 @@ module.exports = {
     const activeCount = [modules.moderation, modules.analytics, modules.automation, modules.tickets].filter(Boolean).length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('⚙️ Automation Overview')
-      .setColor(activeCount >= 3 ? 0x2ecc71 : activeCount >= 1 ? 0xf39c12 : 0xe74c3c)
+      
       .addFields(
         { name: `🤖 Modules (${activeCount}/4 Active)`, value: moduleStatus },
         { name: '🔧 Configuration', value: configStatus }
       )
-      .setFooter({ text: `${interaction.guild.name} • Use /automation_settings to configure` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 const REWARD_THRESHOLDS = [50, 150, 300, 500, 1000];
@@ -25,8 +25,11 @@ module.exports = {
     const bar = '▓'.repeat(Math.round(progress / 10)) + '░'.repeat(10 - Math.round(progress / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎯 Reward Prediction — ${target.username}`)
-      .setColor(0xf39c12)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '⭐ Current Points', value: points.toString(), inline: true },
@@ -34,8 +37,8 @@ module.exports = {
         { name: '📊 Needed', value: `${needed} more points`, inline: true },
         { name: '📈 Progress', value: `\`${bar}\` **${progress}%**` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Reward Prediction` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

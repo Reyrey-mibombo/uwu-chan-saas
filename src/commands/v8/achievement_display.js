@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -21,8 +21,11 @@ module.exports = {
       : '*No achievements yet — keep contributing!*';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🏅 Achievement Showcase — ${target.username}`)
-      .setColor(0xf1c40f)
+      
       .setThumbnail(target.displayAvatarURL({ size: 256 }))
       .setDescription(achieveDisplay)
       .addFields(
@@ -30,8 +33,8 @@ module.exports = {
         { name: '⭐ Points', value: points.toString(), inline: true },
         { name: '🏅 Total Achievements', value: achievements.length.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Elite Achievement Display` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

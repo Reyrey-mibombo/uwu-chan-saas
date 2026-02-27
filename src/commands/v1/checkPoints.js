@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -16,15 +16,18 @@ module.exports = {
     const consistency = userData?.staff?.consistency || 100;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`💰 ${user.username}'s Points`)
-      .setColor(0xf1c40f)
+      
       .setThumbnail(user.displayAvatarURL())
       .addFields(
         { name: '⭐ Points', value: points.toString(), inline: true },
         { name: '🎖️ Rank', value: rank, inline: true },
         { name: '📈 Consistency', value: `${consistency}%`, inline: true }
       )
-      .setTimestamp();
+      ;
 
     await interaction.reply({ embeds: [embed] });
   }

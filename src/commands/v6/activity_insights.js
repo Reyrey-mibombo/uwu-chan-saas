@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 function progressBar(value, max, len = 10) {
@@ -54,8 +54,11 @@ module.exports = {
     }).join('\n');
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔍 Activity Insights — Last 7 Days')
-      .setColor(0x3498db)
+      
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: '📊 Total Activity', value: totalActivity.toString(), inline: true },
@@ -67,8 +70,8 @@ module.exports = {
         { name: '🕐 Top 3 Peak Hours', value: topHoursText, inline: false },
         { name: '📈 Day Breakdown', value: `\`\`\`${dayBreakdown}\`\`\``, inline: false }
       )
-      .setFooter({ text: `${interaction.guild.name} • Enterprise Insights` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

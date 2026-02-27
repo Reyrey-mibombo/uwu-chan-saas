@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -46,8 +46,11 @@ module.exports = {
     const cmdLast = lastWeek.filter(a => a.type === 'command').length;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`${trend} Analytics Trend`)
-      .setColor(trend === '📈' ? 0x2ecc71 : trend === '📉' ? 0xe74c3c : 0x95a5a6)
+      
       .addFields(
         { name: '📊 This Week', value: thisWeek.length.toString(), inline: true },
         { name: '📅 Last Week', value: lastWeek.length.toString(), inline: true },
@@ -57,8 +60,8 @@ module.exports = {
         { name: '👥 Active Users (7d)', value: [...new Set(thisWeek.map(a => a.userId))].length.toString(), inline: true },
         { name: '📆 This Week Daily', value: `\`\`\`${chart}\`\`\`` }
       )
-      .setFooter({ text: `${interaction.guild.name} • Week-over-Week Analysis` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -13,11 +13,14 @@ module.exports = {
     const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
     const list = users.map((u, i) => `${medals[i]} **${u.username || '?'}** — ${u.staff?.points || 0} pts`).join('\n');
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🏆 Leaderboard Summary')
-      .setColor(0xf1c40f)
+      
       .setDescription(list)
-      .setFooter({ text: `${interaction.guild.name} • Top 5 by Points` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

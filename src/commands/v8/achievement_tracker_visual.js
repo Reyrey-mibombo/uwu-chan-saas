@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 const ALL_ACHIEVEMENTS = ['🔥 First Shift', '⭐ Point Collector', '💎 Elite Member', '🎯 Consistent', '🏆 Top Performer', '⚡ Power User'];
@@ -26,8 +26,11 @@ module.exports = {
     const bar = '▓'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`🎯 Achievement Tracker — ${target.username}`)
-      .setColor(pct === 100 ? 0xf1c40f : 0x3498db)
+      
       .setThumbnail(target.displayAvatarURL())
       .addFields(
         { name: '📊 Completion', value: `\`${bar}\` **${pct}%** (${earned.length}/${ALL_ACHIEVEMENTS.length})` },
@@ -35,8 +38,8 @@ module.exports = {
         { name: '📈 Consistency', value: `${consistency}%`, inline: true },
         { name: '🏅 Achievements', value: progress }
       )
-      .setFooter({ text: `${interaction.guild.name} • Visual Achievement Tracker` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

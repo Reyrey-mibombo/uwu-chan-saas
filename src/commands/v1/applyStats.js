@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -45,6 +45,9 @@ module.exports = {
     const progressBar = `\`[${filledBar}${emptyBar}]\` **${rate}%**`;
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle(`📊 ${type === 'all' ? 'Overall' : type.charAt(0).toUpperCase() + type.slice(1)} Application Statistics`)
       .setDescription(`Current statistics for **${interaction.guild.name}** applications.`)
       .addFields(
@@ -55,10 +58,10 @@ module.exports = {
         { name: '❌ Denied', value: `\`${denied}\``, inline: true },
         { name: '📈 Acceptance Rate', value: progressBar, inline: false }
       )
-      .setColor(0x5865f2)
+      
       .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-      .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
-      .setTimestamp();
+       })
+      ;
 
     if (type === 'all') {
       embed.addFields(

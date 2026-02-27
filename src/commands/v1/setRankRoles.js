@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -41,15 +41,18 @@ module.exports = {
     };
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('✅ Rank Role Updated')
-      .setColor(0x2ecc71)
+      
       .setDescription(`When users promote to **${rankNames[rank]}**, they will get the role: **${role.name}**`)
       .addFields(
         { name: '📌 Rank', value: rankNames[rank], inline: true },
         { name: '🎭 Role', value: role.name, inline: true }
       )
-      .setFooter({ text: 'Use /view_rank_roles to see all configured roles' })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

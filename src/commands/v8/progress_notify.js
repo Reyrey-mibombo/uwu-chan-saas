@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -21,12 +21,15 @@ module.exports = {
       ? ready.map(u => `🔔 **${u.username || '?'}** is ready to promote to **${RANK_ORDER[RANK_ORDER.indexOf(u.staff?.rank || 'trial') + 1]}**`).join('\n')
       : '✅ No staff are pending promotion right now.';
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('🔔 Progress Notifications')
-      .setColor(ready.length ? 0xf39c12 : 0x2ecc71)
+      
       .setDescription(txt)
       .addFields({ name: '✅ Ready for Promotion', value: ready.length.toString(), inline: true })
-      .setFooter({ text: `${interaction.guild.name} • Use /rank_announce to promote` })
-      .setTimestamp();
+      
+      ;
     await interaction.editReply({ embeds: [embed] });
   }
 };

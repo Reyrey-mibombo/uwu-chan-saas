@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -24,15 +24,18 @@ module.exports = {
     ).join('\n') || 'No data yet.';
 
     const embed = new EmbedBuilder()
+      .setColor('#2b2d31')
+      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      .setTimestamp()
       .setTitle('📅 Weekly Bonus Leaders')
-      .setColor(0xf1c40f)
+      
       .setDescription(list)
       .addFields(
         { name: '🎁 Bonus Events (7d)', value: weekActivity.length.toString(), inline: true },
         { name: '👥 Total Bonus Recipients', value: Object.keys(weekMap).length.toString(), inline: true }
       )
-      .setFooter({ text: `${interaction.guild.name} • Weekly Bonus Report` })
-      .setTimestamp();
+      
+      ;
 
     await interaction.editReply({ embeds: [embed] });
   }

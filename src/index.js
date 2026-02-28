@@ -16,16 +16,11 @@ const TicketSystem = require('./systems/ticketSystem');
 const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 
+// --- ADDED: Activity model for tracking real data ---
+const Activity = require('./models/Activity'); 
+
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessageTyping,
-    GatewayIntentBits.GuildPresences
-  ]
+  intents:
 });
 
 client.commands = new Collection();
@@ -55,7 +50,7 @@ async function initializeSystems() {
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
   const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8'];
-  const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+  const versions = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version.trim());
@@ -71,24 +66,48 @@ async function loadCommands() {
           client.commands.set(command.data.name, command);
         }
       } catch (e) {
-        logger.error(`[STRATA] Error loading command ${file}: ${e.message}`);
+        logger.error(` Error loading command ${file}: ${e.message}`);
       }
     }
   }
-  logger.info(`[STRATA] Loaded ${client.commands.size} commands`);
+  logger.info(` Loaded ${client.commands.size} commands`);
 }
 
 client.once('ready', async () => {
-  const tierDisplay = process.env.ENABLED_TIERS || 'v1-v8';
-  logger.info(`[STRATA] Bot logged in as ${client.user.tag}`);
-  logger.info(`[STRATA] Active Command Tiers: ${tierDisplay}`);
+  const tierDisplay = process.env.ENABLED_TIERS |
+
+| 'v1-v8';
+  logger.info(` Bot logged in as ${client.user.tag}`);
+  logger.info(` Active Command Tiers: ${tierDisplay}`);
   await initializeSystems();
   await loadCommands();
 
   const testGuildId = process.env.TEST_GUILD_ID;
-  await commandHandler.deployCommands(client, testGuildId || null).catch(e => logger.error('[STRATA2] Deploy error: ' + e.message));
+  await commandHandler.deployCommands(client, testGuildId |
+
+| null).catch(e => logger.error(' Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
+});
+
+// --- ADDED: Real Data Ingestion Pipeline ---
+client.on('messageCreate', async (message) => {
+  // Ignore bot messages and DMs
+  if (message.author.bot ||!message.guild) return;
+
+  // Get today's date safely in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T');
+
+  try {
+    // Find today's record for this server and increment it, or create it if it doesn't exist
+    await Activity.findOneAndUpdate(
+      { guildId: message.guild.id, date: today },
+      { $inc: { messageCount: 1 } },
+      { upsert: true, new: true }
+    );
+  } catch (error) {
+    logger.error(" Error tracking activity:", error);
+  }
 });
 
 client.on('interactionCreate', async interaction => {
@@ -97,7 +116,7 @@ client.on('interactionCreate', async interaction => {
     try {
       await client.systems.automation.handlePromotionButton(interaction);
     } catch (err) {
-      logger.error('[PROMO BUTTON]', err);
+      logger.error('', err);
       if (!interaction.replied) await interaction.reply({ content: '❌ Error processing promotion decision.', ephemeral: true });
     }
     return;
@@ -149,8 +168,8 @@ client.on('interactionCreate', async interaction => {
         return;
       }
     } catch (error) {
-      logger.error('[APPLY BUTTON ERROR]', error);
-      if (!interaction.replied && !interaction.deferred) {
+      logger.error('', error);
+      if (!interaction.replied &&!interaction.deferred) {
         await interaction.reply({ 
           content: '❌ An error occurred processing this application button!', 
           ephemeral: true 
@@ -170,8 +189,8 @@ client.on('interactionCreate', async interaction => {
         await handleApplySubmit(interaction, client);
         return;
       } catch (error) {
-        logger.error('[APPLY MODAL ERROR]', error);
-        if (!interaction.replied && !interaction.deferred) {
+        logger.error('', error);
+        if (!interaction.replied &&!interaction.deferred) {
           await interaction.reply({ 
             content: '❌ Failed to submit application!', 
             ephemeral: true 
@@ -201,7 +220,7 @@ client.on('interactionCreate', async interaction => {
   const command = client.commands.get(interaction.commandName);
   if (!command) return;
 
-  logger.info(`[CMD] ${interaction.commandName} called by ${interaction.user.id} (${interaction.user.tag})`);
+  logger.info(` ${interaction.commandName} called by ${interaction.user.id} (${interaction.user.tag})`);
 
   const hasAccess = await versionGuard.checkAccess(
     interaction.guildId,
@@ -209,7 +228,7 @@ client.on('interactionCreate', async interaction => {
     command.requiredVersion
   );
 
-  logger.info(`[CMD] Access result: ${JSON.stringify(hasAccess)}`);
+  logger.info(` Access result: ${JSON.stringify(hasAccess)}`);
 
   if (!hasAccess.allowed) {
     return interaction.reply({
@@ -226,7 +245,7 @@ client.on('interactionCreate', async interaction => {
   const now = Date.now();
   const timestamps = cooldowns.get(command.data.name);
   const defaultCooldownDuration = 3;
-  const cooldownAmount = (command.cooldown ?? defaultCooldownDuration) * 1000;
+  const cooldownAmount = (command.cooldown?? defaultCooldownDuration) * 1000;
 
   if (timestamps.has(interaction.user.id)) {
     const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
@@ -245,12 +264,14 @@ client.on('interactionCreate', async interaction => {
   try {
     await command.execute(interaction, client);
   } catch (error) {
-    logger.error('[STRATA2]', error);
+    logger.error('', error);
     const reply = {
       content: 'There was an error executing this command!',
       ephemeral: true
     };
-    if (interaction.replied || interaction.deferred) {
+    if (interaction.replied |
+
+| interaction.deferred) {
       await interaction.followUp(reply);
     } else {
       await interaction.reply(reply);
@@ -281,9 +302,9 @@ app.get('/health', (req, res) => {
 });
 
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => logger.info('[STRATA2] Connected to MongoDB'))
-  .catch(err => {
-    logger.error('[STRATA2] MongoDB connection error:', err);
+ .then(() => logger.info(' Connected to MongoDB'))
+ .catch(err => {
+    logger.error(' MongoDB connection error:', err);
     process.exit(1);
   });
 
@@ -295,17 +316,19 @@ app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/webhooks', require('./webhook/paymentWebhook'));
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT |
+
+| 3001;
 app.listen(PORT, () => {
-  logger.info(`[STRATA2] API server running on port ${PORT}`);
+  logger.info(` API server running on port ${PORT}`);
 });
 
 client.login(process.env.DISCORD_TOKEN)
-  .catch(err => {
-    logger.error('[STRATA2] Discord login error:', err);
+ .catch(err => {
+    logger.error(' Discord login error:', err);
     process.exit(1);
   });
 
 process.on('unhandledRejection', error => {
-  logger.error('[STRATA2] Unhandled promise rejection:', error);
+  logger.error(' Unhandled promise rejection:', error);
 });

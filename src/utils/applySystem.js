@@ -47,55 +47,66 @@ async function handleApplyButton(interaction) {
 
 async function handleModalSubmit(interaction) {
     if (interaction.customId !== 'apply_modal_submit') return;
-    await interaction.deferReply({ ephemeral: true });
 
-    const config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
-    if (!config) return interaction.editReply({ embeds: [createErrorEmbed('Configuration error.')] });
+    try {
+        await interaction.deferReply({ ephemeral: true });
 
-    const activeQuestions = config.questions.slice(0, 5);
-    const answers = activeQuestions.map((q, i) => {
-        return {
-            question: q,
-            answer: interaction.fields.getTextInputValue(`question_${i}`)
-        };
-    });
+        const config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
+        if (!config) return interaction.editReply({ embeds: [createErrorEmbed('Configuration error.')] });
 
-    const request = new ApplicationRequest({
-        guildId: interaction.guildId,
-        userId: interaction.user.id,
-        username: interaction.user.username,
-        answers: answers
-    });
+        const activeQuestions = config.questions.slice(0, 5);
+        const answers = activeQuestions.map((q, i) => {
+            return {
+                question: q,
+                answer: interaction.fields.getTextInputValue(`question_${i}`)
+            };
+        });
 
-    await request.save();
+        const request = new ApplicationRequest({
+            guildId: interaction.guildId,
+            userId: interaction.user.id,
+            username: interaction.user.username,
+            answers: answers
+        });
 
-    const reviewChannel = await interaction.guild.channels.fetch(config.reviewChannelId).catch(() => null);
-    if (!reviewChannel) {
-        return interaction.editReply({ embeds: [createErrorEmbed('Review channel not found. The application was saved but staff could not be notified.')] });
+        await request.save();
+
+        const reviewChannel = await interaction.guild.channels.fetch(config.reviewChannelId).catch(() => null);
+        if (!reviewChannel) {
+            return interaction.editReply({ embeds: [createErrorEmbed('Review channel not found. The application was saved but staff could not be notified.')] });
+        }
+
+        const embed = createCoolEmbed({
+            title: `📝 New Application from ${interaction.user.username}`,
+            color: 'warning',
+            thumbnail: interaction.user.displayAvatarURL()
+        });
+
+        answers.forEach((ans, i) => {
+            embed.addFields({ name: `${i + 1}. ${ans.question}`, value: `> ${ans.answer}` });
+        });
+
+        const actionRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`apply_accept_${request._id}`).setLabel('Accept').setStyle(ButtonStyle.Success).setEmoji('✅'),
+            new ButtonBuilder().setCustomId(`apply_deny_${request._id}`).setLabel('Deny').setStyle(ButtonStyle.Danger).setEmoji('❌')
+        );
+
+        const ping = config.reviewerRoleId ? `<@&${config.reviewerRoleId}>` : '';
+        const reviewMsg = await reviewChannel.send({ content: ping, embeds: [embed], components: [actionRow] });
+
+        request.pendingMessageId = reviewMsg.id;
+        await request.save();
+
+        await interaction.editReply({ embeds: [createSuccessEmbed('Application Submitted', 'Your application has been successfully submitted to the staff team for review!')] });
+    } catch (e) {
+        console.error("MODAL SUBMIT ERROR:", e);
+        const errorMessage = `❌ **Failed to process application!**\n\`\`\`js\n${e.stack || e.message}\n\`\`\``;
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ content: errorMessage }).catch(() => { });
+        } else {
+            await interaction.reply({ content: errorMessage, ephemeral: true }).catch(() => { });
+        }
     }
-
-    const embed = createCoolEmbed({
-        title: `📝 New Application from ${interaction.user.username}`,
-        color: 'warning',
-        thumbnail: interaction.user.displayAvatarURL()
-    });
-
-    answers.forEach((ans, i) => {
-        embed.addFields({ name: `${i + 1}. ${ans.question}`, value: `> ${ans.answer}` });
-    });
-
-    const actionRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`apply_accept_${request._id}`).setLabel('Accept').setStyle(ButtonStyle.Success).setEmoji('✅'),
-        new ButtonBuilder().setCustomId(`apply_deny_${request._id}`).setLabel('Deny').setStyle(ButtonStyle.Danger).setEmoji('❌')
-    );
-
-    const ping = config.reviewerRoleId ? `<@&${config.reviewerRoleId}>` : '';
-    const reviewMsg = await reviewChannel.send({ content: ping, embeds: [embed], components: [actionRow] });
-
-    request.pendingMessageId = reviewMsg.id;
-    await request.save();
-
-    await interaction.editReply({ embeds: [createSuccessEmbed('Application Submitted', 'Your application has been successfully submitted to the staff team for review!')] });
 }
 
 async function handleReviewAction(interaction) {

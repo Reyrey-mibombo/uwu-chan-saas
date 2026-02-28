@@ -46,6 +46,12 @@ const guildSchema = new mongoose.Schema({
     logChannel: { type: String, default: null },
     acceptedRole: { type: String, default: null }
   },
+  // Enterprise custom branding configuration
+  customBranding: {
+    color: { type: String, default: null },
+    footer: { type: String, default: null },
+    iconURL: { type: String, default: null }
+  },
   // Dynamic application system config
   applicationConfig: { type: mongoose.Schema.Types.Mixed, default: {} },
   // Full 10-field promotion requirements (customizable by tier)

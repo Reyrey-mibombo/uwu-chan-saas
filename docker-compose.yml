@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: uwu-chan-saas-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/uwu-chan-saas
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - bot-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: uwu-chan-saas-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - bot-network
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: uwu-chan-saas-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - bot-network
+
+volumes:
+  mongo-data:
+  redis-data:
+
+networks:
+  bot-network:
+    driver: bridge

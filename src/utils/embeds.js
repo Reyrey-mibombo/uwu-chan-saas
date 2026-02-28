@@ -22,20 +22,33 @@ const FOOTER_TEXT = 'UwU Chan SaaS • Premium Experience 💖';
  * @param {Object} [options.author] The author object { name, iconURL, url }
  * @param {string} [options.thumbnail] Thumbnail URL
  * @param {string} [options.image] Main image URL
+ * @param {Object} [options.branding] Custom branding overrides { color, footer, iconURL }
  * @returns {EmbedBuilder}
  */
 function createCoolEmbed(options = {}) {
     const embed = new EmbedBuilder();
 
+    const branding = options.branding || {};
+
     // Set color
     let color = EMBED_COLORS.primary;
-    if (options.color) {
+    if (branding.color) {
+        color = branding.color;
+    } else if (options.color) {
         color = EMBED_COLORS[options.color] || options.color;
     }
     embed.setColor(color);
 
     // Set standard footer
-    embed.setFooter({ text: FOOTER_TEXT });
+    const footerText = branding.footer || FOOTER_TEXT;
+    const footerIcon = branding.iconURL || null;
+
+    if (footerIcon) {
+        embed.setFooter({ text: footerText, iconURL: footerIcon });
+    } else {
+        embed.setFooter({ text: footerText });
+    }
+
     embed.setTimestamp();
 
     // Set content

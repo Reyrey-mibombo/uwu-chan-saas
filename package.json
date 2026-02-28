@@ -7,7 +7,8 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "deploy": "node src/handlers/commandHandler.js",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "test": "jest"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
@@ -22,11 +23,13 @@
     "express-rate-limit": "^7.1.0",
     "helmet": "^7.1.0",
     "cors": "^2.8.5",
-    "quickchart-js": "^1.4.2"
+    "quickchart-js": "^1.4.2",
+    "redis": "^4.6.10"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "eslint": "^8.54.0"
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0"
   },
   "engines": {
     "node": ">=20.0.0"

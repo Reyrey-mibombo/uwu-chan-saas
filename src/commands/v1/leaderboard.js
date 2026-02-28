@@ -10,8 +10,25 @@ module.exports = {
   async execute(interaction, client) {
     const limit = interaction.options.getInteger('limit') || 10;
     const staffSystem = client.systems.staff;
+    const redisClient = require('../../utils/cache');
+    const cacheKey = `leaderboard:${interaction.guildId}:${limit}`;
 
-    const leaderboard = await staffSystem.getLeaderboard(interaction.guildId, limit);
+    let leaderboard;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) leaderboard = JSON.parse(cached);
+    } catch (err) {
+      console.error('Redis cache error:', err);
+    }
+
+    if (!leaderboard) {
+      leaderboard = await staffSystem.getLeaderboard(interaction.guildId, limit);
+      try {
+        await redisClient.setEx(cacheKey, 300, JSON.stringify(leaderboard)); // 5 minute cache
+      } catch (err) {
+        console.error('Redis cache error:', err);
+      }
+    }
 
     if (leaderboard.length === 0) {
       return interaction.reply({ content: 'No staff data available yet. Start earning points!', ephemeral: true });

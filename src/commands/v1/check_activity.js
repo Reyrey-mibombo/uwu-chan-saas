@@ -2,173 +2,127 @@ const { SlashCommandBuilder, EmbedBuilder, ActivityType } = require('discord.js'
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('activity')
-        .setDescription('Check a user\'s current activity and status in real-time.')
-        .addUserOption(option =>
+      .setName('check_activity')
+      .setDescription('Check the real-time activity and status of a user.')
+      .addUserOption(option =>
             option.setName('target')
-                .setDescription('The user to inspect (defaults to yourself)')
-                .setRequired(false)),
+              .setDescription('The user you want to check')
+              .setRequired(false)),
 
     async execute(interaction) {
+        // Defer the reply to give the bot up to 15 minutes to process
         await interaction.deferReply();
 
-        const targetUser = interaction.options.getUser('target') || interaction.user;
+        // Determine target user
+        const targetUser = interaction.options.getUser('target') |
+
+| interaction.user;
+        
+        // Fetch the genuine GuildMember object
         const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
 
         if (!member) {
-            return interaction.editReply('❌ Could not find that user in this server.');
+            return interaction.editReply("Could not resolve that user in this server.");
         }
 
         const presence = member.presence;
 
-        // If presence is null, the bot lacks the necessary intent or the user is offline/invisible
-        if (!presence) {
-            const embed = new EmbedBuilder()
-                .setColor('#2f3136')
-                .setAuthor({ name: targetUser.tag, iconURL: targetUser.displayAvatarURL() })
-                .setDescription('🔒 This user is offline, invisible, or has privacy settings enabled.\n*The bot may also need the Presence Intent enabled.*')
-                .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 256 }))
-                .setFooter({ text: 'Discord Activity Check', iconURL: interaction.client.user.displayAvatarURL() })
-                .setTimestamp();
-            return interaction.editReply({ embeds: [embed] });
+        // Handle completely offline or invisible users
+        if (!presence |
+
+| presence.status === 'offline' |
+| presence.status === 'invisible') {
+            const offlineEmbed = new EmbedBuilder()
+              .setColor('#747f8d')
+              .setAuthor({ name: targetUser.tag, iconURL: targetUser.displayAvatarURL() })
+              .setDescription('This user is currently offline, invisible, or has their activity privacy settings enabled.');
+            
+            return interaction.editReply({ embeds: [offlineEmbed] });
         }
 
-        const status = presence.status; // 'online', 'idle', 'dnd', 'offline'
-        const activities = presence.activities.filter(a => a.type !== ActivityType.Custom); // Filter custom for later
-        const customStatus = presence.activities.find(a => a.type === ActivityType.Custom);
+        const activities = presence.activities;
 
-        // Base embed with user info and status
+        // Handle users who are online but have no active status or games
+        if (!activities |
+
+| activities.length === 0) {
+            const noActivityEmbed = new EmbedBuilder()
+              .setColor('#43b581')
+              .setAuthor({ name: targetUser.tag, iconURL: targetUser.displayAvatarURL() })
+              .setDescription(`This user is currently **${presence.status}**, but isn't playing any games or doing any activities.`);
+            
+            return interaction.editReply({ embeds: [noActivityEmbed] });
+        }
+
+        // Dynamic embed color based on exact operational status
         const statusColors = {
-            online: 0x43b581,
-            idle: 0xfaa61a,
-            dnd: 0xf04747,
-            offline: 0x747f8d
+            online: '#43b581',
+            idle: '#faa61a',
+            dnd: '#f04747',
         };
+
         const embed = new EmbedBuilder()
-            .setColor(statusColors[status] || 0x2b2d31)
-            .setAuthor({ 
-                name: `${targetUser.tag} — ${status.toUpperCase()}`,
-                iconURL: targetUser.displayAvatarURL({ dynamic: true })
-            })
-            .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
-            .setFooter({ 
-                text: `Requested by ${interaction.user.tag}`, 
-                iconURL: interaction.user.displayAvatarURL({ dynamic: true })
-            })
-            .setTimestamp();
+          .setColor(statusColors[presence.status] |
 
-        // --- Device Status (if available) ---
-        if (presence.clientStatus) {
-            const devices = [];
-            if (presence.clientStatus.desktop) devices.push('🖥️ Desktop');
-            if (presence.clientStatus.mobile) devices.push('📱 Mobile');
-            if (presence.clientStatus.web) devices.push('🌐 Web');
-            if (devices.length) {
-                embed.addFields({ name: '📡 Connected From', value: devices.join(' • '), inline: true });
+| '#2b2d31')
+          .setAuthor({ name: `${targetUser.tag}'s Real-Time Activity`, iconURL: targetUser.displayAvatarURL() })
+          .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
+          .setFooter({ text: `Status: ${presence.status.toUpperCase()}` })
+          .setTimestamp();
+
+        // Process strictly real activity data
+        activities.forEach((activity) => {
+            let activityString = '';
+
+            switch (activity.type) {
+                case ActivityType.Playing:
+                    activityString = `**Playing:** ${activity.name}`;
+                    break;
+                case ActivityType.Streaming:
+                    // Strictly uses the real URL provided by the Discord API. No fake fallbacks.
+                    activityString = activity.url 
+                       ? `**Streaming:** [${activity.name}](${activity.url})` 
+                        : `**Streaming:** ${activity.name}`;
+                    break;
+                case ActivityType.Listening:
+                    activityString = `**Listening to:** ${activity.name}`;
+                    break;
+                case ActivityType.Watching:
+                    activityString = `**Watching:** ${activity.name}`;
+                    break;
+                case ActivityType.Competing:
+                    activityString = `**Competing in:** ${activity.name}`;
+                    break;
+                case ActivityType.Custom:
+                    const emoji = activity.emoji? (activity.emoji.id? `<${activity.emoji.animated? 'a' : ''}:${activity.emoji.name}:${activity.emoji.id}> ` : `${activity.emoji.name} `) : '';
+                    activityString = `${emoji}${activity.state |
+
+| ''}`;
+                    break;
             }
-        }
 
-        // --- Custom Status (always show if present) ---
-        if (customStatus) {
-            let customText = '';
-            if (customStatus.emoji) {
-                customText += customStatus.emoji.id 
-                    ? `<${customStatus.emoji.animated ? 'a' : ''}:${customStatus.emoji.name}:${customStatus.emoji.id}> `
-                    : `${customStatus.emoji.name} `;
+            // Append real Rich Presence details
+            if (activity.details && activity.type!== ActivityType.Custom) {
+                activityString += `\n**Details:** ${activity.details}`;
             }
-            customText += customStatus.state || '';
-            if (customText.trim()) {
-                embed.addFields({ name: '💬 Custom Status', value: customText, inline: false });
+            if (activity.state && activity.type!== ActivityType.Custom) {
+                activityString += `\n**State:** ${activity.state}`;
             }
-        }
 
-        // --- Regular Activities (games, Spotify, etc.) ---
-        if (activities.length === 0) {
-            embed.setDescription('✨ Online but no active activity to display.');
-        } else {
-            activities.forEach(activity => {
-                let fieldName = '';
-                let fieldValue = '';
+            // Calculate exact epoch timestamps
+            if (activity.timestamps && activity.timestamps.start) {
+                const elapsed = Math.floor(activity.timestamps.start.getTime() / 1000);
+                activityString += `\n**Time Elapsed:** <t:${elapsed}:R>`;
+            }
 
-                // Format activity name with type
-                switch (activity.type) {
-                    case ActivityType.Playing:
-                        fieldName = '🎮 Playing';
-                        break;
-                    case ActivityType.Streaming:
-                        fieldName = '📺 Streaming';
-                        break;
-                    case ActivityType.Listening:
-                        // Special handling for Spotify
-                        if (activity.name === 'Spotify' && activity.assets && activity.assets.largeText) {
-                            fieldName = '🎵 Spotify';
-                        } else {
-                            fieldName = '🎧 Listening';
-                        }
-                        break;
-                    case ActivityType.Watching:
-                        fieldName = '📺 Watching';
-                        break;
-                    case ActivityType.Competing:
-                        fieldName = '🏆 Competing';
-                        break;
-                    default:
-                        fieldName = activity.name || 'Activity';
-                }
+            embed.addFields({ 
+                name: activity.type === ActivityType.Custom? 'Custom Status' : activity.name, 
+                value: activityString |
 
-                // Build the field value
-                let details = [];
-
-                // Main title (game name, song, etc.)
-                if (activity.details) {
-                    details.push(`**${activity.details}**`);
-                } else {
-                    details.push(`**${activity.name}**`);
-                }
-
-                // State (e.g., artist, level, etc.)
-                if (activity.state) {
-                    details.push(`*${activity.state}*`);
-                }
-
-                // Additional rich presence fields
-                if (activity.assets) {
-                    if (activity.assets.largeText && activity.name !== 'Spotify') {
-                        details.push(`📌 ${activity.assets.largeText}`);
-                    }
-                    if (activity.assets.smallText) {
-                        details.push(`🔹 ${activity.assets.smallText}`);
-                    }
-                }
-
-                // Party size (if available)
-                if (activity.party && activity.party.size) {
-                    const [current, max] = activity.party.size;
-                    details.push(`👥 ${current}/${max} players`);
-                }
-
-                // Timestamps
-                if (activity.timestamps) {
-                    if (activity.timestamps.start) {
-                        const start = Math.floor(activity.timestamps.start.getTime() / 1000);
-                        details.push(`⏱️ Started <t:${start}:R>`);
-                    }
-                    if (activity.timestamps.end) {
-                        const end = Math.floor(activity.timestamps.end.getTime() / 1000);
-                        details.push(`⌛ Ends <t:${end}:R>`);
-                    }
-                }
-
-                // For streaming, add the URL if present
-                if (activity.type === ActivityType.Streaming && activity.url) {
-                    details.push(`🔗 [Watch Stream](${activity.url})`);
-                }
-
-                fieldValue = details.join('\n') || 'No additional details.';
-
-                embed.addFields({ name: fieldName, value: fieldValue.slice(0, 1024), inline: false });
+| 'No detailed data available.',
+                inline: false 
             });
-        }
+        });
 
         await interaction.editReply({ embeds: [embed] });
     }

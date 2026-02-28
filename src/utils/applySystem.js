@@ -5,40 +5,40 @@ const { createCoolEmbed, createErrorEmbed, createSuccessEmbed } = require('./emb
 async function handleApplyButton(interaction) {
     if (interaction.customId !== 'start_application') return;
 
-    const config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
-    if (!config || !config.enabled || !config.questions || config.questions.length === 0) {
-        return interaction.reply({ embeds: [createErrorEmbed('The application system is not fully configured yet.')], ephemeral: true });
-    }
-
-    const hasPending = await ApplicationRequest.findOne({ guildId: interaction.guildId, userId: interaction.user.id, status: 'pending' });
-    if (hasPending) {
-        return interaction.reply({ embeds: [createErrorEmbed('You already have a pending application. Please wait for it to be reviewed.')], ephemeral: true });
-    }
-
-    const modal = new ModalBuilder()
-        .setCustomId('apply_modal_submit')
-        .setTitle(config.panelTitle || 'Server Application');
-
-    const activeQuestions = config.questions.slice(0, 5); // Strict Discord 5-item limit
-    const inputs = activeQuestions.map((q, i) => {
-        return new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-                .setCustomId(`question_${i}`)
-                .setLabel(String(q).substring(0, 45)) // Discord limits labels to 45 chars
-                .setStyle(TextInputStyle.Paragraph)
-                .setRequired(true)
-        );
-    });
-
-    modal.addComponents(...inputs);
-
     try {
+        const config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
+        if (!config || !config.enabled || !config.questions || config.questions.length === 0) {
+            return interaction.reply({ embeds: [createErrorEmbed('The application system is not fully configured yet.')], ephemeral: true });
+        }
+
+        const hasPending = await ApplicationRequest.findOne({ guildId: interaction.guildId, userId: interaction.user.id, status: 'pending' });
+        if (hasPending) {
+            return interaction.reply({ embeds: [createErrorEmbed('You already have a pending application. Please wait for it to be reviewed.')], ephemeral: true });
+        }
+
+        const modal = new ModalBuilder()
+            .setCustomId('apply_modal_submit')
+            .setTitle(config.panelTitle ? String(config.panelTitle).substring(0, 45) : 'Server Application');
+
+        const activeQuestions = config.questions.slice(0, 5); // Strict Discord 5-item limit
+        const inputs = activeQuestions.map((q, i) => {
+            return new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId(`question_${i}`)
+                    .setLabel(q ? String(q).substring(0, 45) : `Question ${i + 1}`) // Discord limits labels to 45 chars
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(true)
+            );
+        });
+
+        modal.addComponents(...inputs);
         await interaction.showModal(modal);
+
     } catch (e) {
-        console.error("MODAL THREW:", e);
+        console.error("FATAL APPLY ERROR:", e);
         if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({
-                content: `❌ **Failed to open Modal! Discord API Error:**\n\`\`\`js\n${e.message}\n\`\`\`\nJSON Payload Dump: \`${JSON.stringify(inputs.length)} components\``,
+                content: `❌ **Failed to open Modal! Internal Error:**\n\`\`\`js\n${e.stack || e.message}\n\`\`\``,
                 ephemeral: true
             }).catch(() => { });
         }

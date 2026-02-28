@@ -33,7 +33,7 @@ class StaffSystem {
       startTime: new Date()
     });
     await shift.save();
-    
+
     await Activity.create({
       guildId,
       userId,
@@ -45,10 +45,10 @@ class StaffSystem {
   }
 
   async endShift(userId, guildId) {
-    const shift = await Shift.findOne({ 
-      guildId, 
-      userId, 
-      endTime: null 
+    const shift = await Shift.findOne({
+      guildId,
+      userId,
+      endTime: null
     }).sort({ startTime: -1 });
 
     if (!shift) return { success: false, message: 'No active shift found' };
@@ -62,13 +62,13 @@ class StaffSystem {
     if (user && user.staff) {
       user.staff.shiftTime = (user.staff.shiftTime || 0) + shift.duration;
       user.staff.lastShift = new Date();
-      
+
       pointsEarned = Math.floor(shift.duration / 300);
       user.staff.points = (user.staff.points || 0) + pointsEarned;
-      
+
       const consistency = await this.calculateConsistency(userId, guildId);
       user.staff.consistency = consistency;
-      
+
       await user.save();
     }
 
@@ -81,16 +81,17 @@ class StaffSystem {
 
     const guild = await Guild.findOne({ guildId });
     const autoPromoEnabled = guild?.settings?.modules?.automation ?? false;
-    
+
     if (autoPromoEnabled) {
-      await this.checkAutoPromotion(userId, guildId);
+      const PromotionSystem = require('../utils/promotionSystem');
+      await PromotionSystem.checkEligibility(userId, guildId, this.client);
     }
 
     const hours = Math.floor(shift.duration / 3600);
     const minutes = Math.floor((shift.duration % 3600) / 60);
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       duration: shift.duration,
       hours,
       minutes,
@@ -168,129 +169,13 @@ class StaffSystem {
 
     const guild = await Guild.findOne({ guildId });
     const autoPromoEnabled = guild?.settings?.modules?.automation ?? false;
-    
+
     if (autoPromoEnabled) {
-      await this.checkAutoPromotion(userId, guildId);
+      const PromotionSystem = require('../utils/promotionSystem');
+      await PromotionSystem.checkEligibility(userId, guildId, this.client);
     }
 
     return { success: true, total: user.staff.points };
-  }
-
-  async checkAutoPromotion(userId, guildId) {
-    const user = await User.findOne({ userId });
-    if (!user || !user.staff) return;
-
-    const guild = await Guild.findOne({ guildId });
-    if (!guild) return;
-
-    const currentRank = user.staff.rank || 'member';
-    const points = user.staff.points || 0;
-    const consistency = user.staff.consistency || 0;
-    const reputation = user.staff.reputation || 0;
-    const achievements = user.staff.achievements || [];
-
-    const shiftCount = await Shift.countDocuments({ userId, guildId, endTime: { $ne: null } });
-    const warningCount = await Warning.countDocuments({ userId, guildId });
-    
-    const userGuild = user.guilds?.find(g => g.guildId === guildId);
-    const daysInServer = userGuild ? Math.floor((Date.now() - new Date(userGuild.joinedAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
-
-    const ranks = ['staff', 'senior', 'manager', 'admin'];
-    const rankOrder = ['member', 'trial', 'staff', 'senior', 'manager', 'admin'];
-    const currentIndex = rankOrder.indexOf(currentRank);
-
-    for (const rank of ranks) {
-      const req = guild.promotionRequirements?.[rank];
-      if (!req) continue;
-
-      const reqPoints = req.points || 0;
-      const reqShifts = req.shifts || 0;
-      const reqConsistency = req.consistency || 0;
-      const reqMaxWarnings = req.maxWarnings ?? 3;
-      const reqShiftHours = req.shiftHours || 0;
-      const reqAchievements = req.achievements || 0;
-      const reqReputation = req.reputation || 0;
-      const reqDaysInServer = req.daysInServer || 0;
-      const reqCleanRecordDays = req.cleanRecordDays || 0;
-
-      const meetsPoints = points >= reqPoints;
-      const meetsShifts = shiftCount >= reqShifts;
-      const meetsConsistency = consistency >= reqConsistency;
-      const meetsWarnings = warningCount <= reqMaxWarnings;
-      const meetsShiftHours = (user.staff.shiftTime || 0) >= (reqShiftHours * 3600);
-      const meetsAchievements = achievements.length >= reqAchievements;
-      const meetsReputation = reputation >= reqReputation;
-      const meetsDaysInServer = daysInServer >= reqDaysInServer;
-
-      const cleanRecordDays = warningCount === 0 ? daysInServer : 0;
-      const meetsCleanRecord = cleanRecordDays >= reqCleanRecordDays;
-
-      const newIndex = rankOrder.indexOf(rank);
-      
-      const allRequirements = [
-        meetsPoints,
-        meetsShifts, 
-        meetsConsistency,
-        meetsWarnings,
-        meetsShiftHours,
-        meetsAchievements,
-        meetsReputation,
-        meetsDaysInServer,
-        meetsCleanRecord
-      ].filter(r => r !== undefined).length;
-      
-      const metCount = allRequirements.filter(r => r === true).length;
-      const totalCount = allRequirements.filter(r => r !== false).length;
-
-      if (metCount === totalCount && newIndex > currentIndex) {
-        user.staff.rank = rank;
-        await user.save();
-
-        await Activity.create({
-          guildId,
-          userId,
-          type: 'promotion',
-          data: { 
-            newRank: rank, 
-            auto: true, 
-            requirements: { 
-              points: reqPoints, 
-              shifts: reqShifts, 
-              consistency: reqConsistency,
-              maxWarnings: reqMaxWarnings,
-              shiftHours: reqShiftHours,
-              achievements: reqAchievements,
-              reputation: reqReputation,
-              daysInServer: reqDaysInServer,
-              cleanRecordDays: reqCleanRecordDays
-            } 
-          }
-        });
-
-        const discordGuild = this.client.guilds.cache.get(guildId);
-        if (discordGuild) {
-          const member = discordGuild.members.cache.get(userId);
-          if (member) {
-            const rankRole = guild.rankRoles?.[rank];
-            if (rankRole) {
-              try {
-                await member.roles.add(rankRole);
-              } catch (e) {}
-            }
-          }
-
-          const promotionChannel = guild.settings?.promotionChannel;
-          if (promotionChannel) {
-            const channel = discordGuild.channels.cache.get(promotionChannel);
-            if (channel) {
-              const userTag = user.username || 'Unknown';
-              channel.send(`🎉 **${userTag}** has been promoted to **${rank.toUpperCase()}**! (Auto-promotion)`);
-            }
-          }
-        }
-        break;
-      }
-    }
   }
 
   async getPoints(userId, guildId) {
@@ -330,10 +215,10 @@ class StaffSystem {
     const shiftTime = user.staff.shiftTime || 0;
     const consistency = user.staff.consistency || 100;
 
-    const score = Math.min(100, 
-      (points / 10) + 
-      (shiftTime / 3600) * 5 + 
-      consistency - 
+    const score = Math.min(100,
+      (points / 10) +
+      (shiftTime / 3600) * 5 +
+      consistency -
       (warnings * 5)
     );
 
@@ -375,63 +260,21 @@ class StaffSystem {
     }));
   }
 
-  async getPromotionRequirements(currentRank, guildId) {
-    const guild = await Guild.findOne({ guildId });
-    const ranks = {
-      'member': { points: 0, next: 'trial', shifts: 0, consistency: 0 },
-      'trial': { points: 50, next: 'staff', shifts: 3, consistency: 50 },
-      'staff': { points: 100, next: 'senior', shifts: 5, consistency: 70 },
-      'senior': { points: 300, next: 'manager', shifts: 10, consistency: 75 },
-      'manager': { points: 600, next: 'admin', shifts: 20, consistency: 80 },
-      'admin': { points: 1000, next: 'owner', shifts: 30, consistency: 85 }
-    };
-
-    if (guild?.promotionRequirements) {
-      const nextRank = ranks[currentRank]?.next;
-      if (nextRank && guild.promotionRequirements[nextRank]) {
-        return guild.promotionRequirements[nextRank];
-      }
-    }
-
-    return ranks[currentRank] || ranks['member'];
-  }
-
-  async predictPromotion(userId, guildId) {
-    const user = await User.findOne({ userId });
-    if (!user || !user.staff) return null;
-
-    const currentRank = user.staff.rank || 'member';
-    const requirements = await this.getPromotionRequirements(currentRank);
-    const currentPoints = user.staff.points || 0;
-    const pointsNeeded = Math.max(0, requirements.points - currentPoints);
-
-    const avgPointsPerWeek = 50;
-    const weeksNeeded = Math.ceil(pointsNeeded / avgPointsPerWeek);
-
-    return {
-      currentRank,
-      nextRank: requirements.next,
-      currentPoints,
-      pointsNeeded,
-      estimatedWeeks: weeksNeeded
-    };
-  }
-
   async calculateConsistency(userId, guildId) {
     const shifts = await Shift.find({ userId, guildId, endTime: { $ne: null } }).sort({ endTime: -1 }).limit(30);
-    
+
     if (shifts.length === 0) return 100;
-    
+
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     const recentShifts = shifts.filter(s => new Date(s.endTime) > weekAgo);
-    
+
     if (recentShifts.length === 0) return 0;
-    
+
     const expectedShiftsPerWeek = 3;
     const consistency = Math.min(100, Math.round((recentShifts.length / expectedShiftsPerWeek) * 100));
-    
+
     return consistency;
   }
 }

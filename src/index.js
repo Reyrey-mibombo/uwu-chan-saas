@@ -209,6 +209,89 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
+  // --- PROMO SETUP INTERACTION ---
+  if (interaction.isStringSelectMenu() && interaction.customId === 'promo_setup_select') {
+    const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    const rank = interaction.values[0];
+
+    const modal = new ModalBuilder()
+      .setCustomId(`promo_setup_modal_${rank}`)
+      .setTitle(`Configure Rank: ${rank.toUpperCase()}`);
+
+    const pointsInput = new TextInputBuilder()
+      .setCustomId('promo_points')
+      .setLabel('Points Threshold')
+      .setPlaceholder('Number of points needed...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const shiftsInput = new TextInputBuilder()
+      .setCustomId('promo_shifts')
+      .setLabel('Minimum Shifts')
+      .setPlaceholder('Number of shifts needed...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const consistencyInput = new TextInputBuilder()
+      .setCustomId('promo_consistency')
+      .setLabel('Consistency (%)')
+      .setPlaceholder('Minimum consistency (0-100)...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const warningsInput = new TextInputBuilder()
+      .setCustomId('promo_warnings')
+      .setLabel('Max Warnings Allowed')
+      .setPlaceholder('Staff cannot exceed this number...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(pointsInput),
+      new ActionRowBuilder().addComponents(shiftsInput),
+      new ActionRowBuilder().addComponents(consistencyInput),
+      new ActionRowBuilder().addComponents(warningsInput)
+    );
+
+    await interaction.showModal(modal);
+  }
+
+  if (interaction.isModalSubmit() && interaction.customId.startsWith('promo_setup_modal_')) {
+    try {
+      const rank = interaction.customId.replace('promo_setup_modal_', '');
+      const points = parseInt(interaction.fields.getTextInputValue('promo_points'));
+      const shifts = parseInt(interaction.fields.getTextInputValue('promo_shifts'));
+      const consistency = parseInt(interaction.fields.getTextInputValue('promo_consistency'));
+      const warnings = parseInt(interaction.fields.getTextInputValue('promo_warnings'));
+
+      if (isNaN(points) || isNaN(shifts) || isNaN(consistency) || isNaN(warnings)) {
+        return interaction.reply({ content: '❌ Please enter valid numbers for all fields.', ephemeral: true });
+      }
+
+      await Guild.findOneAndUpdate(
+        { guildId: interaction.guildId },
+        {
+          $set: {
+            [`promotionRequirements.${rank}.points`]: points,
+            [`promotionRequirements.${rank}.shifts`]: shifts,
+            [`promotionRequirements.${rank}.consistency`]: consistency,
+            [`promotionRequirements.${rank}.maxWarnings`]: warnings
+          }
+        },
+        { upsert: true }
+      );
+
+      const { createSuccessEmbed } = require('./utils/embeds');
+      await interaction.reply({
+        embeds: [createSuccessEmbed('Configuration Saved', `Successfully updated requirements for the **${rank.toUpperCase()}** rank!`)],
+        ephemeral: true
+      });
+    } catch (error) {
+      logger.error('Promo modal submit error', error);
+      await interaction.reply({ content: '❌ An error occurred while saving configuration.', ephemeral: true }).catch(() => { });
+    }
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);

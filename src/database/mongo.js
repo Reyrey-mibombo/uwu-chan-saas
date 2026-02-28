@@ -148,7 +148,8 @@ const userSchema = new mongoose.Schema({
     reputation: { type: Number, default: 0 },
     achievements: [String],
     promotionPending: { type: Boolean, default: false }, // true = owner DM already sent, awaiting decision
-    lastPromotionCheck: Date // last time this user was checked for promotion
+    lastPromotionCheck: Date, // last time this user was checked for promotion
+    lastPromotionDate: Date // Added: tracks when the user was last promoted
   },
   stats: {
     commandsUsed: { type: Number, default: 0 },
@@ -240,7 +241,7 @@ const applicationConfigSchema = new mongoose.Schema({
   reviewerRoleId: { type: String, default: null },
   panelTitle: { type: String, default: 'Server Application' },
   questions: {
-    type: [{ type: String }],
+    type: [String],
     default: [
       "Why do you want to join our team?",
       "What experience do you have?",

@@ -29,113 +29,18 @@ class AutomationSystem {
   // ============================================================
 
   async checkAutoPromotions() {
-    logger.info('[PROMO] Running auto-promotion eligibility check');
-    const guilds = await Guild.find({});
+    logger.info('[PROMO] Running background promotion checks');
+    const guilds = await Guild.find({ 'settings.modules.automation': true });
+    const PromotionSystem = require('../utils/promotionSystem');
 
     for (const guildData of guilds) {
-      try {
-        const discordGuild = this.client.guilds.cache.get(guildData.guildId);
-        if (!discordGuild) continue;
-
-        // Get the guild owner to DM them
-        const owner = await discordGuild.fetchOwner().catch(() => null);
-        if (!owner) continue;
-
-        // Determine default + custom requirements
-        const defaultReqs = {
-          staff: { points: 100, shifts: 5, consistency: 70, maxWarnings: 3 },
-          senior: { points: 300, shifts: 10, consistency: 75, maxWarnings: 2 },
-          manager: { points: 600, shifts: 20, consistency: 80, maxWarnings: 1 },
-          admin: { points: 1000, shifts: 30, consistency: 85, maxWarnings: 0 }
-        };
-        const RANK_ORDER = ['member', 'trial', 'staff', 'senior', 'manager', 'admin'];
-
-        // Find all users with points in this guild
-        const allUsers = await User.find({ 'staff.points': { $gt: 0 } });
-
-        for (const user of allUsers) {
-          try {
-            // Skip if already pending owner decision
-            if (user.staff?.promotionPending) continue;
-
-            const currentRank = user.staff?.rank || 'member';
-            const currentIdx = RANK_ORDER.indexOf(currentRank);
-            const nextRank = RANK_ORDER[currentIdx + 1];
-            if (!nextRank || nextRank === 'admin' && currentRank === 'admin') continue;
-
-            // Get requirements for next rank
-            const req = guildData.promotionRequirements?.[nextRank] || defaultReqs[nextRank];
-            if (!req) continue;
-
-            // Get user's shift count
-            const shiftCount = await Shift.countDocuments({
-              guildId: guildData.guildId,
-              userId: user.userId,
-              endTime: { $ne: null }
-            });
-
-            // Gather all user data needed for checks
-            const pts = user.staff?.points || 0;
-            const consistency = user.staff?.consistency || 100;
-            const warnings = user.staff?.warnings || 0;
-            const achievements = user.staff?.achievements?.length || 0;
-            const reputation = user.staff?.reputation || 0;
-
-            // Get total shift hours
-            const allShifts = await Shift.find({ guildId: guildData.guildId, userId: user.userId, endTime: { $ne: null } }).lean();
-            const totalHours = allShifts.reduce((s, sh) => s + (sh.duration || (new Date(sh.endTime) - new Date(sh.startTime)) / 3600000), 0);
-
-            // Days in server (fetch Discord member join date)
-            let daysInServer = 0;
-            try {
-              const discordMember = await discordGuild.members.fetch(user.userId).catch(() => null);
-              if (discordMember?.joinedAt) {
-                daysInServer = Math.floor((Date.now() - discordMember.joinedAt.getTime()) / 86400000);
-              }
-            } catch (_) { }
-
-            // Clean record days (days since last warning)
-            let cleanRecordDays = 9999;
-            if (warnings > 0) {
-              const { Warning } = require('../database/mongo');
-              const lastWarn = await Warning.findOne({ guildId: guildData.guildId, userId: user.userId }).sort({ createdAt: -1 }).lean();
-              if (lastWarn) cleanRecordDays = Math.floor((Date.now() - new Date(lastWarn.createdAt).getTime()) / 86400000);
-            }
-
-            // Build checks object — requirements with 0 value are skipped (disabled)
-            const checks = {
-              points: { met: pts >= req.points, val: pts, req: req.points, label: '⭐ Points', active: true },
-              shifts: { met: shiftCount >= req.shifts, val: shiftCount, req: req.shifts, label: '🔄 Shifts', active: true },
-              consistency: { met: consistency >= req.consistency, val: consistency, req: req.consistency, label: '📈 Consistency %', active: true },
-              maxWarnings: { met: warnings <= req.maxWarnings, val: warnings, req: req.maxWarnings, label: '⚠️ Warnings (max)', active: req.maxWarnings !== undefined },
-              shiftHours: { met: totalHours >= req.shiftHours, val: Math.round(totalHours), req: req.shiftHours, label: '⏱️ Shift Hours', active: (req.shiftHours || 0) > 0 },
-              achievements: { met: achievements >= req.achievements, val: achievements, req: req.achievements, label: '🏅 Achievements', active: (req.achievements || 0) > 0 },
-              reputation: { met: reputation >= req.reputation, val: reputation, req: req.reputation, label: '🌟 Reputation', active: (req.reputation || 0) > 0 },
-              daysInServer: { met: daysInServer >= req.daysInServer, val: daysInServer, req: req.daysInServer, label: '📅 Days In Server', active: (req.daysInServer || 0) > 0 },
-              cleanRecord: { met: cleanRecordDays >= (req.cleanRecordDays || 0), val: cleanRecordDays, req: req.cleanRecordDays, label: '🔒 Clean Record Days', active: (req.cleanRecordDays || 0) > 0 }
-            };
-
-            // Only check active requirements
-            const activeChecks = Object.fromEntries(Object.entries(checks).filter(([, c]) => c.active));
-            const allMet = Object.values(activeChecks).every(c => c.met);
-            if (!allMet) continue;
-
-            // All requirements met — DM the owner
-            logger.info(`[PROMO] ${user.username} eligible for ${nextRank} in guild ${guildData.guildId}`);
-
-            await this.sendOwnerPromotionDM(owner, user, guildData, nextRank, activeChecks, shiftCount, achievements);
-
-            // Mark as pending so we don't spam the owner
-            user.staff.promotionPending = true;
-            user.staff.lastPromotionCheck = new Date();
-            await user.save();
-
-          } catch (userErr) {
-            logger.error(`[PROMO] Error checking user ${user.userId}:`, userErr);
-          }
+      const allUsers = await User.find({ 'staff.points': { $gt: 0 } });
+      for (const user of allUsers) {
+        try {
+          await PromotionSystem.checkEligibility(user.userId, guildData.guildId, this.client);
+        } catch (e) {
+          logger.error(`Error in background promotion check for ${user.userId}: ${e.message}`);
         }
-      } catch (guildErr) {
-        logger.error(`[PROMO] Error checking guild ${guildData.guildId}:`, guildErr);
       }
     }
   }

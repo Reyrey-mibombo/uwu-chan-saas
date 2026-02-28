@@ -195,6 +195,20 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
+  // --- HELP MENU INTERACTION ---
+  if (interaction.isStringSelectMenu() && interaction.customId === 'help_category_select') {
+    try {
+      const helpCommand = client.commands.get('help');
+      if (helpCommand && helpCommand.generateCategoryEmbed) {
+        const categoryKey = interaction.values[0];
+        const embed = await helpCommand.generateCategoryEmbed(categoryKey, client);
+        await interaction.update({ embeds: [embed] });
+      }
+    } catch (error) {
+      logger.error('Help menu interaction error', error);
+    }
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);

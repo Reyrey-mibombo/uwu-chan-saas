@@ -4,8 +4,9 @@ const fs = require("fs");
 require('dotenv').config();
 
 const commandsPath = path.join(__dirname, "src/commands");
-// STRATA 2: v3, v4, v5 (Premium tier commands)
-const versions = ["v3", "v4", "v5"];
+// Support all tiers, or restrict by environment variable
+const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
+const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 const commands = [];
 
 for (const version of versions) {
@@ -35,7 +36,7 @@ console.log("Commands to deploy:", commands.length);
 const rest = new REST({ timeout: 120000 });
 rest.setToken(token);
 
-const route = guildId 
+const route = guildId
   ? Routes.applicationGuildCommands(id, guildId)
   : Routes.applicationCommands(id);
 

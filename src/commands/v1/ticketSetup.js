@@ -8,7 +8,7 @@ module.exports = {
     .setDescription('Setup the ticket system with Report Staff and Feedback buttons')
     .addChannelOption(opt => opt.setName('channel').setDescription('Channel to send ticket panel').setRequired(true))
     .addStringOption(opt => opt.setName('title').setDescription('Title for the ticket panel').setRequired(false))
-    .setDefaultMemberPermissions('ManageGuild'),
+    .setDefaultMemberPermissions(32n),
 
   async execute(interaction, client) {
     const channel = interaction.options.getChannel('channel');

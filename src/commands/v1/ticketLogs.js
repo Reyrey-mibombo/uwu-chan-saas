@@ -27,7 +27,7 @@ module.exports = {
         )
     )
     .addIntegerOption(opt => opt.setName('limit').setDescription('Number of tickets to show').setRequired(false))
-    .setDefaultMemberPermissions('ManageMessages'),
+    .setDefaultMemberPermissions(8192n),
 
   async execute(interaction, client) {
     await interaction.deferReply();

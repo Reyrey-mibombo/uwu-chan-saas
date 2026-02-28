@@ -253,6 +253,9 @@ client.on('interactionCreate', async interaction => {
 
   try {
     await command.execute(interaction, client);
+    // Give user XP for using commands
+    const { handleCommandXP } = require('./utils/xpSystem');
+    await handleCommandXP(interaction);
   } catch (error) {
     logger.error('Command execution error', error);
     const reply = {

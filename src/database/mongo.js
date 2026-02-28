@@ -152,7 +152,9 @@ const userSchema = new mongoose.Schema({
   },
   stats: {
     commandsUsed: { type: Number, default: 0 },
-    totalSpent: { type: Number, default: 0 }
+    totalSpent: { type: Number, default: 0 },
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 }
   },
   applications: [{
     id: String,

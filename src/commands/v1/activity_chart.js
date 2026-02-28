@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const QuickChart = require('quickchart-js');
 const { Activity } = require('../../database/mongo'); // Use correct import for your model
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,6 +16,9 @@ module.exports = {
         const labels = [];
         const dataPoints = [];
 
+        let totalMessages = 0;
+        let peakDay = { date: 'N/A', count: 0 };
+
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
@@ -24,8 +28,17 @@ module.exports = {
 
             // 2. Fetch the real message count from MongoDB for this specific day
             const record = await Activity.findOne({ guildId: interaction.guild.id, date: dateStr });
-            dataPoints.push(record ? record.messageCount : 0);
+            const count = record ? record.messageCount : 0;
+
+            dataPoints.push(count);
+            totalMessages += count;
+
+            if (count > peakDay.count) {
+                peakDay = { date: dateStr, count: count };
+            }
         }
+
+        const avgMessages = Math.round(totalMessages / 7);
 
         // 3. Construct a "Cool" Chart Configuration
         const chart = new QuickChart();
@@ -65,17 +78,21 @@ module.exports = {
         // 4. Get the Short URL (Prevents Discord API limits from crashing the embed)
         const chartUrl = await chart.getShortUrl();
 
-        // 5. Build the Dynamic Embed UI
-        const chartEmbed = new EmbedBuilder()
-            .setAuthor({
+        // 5. Build the Dynamic Embed UI using centralized utility
+        const chartEmbed = createCoolEmbed({
+            title: '📈 7-Day Server Engagement Dashboard',
+            description: 'Here is the real-time textual engagement over the last 7 days based on actual logged gateway events.',
+            color: '#5865F2',
+            image: chartUrl,
+            author: {
                 name: `${interaction.guild.name} Analytics`,
                 iconURL: interaction.guild.iconURL({ dynamic: true }) || null
-            })
-            .setTitle('📈 7-Day Server Engagement Dashboard')
-            .setDescription('Here is the real-time textual engagement over the last 7 days based on actual logged gateway events.')
-            .setColor('#5865F2')
-            .setImage(chartUrl)
-            .setTimestamp();
+            }
+        }).addFields(
+            { name: '📊 Total Messages (7d)', value: `**${totalMessages.toLocaleString()}**`, inline: true },
+            { name: '⏱️ Daily Average', value: `**${avgMessages.toLocaleString()}**`, inline: true },
+            { name: '🔥 Peak Activity Day', value: `**${peakDay.date}** (${peakDay.count} msgs)`, inline: true }
+        );
 
         // 6. Deliver the Dashboard
         await interaction.editReply({ embeds: [chartEmbed] });

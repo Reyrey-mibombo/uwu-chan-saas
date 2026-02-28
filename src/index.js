@@ -66,26 +66,26 @@ async function loadCommands() {
           client.commands.set(command.data.name, command);
         }
       } catch (e) {
-        logger.error(` Error loading command ${file}: ${e.message}`);
+        logger.error(`Error loading command ${file}: ${e.message}`);
       }
     }
   }
-  logger.info(` Loaded ${client.commands.size} commands`);
+  logger.info(`Loaded ${client.commands.size} commands`);
 }
 
 client.once('ready', async () => {
   const tierDisplay = process.env.ENABLED_TIERS |
 
 | 'v1-v8';
-  logger.info(` Bot logged in as ${client.user.tag}`);
-  logger.info(` Active Command Tiers: ${tierDisplay}`);
+  logger.info(`Bot logged in as ${client.user.tag}`);
+  logger.info(`Active Command Tiers: ${tierDisplay}`);
   await initializeSystems();
   await loadCommands();
 
   const testGuildId = process.env.TEST_GUILD_ID;
   await commandHandler.deployCommands(client, testGuildId |
 
-| null).catch(e => logger.error(' Deploy error: ' + e.message));
+| null).catch(e => logger.error('Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });
@@ -106,7 +106,7 @@ client.on('messageCreate', async (message) => {
       { upsert: true, new: true }
     );
   } catch (error) {
-    logger.error(" Error tracking activity:", error);
+    logger.error("Error tracking activity:", error);
   }
 });
 
@@ -116,7 +116,7 @@ client.on('interactionCreate', async interaction => {
     try {
       await client.systems.automation.handlePromotionButton(interaction);
     } catch (err) {
-      logger.error('', err);
+      logger.error('Error in promo button', err);
       if (!interaction.replied) await interaction.reply({ content: '❌ Error processing promotion decision.', ephemeral: true });
     }
     return;
@@ -168,7 +168,7 @@ client.on('interactionCreate', async interaction => {
         return;
       }
     } catch (error) {
-      logger.error('', error);
+      logger.error('Application button error', error);
       if (!interaction.replied &&!interaction.deferred) {
         await interaction.reply({ 
           content: '❌ An error occurred processing this application button!', 
@@ -189,7 +189,7 @@ client.on('interactionCreate', async interaction => {
         await handleApplySubmit(interaction, client);
         return;
       } catch (error) {
-        logger.error('', error);
+        logger.error('Modal submit error', error);
         if (!interaction.replied &&!interaction.deferred) {
           await interaction.reply({ 
             content: '❌ Failed to submit application!', 
@@ -220,7 +220,7 @@ client.on('interactionCreate', async interaction => {
   const command = client.commands.get(interaction.commandName);
   if (!command) return;
 
-  logger.info(` ${interaction.commandName} called by ${interaction.user.id} (${interaction.user.tag})`);
+  logger.info(`${interaction.commandName} called by ${interaction.user.id} (${interaction.user.tag})`);
 
   const hasAccess = await versionGuard.checkAccess(
     interaction.guildId,
@@ -228,7 +228,7 @@ client.on('interactionCreate', async interaction => {
     command.requiredVersion
   );
 
-  logger.info(` Access result: ${JSON.stringify(hasAccess)}`);
+  logger.info(`Access result: ${JSON.stringify(hasAccess)}`);
 
   if (!hasAccess.allowed) {
     return interaction.reply({
@@ -264,7 +264,7 @@ client.on('interactionCreate', async interaction => {
   try {
     await command.execute(interaction, client);
   } catch (error) {
-    logger.error('', error);
+    logger.error('Command execution error', error);
     const reply = {
       content: 'There was an error executing this command!',
       ephemeral: true
@@ -302,9 +302,9 @@ app.get('/health', (req, res) => {
 });
 
 mongoose.connect(process.env.MONGODB_URI)
- .then(() => logger.info(' Connected to MongoDB'))
- .catch(err => {
-    logger.error(' MongoDB connection error:', err);
+.then(() => logger.info('Connected to MongoDB'))
+.catch(err => {
+    logger.error('MongoDB connection error:', err);
     process.exit(1);
   });
 
@@ -320,15 +320,15 @@ const PORT = process.env.PORT |
 
 | 3001;
 app.listen(PORT, () => {
-  logger.info(` API server running on port ${PORT}`);
+  logger.info(`API server running on port ${PORT}`);
 });
 
 client.login(process.env.DISCORD_TOKEN)
- .catch(err => {
-    logger.error(' Discord login error:', err);
+.catch(err => {
+    logger.error('Discord login error:', err);
     process.exit(1);
   });
 
 process.on('unhandledRejection', error => {
-  logger.error(' Unhandled promise rejection:', error);
+  logger.error('Unhandled promise rejection:', error);
 });

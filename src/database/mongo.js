@@ -156,23 +156,6 @@ const userSchema = new mongoose.Schema({
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 }
   },
-  applications: [{
-    id: String,
-    guildId: String,
-    username: String,
-    userId: String,
-    whyJoin: String,
-    experience: String,
-    activity: String,
-    age: String,
-    other: String,
-    status: { type: String, enum: ['pending', 'accepted', 'denied'], default: 'pending' },
-    messageId: String,
-    channelId: String,
-    reviewedBy: String,
-    reviewedAt: Date,
-    createdAt: { type: Date, default: Date.now }
-  }],
   helperApplications: [{
     id: String,
     guildId: String,
@@ -249,6 +232,35 @@ const ticketSchema = new mongoose.Schema({
   closedAt: Date
 });
 
+const applicationConfigSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  enabled: { type: Boolean, default: false },
+  staffRole: { type: String, default: null },
+  logChannel: { type: String, default: null },
+  acceptedRole: { type: String, default: null },
+  applicationQuestions: [{
+    question: String,
+    type: { type: String, enum: ['text', 'textarea', 'number', 'boolean'], default: 'text' },
+    required: { type: Boolean, default: true }
+  }],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const applicationRequestSchema = new mongoose.Schema({
+  guildId: { type: String, required: true },
+  userId: { type: String, required: true },
+  username: String,
+  globalName: String,
+  answers: mongoose.Schema.Types.Mixed, // Stores answers to dynamic questions
+  status: { type: String, enum: ['pending', 'accepted', 'denied'], default: 'pending' },
+  messageId: String, // Message ID of the application in the log channel
+  channelId: String, // Channel ID where the application was submitted
+  reviewedBy: String,
+  reviewedAt: Date,
+  createdAt: { type: Date, default: Date.now }
+});
+
 const Guild = mongoose.model('Guild', guildSchema);
 const User = mongoose.model('User', userSchema);
 const License = mongoose.model('License', licenseSchema);
@@ -256,5 +268,7 @@ const Warning = mongoose.model('Warning', warningSchema);
 const Shift = mongoose.model('Shift', shiftSchema);
 const Activity = mongoose.model('Activity', activitySchema);
 const Ticket = mongoose.model('Ticket', ticketSchema);
+const ApplicationConfig = mongoose.model('ApplicationConfig', applicationConfigSchema);
+const ApplicationRequest = mongoose.model('ApplicationRequest', applicationRequestSchema);
 
-module.exports = { Guild, User, License, Warning, Shift, Activity, Ticket };
+module.exports = { Guild, User, License, Warning, Shift, Activity, Ticket, ApplicationConfig, ApplicationRequest };

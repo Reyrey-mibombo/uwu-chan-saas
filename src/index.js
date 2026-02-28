@@ -148,45 +148,35 @@ client.on('interactionCreate', async interaction => {
     }
 
     try {
-      const { handleApply, handleAccept, handleDeny } = require('./commands/v1/applyPanel');
+      const { handleApplyButton, handleReviewAction } = require('./utils/applySystem');
 
-      if (interaction.customId.startsWith('apply_now_')) {
-        await handleApply(interaction, client);
+      if (interaction.customId === 'start_application') {
+        await handleApplyButton(interaction);
         return;
       }
-      else if (interaction.customId.startsWith('apply_accept_')) {
-        await handleAccept(interaction, client);
-        return;
-      }
-      else if (interaction.customId.startsWith('apply_deny_')) {
-        await handleDeny(interaction, client);
+      if (interaction.customId.startsWith('apply_accept_') || interaction.customId.startsWith('apply_deny_')) {
+        await handleReviewAction(interaction);
         return;
       }
     } catch (error) {
       logger.error('Application button error', error);
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ An error occurred processing this application button!',
-          ephemeral: true
-        }).catch(() => { });
+        await interaction.reply({ content: '❌ An error occurred processing this application button!', ephemeral: true }).catch(() => { });
       }
     }
   }
 
   if (interaction.isModalSubmit()) {
-    if (interaction.customId.startsWith('apply_modal_')) {
-      try {
-        const { handleApplySubmit } = require('./commands/v1/applyPanel');
-        await handleApplySubmit(interaction, client);
+    try {
+      const { handleModalSubmit } = require('./utils/applySystem');
+      if (interaction.customId === 'apply_modal_submit') {
+        await handleModalSubmit(interaction);
         return;
-      } catch (error) {
-        logger.error('Modal submit error', error);
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({
-            content: '❌ Failed to submit application!',
-            ephemeral: true
-          }).catch(() => { });
-        }
+      }
+    } catch (error) {
+      logger.error('Modal submit error', error);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ Failed to submit application!', ephemeral: true }).catch(() => { });
       }
     }
 

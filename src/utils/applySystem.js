@@ -1,4 +1,4 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const { ApplicationConfig, ApplicationRequest } = require('../database/mongo');
 const { createCoolEmbed, createErrorEmbed, createSuccessEmbed } = require('./embeds');
 

@@ -58,11 +58,10 @@ function createCoolEmbed(options = {}) {
     if (options.description) embed.setDescription(options.description);
 
     if (options.author) {
-        embed.setAuthor({
-            name: options.author.name,
-            iconURL: options.author.iconURL,
-            url: options.author.url
-        });
+        const authorData = { name: options.author.name };
+        if (options.author.iconURL) authorData.iconURL = options.author.iconURL;
+        if (options.author.url) authorData.url = options.author.url;
+        embed.setAuthor(authorData);
     }
 
     if (options.thumbnail) embed.setThumbnail(options.thumbnail);

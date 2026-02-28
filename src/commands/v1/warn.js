@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { createCoolEmbed } = require('../../utils/embeds');
 module.exports = {
   data: new SlashCommandBuilder()
@@ -35,15 +35,15 @@ module.exports = {
       )
       ;
     try {
-      await user.send({ 
+      await user.send({
         embeds: [new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setTimestamp()
+          .setColor('#2b2d31')
+          .setTimestamp()
           .setTitle('?? You have been warned')
           .setDescription(`**Server:** ${interaction.guild.name}\n**Reason:** ${reason}\n**Severity:** ${severity}`)
-        ] 
-      }).catch(() => {});
-    } catch (e) {}
+        ]
+      }).catch(() => { });
+    } catch (e) { }
     await interaction.reply({ embeds: [embed] });
   }
 };

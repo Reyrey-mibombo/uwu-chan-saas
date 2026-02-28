@@ -89,4 +89,63 @@ function createLineChart(labels, data, title = 'Growth Forecast') {
     return chart.getUrl();
 }
 
-module.exports = { createRadarChart, createLineChart };
+/**
+ * Generates a Pie Chart URL for categorizing data
+ */
+function createPieChart(labels, data, title = 'Data Breakdown') {
+    const chart = new QuickChart();
+    chart.setConfig({
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#5865F2', '#57F287', '#FEE75C', '#EB459E', '#ED4245', '#FFFFFF'
+                ],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    display: true,
+                    align: 'center',
+                    backgroundColor: '#2b2d31',
+                    borderRadius: 3,
+                    font: { size: 14, weight: 'bold' },
+                    color: '#fff'
+                },
+                doughnutlabel: {
+                    labels: [{
+                        text: data.reduce((a, b) => a + b, 0).toString(),
+                        font: { size: 30, weight: 'bold' },
+                        color: '#fff'
+                    }, {
+                        text: 'Total',
+                        font: { size: 16 },
+                        color: '#B9BBBE'
+                    }]
+                }
+            },
+            legend: {
+                position: 'right',
+                labels: { fontColor: '#fff', fontSize: 14, padding: 20 }
+            },
+            title: {
+                display: true,
+                text: title,
+                fontColor: '#fff',
+                fontSize: 16
+            }
+        }
+    });
+
+    chart.setBackgroundColor('#2f3136');
+    chart.setWidth(500);
+    chart.setHeight(300);
+
+    return chart.getUrl();
+}
+
+module.exports = { createRadarChart, createLineChart, createPieChart };

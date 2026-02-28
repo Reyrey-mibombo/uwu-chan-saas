@@ -17,7 +17,8 @@ const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 
 // --- ADDED: Activity model for tracking real data ---
-const Activity = require('./models/activity');
+// FIXED: Renamed to DailyActivity to prevent the ReferenceError in your Railway logs
+const DailyActivity = require('./models/activity');
 
 // FIXED: Using new Array() so the formatter doesn't delete the brackets
 const client = new Client({
@@ -59,7 +60,7 @@ async function initializeSystems() {
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
   const defaultVersions = new Array('v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8');
-  const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+  const versions = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version.trim());
@@ -83,14 +84,14 @@ async function loadCommands() {
 }
 
 client.once('ready', async () => {
-  const tierDisplay = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS : 'v1-v8';
+  const tierDisplay = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS : 'v1-v8';
   logger.info(`Bot logged in as ${client.user.tag}`);
   logger.info(`Active Command Tiers: ${tierDisplay}`);
   await initializeSystems();
   await loadCommands();
 
   const testGuildId = process.env.TEST_GUILD_ID;
-  await commandHandler.deployCommands(client, testGuildId ? testGuildId : null).catch(e => logger.error('Deploy error: ' + e.message));
+  await commandHandler.deployCommands(client, testGuildId? testGuildId : null).catch(e => logger.error('Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });
@@ -154,13 +155,15 @@ client.on('interactionCreate', async interaction => {
         await handleApplyButton(interaction);
         return;
       }
-      if (interaction.customId.startsWith('apply_accept_') || interaction.customId.startsWith('apply_deny_')) {
+      if (interaction.customId.startsWith('apply_accept_') |
+
+| interaction.customId.startsWith('apply_deny_')) {
         await handleReviewAction(interaction);
         return;
       }
     } catch (error) {
       logger.error('Application button error', error);
-      if (!interaction.replied && !interaction.deferred) {
+      if (!interaction.replied &&!interaction.deferred) {
         await interaction.reply({ content: '❌ An error occurred processing this application button!', ephemeral: true }).catch(() => { });
       }
     }
@@ -175,7 +178,7 @@ client.on('interactionCreate', async interaction => {
       }
     } catch (error) {
       logger.error('Modal submit error', error);
-      if (!interaction.replied && !interaction.deferred) {
+      if (!interaction.replied &&!interaction.deferred) {
         await interaction.reply({ content: '❌ Failed to submit application!', ephemeral: true }).catch(() => { });
       }
     }
@@ -200,7 +203,7 @@ client.on('interactionCreate', async interaction => {
     try {
       const helpCommand = client.commands.get('help');
       if (helpCommand && helpCommand.generateCategoryEmbed) {
-        const categoryKey = interaction.values[0];
+        const categoryKey = interaction.values;
         const embed = await helpCommand.generateCategoryEmbed(categoryKey, client);
         await interaction.update({ embeds: [embed] });
       }
@@ -212,39 +215,39 @@ client.on('interactionCreate', async interaction => {
   // --- PROMO SETUP INTERACTION ---
   if (interaction.isStringSelectMenu() && interaction.customId === 'promo_setup_select') {
     const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-    const rank = interaction.values[0];
+    const rank = interaction.values;
 
     const modal = new ModalBuilder()
-      .setCustomId(`promo_setup_modal_${rank}`)
-      .setTitle(`Configure Rank: ${rank.toUpperCase()}`);
+     .setCustomId(`promo_setup_modal_${rank}`)
+     .setTitle(`Configure Rank: ${rank.toUpperCase()}`);
 
     const pointsInput = new TextInputBuilder()
-      .setCustomId('promo_points')
-      .setLabel('Points Threshold')
-      .setPlaceholder('Number of points needed...')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+     .setCustomId('promo_points')
+     .setLabel('Points Threshold')
+     .setPlaceholder('Number of points needed...')
+     .setStyle(TextInputStyle.Short)
+     .setRequired(true);
 
     const shiftsInput = new TextInputBuilder()
-      .setCustomId('promo_shifts')
-      .setLabel('Minimum Shifts')
-      .setPlaceholder('Number of shifts needed...')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+     .setCustomId('promo_shifts')
+     .setLabel('Minimum Shifts')
+     .setPlaceholder('Number of shifts needed...')
+     .setStyle(TextInputStyle.Short)
+     .setRequired(true);
 
     const consistencyInput = new TextInputBuilder()
-      .setCustomId('promo_consistency')
-      .setLabel('Consistency (%)')
-      .setPlaceholder('Minimum consistency (0-100)...')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+     .setCustomId('promo_consistency')
+     .setLabel('Consistency (%)')
+     .setPlaceholder('Minimum consistency (0-100)...')
+     .setStyle(TextInputStyle.Short)
+     .setRequired(true);
 
     const warningsInput = new TextInputBuilder()
-      .setCustomId('promo_warnings')
-      .setLabel('Max Warnings Allowed')
-      .setPlaceholder('Staff cannot exceed this number...')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+     .setCustomId('promo_warnings')
+     .setLabel('Max Warnings Allowed')
+     .setPlaceholder('Staff cannot exceed this number...')
+     .setStyle(TextInputStyle.Short)
+     .setRequired(true);
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(pointsInput),
@@ -264,7 +267,11 @@ client.on('interactionCreate', async interaction => {
       const consistency = parseInt(interaction.fields.getTextInputValue('promo_consistency'));
       const warnings = parseInt(interaction.fields.getTextInputValue('promo_warnings'));
 
-      if (isNaN(points) || isNaN(shifts) || isNaN(consistency) || isNaN(warnings)) {
+      if (isNaN(points) |
+
+| isNaN(shifts) |
+| isNaN(consistency) |
+| isNaN(warnings)) {
         return interaction.reply({ content: '❌ Please enter valid numbers for all fields.', ephemeral: true });
       }
 
@@ -272,10 +279,10 @@ client.on('interactionCreate', async interaction => {
         { guildId: interaction.guildId },
         {
           $set: {
-            [`promotionRequirements.${rank}.points`]: points,
-            [`promotionRequirements.${rank}.shifts`]: shifts,
-            [`promotionRequirements.${rank}.consistency`]: consistency,
-            [`promotionRequirements.${rank}.maxWarnings`]: warnings
+           : points,
+           : shifts,
+           : consistency,
+           : warnings
           }
         },
         { upsert: true }
@@ -283,7 +290,7 @@ client.on('interactionCreate', async interaction => {
 
       const { createSuccessEmbed } = require('./utils/embeds');
       await interaction.reply({
-        embeds: [createSuccessEmbed('Configuration Saved', `Successfully updated requirements for the **${rank.toUpperCase()}** rank!`)],
+        embeds:,
         ephemeral: true
       });
     } catch (error) {
@@ -322,7 +329,7 @@ client.on('interactionCreate', async interaction => {
   const now = Date.now();
   const timestamps = cooldowns.get(command.data.name);
   const defaultCooldownDuration = 3;
-  const cooldownAmount = (command.cooldown ? command.cooldown : defaultCooldownDuration) * 1000;
+  const cooldownAmount = (command.cooldown? command.cooldown : defaultCooldownDuration) * 1000;
 
   if (timestamps.has(interaction.user.id)) {
     const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
@@ -349,7 +356,7 @@ client.on('interactionCreate', async interaction => {
       content: 'There was an error executing this command!',
       ephemeral: true
     };
-    const hasReplied = interaction.replied ? true : interaction.deferred;
+    const hasReplied = interaction.replied? true : interaction.deferred;
     if (hasReplied) {
       await interaction.followUp(reply);
     } else {
@@ -381,8 +388,8 @@ app.get('/health', (req, res) => {
 });
 
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => logger.info('Connected to MongoDB'))
-  .catch(err => {
+ .then(() => logger.info('Connected to MongoDB'))
+ .catch(err => {
     logger.error('MongoDB connection error:', err);
     process.exit(1);
   });
@@ -395,13 +402,13 @@ app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/webhooks', require('./webhook/paymentWebhook'));
 
-const PORT = process.env.PORT ? process.env.PORT : 3001;
+const PORT = process.env.PORT? process.env.PORT : 3001;
 app.listen(PORT, () => {
   logger.info(`API server running on port ${PORT}`);
 });
 
 client.login(process.env.DISCORD_TOKEN)
-  .catch(err => {
+ .catch(err => {
     logger.error('Discord login error:', err);
     process.exit(1);
   });

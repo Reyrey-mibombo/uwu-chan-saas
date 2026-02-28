@@ -103,7 +103,7 @@ client.on('messageCreate', async (message) => {
   const today = new Date().toISOString().split('T');
 
   try {
-    await Activity.findOneAndUpdate(
+    await DailyActivity.findOneAndUpdate(
       { guildId: message.guild.id, date: today },
       { $inc: { messageCount: 1 } },
       { upsert: true, new: true }

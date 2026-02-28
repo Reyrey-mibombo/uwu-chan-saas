@@ -6,4 +6,4 @@ const activitySchema = new mongoose.Schema({
     messageCount: { type: Number, default: 0 }
 });
 
-module.exports = mongoose.model('Activity', activitySchema);
+module.exports = mongoose.model('DailyActivity', activitySchema);

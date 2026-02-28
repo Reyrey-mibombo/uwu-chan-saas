@@ -19,8 +19,17 @@ const { Guild } = require('./database/mongo');
 // --- ADDED: Activity model for tracking real data ---
 const Activity = require('./models/Activity'); 
 
+// FIXED: Using new Array() so the formatter doesn't delete the brackets
 const client = new Client({
-  intents:
+  intents: new Array(
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessageTyping,
+    GatewayIntentBits.GuildPresences
+  )
 });
 
 client.commands = new Collection();
@@ -49,7 +58,7 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8'];
+  const defaultVersions = new Array('v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8');
   const versions = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
   for (const version of versions) {
@@ -74,32 +83,26 @@ async function loadCommands() {
 }
 
 client.once('ready', async () => {
-  const tierDisplay = process.env.ENABLED_TIERS |
-
-| 'v1-v8';
+  const tierDisplay = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS : 'v1-v8';
   logger.info(`Bot logged in as ${client.user.tag}`);
   logger.info(`Active Command Tiers: ${tierDisplay}`);
   await initializeSystems();
   await loadCommands();
 
   const testGuildId = process.env.TEST_GUILD_ID;
-  await commandHandler.deployCommands(client, testGuildId |
-
-| null).catch(e => logger.error('Deploy error: ' + e.message));
+  await commandHandler.deployCommands(client, testGuildId? testGuildId : null).catch(e => logger.error('Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });
 
 // --- ADDED: Real Data Ingestion Pipeline ---
 client.on('messageCreate', async (message) => {
-  // Ignore bot messages and DMs
-  if (message.author.bot ||!message.guild) return;
+  if (message.author.bot) return;
+  if (!message.guild) return;
 
-  // Get today's date safely in YYYY-MM-DD format
   const today = new Date().toISOString().split('T');
 
   try {
-    // Find today's record for this server and increment it, or create it if it doesn't exist
     await Activity.findOneAndUpdate(
       { guildId: message.guild.id, date: today },
       { $inc: { messageCount: 1 } },
@@ -111,7 +114,6 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('interactionCreate', async interaction => {
-  // Handle promotion approval buttons (fired from owner DMs)
   if (interaction.isButton() && interaction.customId.startsWith('promo_')) {
     try {
       await client.systems.automation.handlePromotionButton(interaction);
@@ -122,7 +124,6 @@ client.on('interactionCreate', async interaction => {
     return;
   }
 
-  // Handle ticket buttons
   if (interaction.isButton()) {
     const ticketSetup = require('./commands/v1/ticketSetup');
     if (interaction.customId === 'ticket_report_staff') {
@@ -146,23 +147,17 @@ client.on('interactionCreate', async interaction => {
       return;
     }
     
-    // ============================================
-    // COMBINED STAFF/HELPER APPLICATION SYSTEM
-    // ============================================
     try {
       const { handleApply, handleAccept, handleDeny } = require('./commands/v1/applyPanel');
       
-      // Apply Now buttons: apply_now_staff or apply_now_helper
       if (interaction.customId.startsWith('apply_now_')) {
         await handleApply(interaction, client);
         return;
       }
-      // Accept buttons: apply_accept_staff_ID or apply_accept_helper_ID
       else if (interaction.customId.startsWith('apply_accept_')) {
         await handleAccept(interaction, client);
         return;
       }
-      // Deny buttons: apply_deny_staff_ID or apply_deny_helper_ID
       else if (interaction.customId.startsWith('apply_deny_')) {
         await handleDeny(interaction, client);
         return;
@@ -178,11 +173,7 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
-  // ============================================
-  // COMBINED MODAL SUBMISSIONS
-  // ============================================
   if (interaction.isModalSubmit()) {
-    // Application modals: apply_modal_staff or apply_modal_helper
     if (interaction.customId.startsWith('apply_modal_')) {
       try {
         const { handleApplySubmit } = require('./commands/v1/applyPanel');
@@ -199,7 +190,6 @@ client.on('interactionCreate', async interaction => {
       }
     }
 
-    // Ticket modals
     const ticketSetup = require('./commands/v1/ticketSetup');
     if (interaction.customId === 'modal_report_staff') {
       await ticketSetup.handleReportSubmit(interaction, client);
@@ -245,7 +235,7 @@ client.on('interactionCreate', async interaction => {
   const now = Date.now();
   const timestamps = cooldowns.get(command.data.name);
   const defaultCooldownDuration = 3;
-  const cooldownAmount = (command.cooldown?? defaultCooldownDuration) * 1000;
+  const cooldownAmount = (command.cooldown? command.cooldown : defaultCooldownDuration) * 1000;
 
   if (timestamps.has(interaction.user.id)) {
     const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
@@ -269,9 +259,8 @@ client.on('interactionCreate', async interaction => {
       content: 'There was an error executing this command!',
       ephemeral: true
     };
-    if (interaction.replied |
-
-| interaction.deferred) {
+    const hasReplied = interaction.replied? true : interaction.deferred;
+    if (hasReplied) {
       await interaction.followUp(reply);
     } else {
       await interaction.reply(reply);
@@ -316,9 +305,7 @@ app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/webhooks', require('./webhook/paymentWebhook'));
 
-const PORT = process.env.PORT |
-
-| 3001;
+const PORT = process.env.PORT? process.env.PORT : 3001;
 app.listen(PORT, () => {
   logger.info(`API server running on port ${PORT}`);
 });

@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -34,13 +34,11 @@ module.exports = {
       { id: 'mentor', name: 'Mentor', desc: 'Help new staff members', icon: '🎓' }
     ];
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
-      .setTitle(`🏆 Achievement Tracker - ${targetUser.username}`)
-      
-      .setThumbnail(targetUser.displayAvatarURL());
+    const { createPremiumEmbed } = require('../../utils/embeds');
+    const embed = createPremiumEmbed({
+      title: `🏆 Achievement Tracker - ${targetUser.username}`,
+      thumbnail: targetUser.displayAvatarURL()
+    });
 
     let unlockedCount = 0;
     const unlockedAchievements = [];

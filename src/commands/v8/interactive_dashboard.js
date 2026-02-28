@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
 const { Guild, Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -26,25 +26,20 @@ module.exports = {
     const stats = guild?.stats || {};
     const engBar = '▓'.repeat(Math.round(engRate / 10)) + '░'.repeat(10 - Math.round(engRate / 10));
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
-      .setTitle('🖥️ Interactive Dashboard')
-      
-      .setThumbnail(interaction.guild.iconURL())
-      .addFields(
-        { name: '👥 Members', value: memberCount.toString(), inline: true },
-        { name: '✅ Active (7d)', value: activeUsers.toString(), inline: true },
-        { name: '📊 Engagement', value: `\`${engBar}\` ${engRate}%`, inline: false },
-        { name: '⚡ Commands Used', value: (stats.commandsUsed || 0).toString(), inline: true },
-        { name: '⚠️ Warnings', value: (stats.warnings || 0).toString(), inline: true },
-        { name: '🤖 Bot Uptime', value: uptimeStr, inline: true },
-        { name: '🏆 Top Staff', value: topStaff ? `**${topStaff.username || '?'}** — ${topStaff.staff?.points || 0} pts` : 'No data', inline: true },
-        { name: '🎖️ Premium', value: (guild?.premium?.tier || 'free').toUpperCase(), inline: true }
-      )
-      
-      ;
+    const { createEnterpriseEmbed } = require('../../utils/embeds');
+    const embed = createEnterpriseEmbed({
+      title: '🖥️ Interactive Dashboard',
+      thumbnail: interaction.guild.iconURL()
+    }).addFields(
+      { name: '👥 Members', value: memberCount.toString(), inline: true },
+      { name: '✅ Active (7d)', value: activeUsers.toString(), inline: true },
+      { name: '📊 Engagement', value: `\`${engBar}\` ${engRate}%`, inline: false },
+      { name: '⚡ Commands Used', value: (stats.commandsUsed || 0).toString(), inline: true },
+      { name: '⚠️ Warnings', value: (stats.warnings || 0).toString(), inline: true },
+      { name: '🤖 Bot Uptime', value: uptimeStr, inline: true },
+      { name: '🏆 Top Staff', value: topStaff ? `**${topStaff.username || '?'}** — ${topStaff.staff?.points || 0} pts` : 'No data', inline: true },
+      { name: '🎖️ Premium', value: (guild?.premium?.tier || 'free').toUpperCase(), inline: true }
+    );
 
     await interaction.editReply({ embeds: [embed] });
   }

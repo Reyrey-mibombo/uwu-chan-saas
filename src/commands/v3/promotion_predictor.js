@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
 const { User, Activity, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -47,13 +47,11 @@ module.exports = {
     const promotionScore = calculatePromotionScore(points, consistency, reputation, commands, completedShifts, rank);
     const prediction = getPrediction(promotionScore, rank);
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
-      .setTitle(`🔮 Promotion Predictor - ${targetUser.username}`)
-      
-      .setThumbnail(targetUser.displayAvatarURL());
+    const { createPremiumEmbed } = require('../../utils/embeds');
+    const embed = createPremiumEmbed({
+      title: `🔮 Promotion Predictor - ${targetUser.username}`,
+      thumbnail: targetUser.displayAvatarURL()
+    });
 
     embed.addFields(
       { name: 'Current Rank', value: rank.charAt(0).toUpperCase() + rank.slice(1), inline: true },

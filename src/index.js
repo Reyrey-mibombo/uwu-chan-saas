@@ -17,7 +17,7 @@ const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 
 // --- ADDED: Activity model for tracking real data ---
-const Activity = require('./models/Activity'); 
+const Activity = require('./models/activity');
 
 // FIXED: Using new Array() so the formatter doesn't delete the brackets
 const client = new Client({
@@ -59,7 +59,7 @@ async function initializeSystems() {
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
   const defaultVersions = new Array('v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8');
-  const versions = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+  const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version.trim());
@@ -83,14 +83,14 @@ async function loadCommands() {
 }
 
 client.once('ready', async () => {
-  const tierDisplay = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS : 'v1-v8';
+  const tierDisplay = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS : 'v1-v8';
   logger.info(`Bot logged in as ${client.user.tag}`);
   logger.info(`Active Command Tiers: ${tierDisplay}`);
   await initializeSystems();
   await loadCommands();
 
   const testGuildId = process.env.TEST_GUILD_ID;
-  await commandHandler.deployCommands(client, testGuildId? testGuildId : null).catch(e => logger.error('Deploy error: ' + e.message));
+  await commandHandler.deployCommands(client, testGuildId ? testGuildId : null).catch(e => logger.error('Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });
@@ -146,10 +146,10 @@ client.on('interactionCreate', async interaction => {
       await ticketSetup.handleCloseTicket(interaction, client);
       return;
     }
-    
+
     try {
       const { handleApply, handleAccept, handleDeny } = require('./commands/v1/applyPanel');
-      
+
       if (interaction.customId.startsWith('apply_now_')) {
         await handleApply(interaction, client);
         return;
@@ -164,11 +164,11 @@ client.on('interactionCreate', async interaction => {
       }
     } catch (error) {
       logger.error('Application button error', error);
-      if (!interaction.replied &&!interaction.deferred) {
-        await interaction.reply({ 
-          content: '❌ An error occurred processing this application button!', 
-          ephemeral: true 
-        }).catch(() => {});
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ An error occurred processing this application button!',
+          ephemeral: true
+        }).catch(() => { });
       }
     }
   }
@@ -181,11 +181,11 @@ client.on('interactionCreate', async interaction => {
         return;
       } catch (error) {
         logger.error('Modal submit error', error);
-        if (!interaction.replied &&!interaction.deferred) {
-          await interaction.reply({ 
-            content: '❌ Failed to submit application!', 
-            ephemeral: true 
-          }).catch(() => {});
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content: '❌ Failed to submit application!',
+            ephemeral: true
+          }).catch(() => { });
         }
       }
     }
@@ -235,7 +235,7 @@ client.on('interactionCreate', async interaction => {
   const now = Date.now();
   const timestamps = cooldowns.get(command.data.name);
   const defaultCooldownDuration = 3;
-  const cooldownAmount = (command.cooldown? command.cooldown : defaultCooldownDuration) * 1000;
+  const cooldownAmount = (command.cooldown ? command.cooldown : defaultCooldownDuration) * 1000;
 
   if (timestamps.has(interaction.user.id)) {
     const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
@@ -259,7 +259,7 @@ client.on('interactionCreate', async interaction => {
       content: 'There was an error executing this command!',
       ephemeral: true
     };
-    const hasReplied = interaction.replied? true : interaction.deferred;
+    const hasReplied = interaction.replied ? true : interaction.deferred;
     if (hasReplied) {
       await interaction.followUp(reply);
     } else {
@@ -291,8 +291,8 @@ app.get('/health', (req, res) => {
 });
 
 mongoose.connect(process.env.MONGODB_URI)
-.then(() => logger.info('Connected to MongoDB'))
-.catch(err => {
+  .then(() => logger.info('Connected to MongoDB'))
+  .catch(err => {
     logger.error('MongoDB connection error:', err);
     process.exit(1);
   });
@@ -305,13 +305,13 @@ app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/webhooks', require('./webhook/paymentWebhook'));
 
-const PORT = process.env.PORT? process.env.PORT : 3001;
+const PORT = process.env.PORT ? process.env.PORT : 3001;
 app.listen(PORT, () => {
   logger.info(`API server running on port ${PORT}`);
 });
 
 client.login(process.env.DISCORD_TOKEN)
-.catch(err => {
+  .catch(err => {
     logger.error('Discord login error:', err);
     process.exit(1);
   });

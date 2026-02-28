@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { createCoolEmbed } = require('../../utils/embeds');
 const { PermissionFlagsBits } = require('discord.js');
 const { createCoolEmbed } = require('../../utils/embeds');
@@ -24,17 +24,17 @@ module.exports = {
     
     const member = interaction.guild.members.cache.get(user.id);
     if (!member) {
-      return interaction.reply({ content: '❌ User not found in server', ephemeral: true });
+      return interaction.reply({ content: '? User not found in server', ephemeral: true });
     }
     
     if (!interaction.member.permissions.has('ModerateMembers')) {
-      return interaction.reply({ content: '❌ You dont have permission', ephemeral: true });
+      return interaction.reply({ content: '? You dont have permission', ephemeral: true });
     }
     
     const result = await staffSystem.addWarning(user.id, interaction.guildId, reason, interaction.user.id, severity);
     
     const embed = createCoolEmbed()
-      .setTitle('⚠️ User Warned')
+      .setTitle('?? User Warned')
       .addFields(
         { name: 'User', value: `${user.tag}`, inline: true },
         { name: 'Severity', value: severity, inline: true },
@@ -48,9 +48,9 @@ module.exports = {
       await user.send({ 
         embeds: [new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-          .setTitle('⚠️ You have been warned')
+          .setTitle('?? You have been warned')
           .setDescription(`**Server:** ${interaction.guild.name}\n**Reason:** ${reason}\n**Severity:** ${severity}`)
           
         ] 
@@ -60,6 +60,7 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
 
 
 

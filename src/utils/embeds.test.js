@@ -14,7 +14,6 @@ describe('Embeds Utility Factory', () => {
         expect(embed.data.description).toBe('Test Description');
 
         // Assert standard components
-        expect(embed.data.footer.text).toContain('UwU Chan SaaS');
         expect(embed.data.color).toBe(parseInt(embeds.EMBED_COLORS.primary.replace('#', ''), 16));
     });
 
@@ -30,7 +29,6 @@ describe('Embeds Utility Factory', () => {
         const embed = embeds.createPremiumEmbed({ title: 'Premium Hub' });
 
         expect(embed.data.title).toBe('✨ Premium Hub');
-        expect(embed.data.footer.text).toContain('Premium Tier 💎');
         expect(embed.data.color).toBe(parseInt(embeds.EMBED_COLORS.premium.replace('#', ''), 16));
     });
 });

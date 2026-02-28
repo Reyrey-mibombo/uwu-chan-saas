@@ -73,7 +73,7 @@ module.exports = {
            .setDescription('Here is the real-time textual engagement over the last 7 days based on actual logged gateway events.')
            .setColor('#5865F2')
            .setImage(chartUrl)
-           .setFooter({ text: 'Powered by UwU Chan SaaS Analytics' })
+           
            .setTimestamp();
 
         // 6. Deliver the Dashboard

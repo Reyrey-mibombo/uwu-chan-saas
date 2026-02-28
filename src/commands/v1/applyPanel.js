@@ -1,4 +1,4 @@
-﻿const {
+const {
   SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
@@ -20,8 +20,8 @@ module.exports = {
         .setDescription('Type of applications')
         .setRequired(true)
         .addChoices(
-          { name: '👮 Staff', value: 'staff' },
-          { name: '🌟 Helper', value: 'helper' }
+          { name: '?? Staff', value: 'staff' },
+          { name: '?? Helper', value: 'helper' }
         ))
     .addChannelOption(opt => opt.setName('channel').setDescription('Channel to send panel').setRequired(true))
     .addStringOption(opt => opt.setName('custom_title').setDescription('Override title').setRequired(false))
@@ -37,24 +37,24 @@ module.exports = {
     const guild = await Guild.findOne({ guildId });
 
     if (!guild?.applicationConfig?.types?.[type]?.enabled) {
-      return interaction.editReply(`❌ ${type} application system not configured. Use \`/apply_setup type:${type}\` first!`);
+      return interaction.editReply(`? ${type} application system not configured. Use \`/apply_setup type:${type}\` first!`);
     }
 
     const config = guild.applicationConfig.types[type];
     const title = interaction.options.getString('custom_title') || config.customTitle;
     const description = interaction.options.getString('custom_desc') || config.customDesc;
 
-    const emoji = type === 'staff' ? '👮' : '🌟';
+    const emoji = type === 'staff' ? '??' : '??';
     const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
 
     const embed = createCoolEmbed()
       .setTitle(`${emoji} ${title}`)
-      .setDescription(`${description}\n\n**Before you apply:**\n> • Ensure your DMs are open so we can contact you.\n> • Be detailed and honest in your responses.\n> • Troll or spam applications will result in a blacklist.`)
+      .setDescription(`${description}\n\n**Before you apply:**\n> � Ensure your DMs are open so we can contact you.\n> � Be detailed and honest in your responses.\n> � Troll or spam applications will result in a blacklist.`)
       .addFields(
-        { name: '📝 Requirements', value: '• Be active in the community\n• Have good communication skills\n• Follow all server rules', inline: false },
-        { name: '⏱️ Cooldown', value: 'One application per 24 hours', inline: true },
-        { name: '📋 Note', value: 'Answer all questions carefully!', inline: true },
-        { name: '📅 Updated', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+        { name: '?? Requirements', value: '� Be active in the community\n� Have good communication skills\n� Follow all server rules', inline: false },
+        { name: '?? Cooldown', value: 'One application per 24 hours', inline: true },
+        { name: '?? Note', value: 'Answer all questions carefully!', inline: true },
+        { name: '?? Updated', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
       )
       
       .setThumbnail(interaction.guild.iconURL({ dynamic: true, size: 512 }))
@@ -73,13 +73,13 @@ module.exports = {
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId(`apply_stats_${type}`)
-          .setLabel('📊 View Stats')
+          .setLabel('?? View Stats')
           .setStyle(ButtonStyle.Secondary)
       );
 
     await channel.send({ embeds: [embed], components: [row] });
 
-    await interaction.editReply({ content: `✅ ${type} application panel sent to ${channel}!`, ephemeral: true });
+    await interaction.editReply({ content: `? ${type} application panel sent to ${channel}!`, ephemeral: true });
   }
 };
 
@@ -91,13 +91,13 @@ module.exports.handleApply = async (interaction, client) => {
   const guild = await Guild.findOne({ guildId });
 
   if (!guild?.applicationConfig?.types?.[type]?.enabled) {
-    return interaction.reply({ content: `❌ ${type} application system not configured.`, ephemeral: true });
+    return interaction.reply({ content: `? ${type} application system not configured.`, ephemeral: true });
   }
 
   const config = guild.applicationConfig.types[type];
 
   if (guild.applicationConfig.blacklist?.some(entry => entry.userId === userId)) {
-    return interaction.reply({ content: '❌ You are blacklisted from submitting applications.', ephemeral: true });
+    return interaction.reply({ content: '? You are blacklisted from submitting applications.', ephemeral: true });
   }
 
   const user = await User.findOne({ userId });
@@ -110,13 +110,13 @@ module.exports.handleApply = async (interaction, client) => {
       const hoursSince = (Date.now() - new Date(lastApp.createdAt)) / (1000 * 60 * 60);
       if (hoursSince < 24) {
         return interaction.reply({
-          content: `⏳ You must wait **${Math.round(24 - hoursSince)} hours** before applying again for ${type}.`,
+          content: `? You must wait **${Math.round(24 - hoursSince)} hours** before applying again for ${type}.`,
           ephemeral: true
         });
       }
       if (lastApp.status === 'pending') {
         return interaction.reply({
-          content: `❌ You already have a pending ${type} application!`,
+          content: `? You already have a pending ${type} application!`,
           ephemeral: true
         });
       }
@@ -155,7 +155,7 @@ module.exports.handleApplySubmit = async (interaction, client) => {
 
   const guild = await Guild.findOne({ guildId });
   if (!guild?.applicationConfig?.types?.[type]?.enabled) {
-    return interaction.reply({ content: `❌ ${type} system not configured.`, ephemeral: true });
+    return interaction.reply({ content: `? ${type} system not configured.`, ephemeral: true });
   }
 
   const config = guild.applicationConfig.types[type];
@@ -196,7 +196,7 @@ module.exports.handleApplySubmit = async (interaction, client) => {
   const logChannelId = config.logChannel;
   const logChannel = interaction.guild.channels.cache.get(logChannelId);
   const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
-  const emoji = type === 'staff' ? '👮' : '🌟';
+  const emoji = type === 'staff' ? '??' : '??';
 
   const member = await interaction.guild.members.fetch(userId).catch(() => null);
   const accountAgeStr = member ? `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>` : 'Unknown';
@@ -207,11 +207,11 @@ module.exports.handleApplySubmit = async (interaction, client) => {
     
     .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 256 }))
     .addFields(
-      { name: '👤 Applicant', value: `<@${userId}>\n\`${interaction.user.tag}\``, inline: true },
-      { name: '🆔 IDs', value: `App: \`${appId}\`\nUser: \`${userId}\``, inline: true },
-      { name: '⏰ Applied', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
-      { name: '📅 Account Created', value: accountAgeStr, inline: true },
-      { name: '📥 Joined Server', value: joinedAtStr, inline: true }
+      { name: '?? Applicant', value: `<@${userId}>\n\`${interaction.user.tag}\``, inline: true },
+      { name: '?? IDs', value: `App: \`${appId}\`\nUser: \`${userId}\``, inline: true },
+      { name: '? Applied', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
+      { name: '?? Account Created', value: accountAgeStr, inline: true },
+      { name: '?? Joined Server', value: joinedAtStr, inline: true }
     );
 
   // Add a divider
@@ -235,17 +235,17 @@ module.exports.handleApplySubmit = async (interaction, client) => {
       new ButtonBuilder()
         .setCustomId(`apply_accept_${type}_${appId}`)
         .setLabel('Accept')
-        .setEmoji('✅')
+        .setEmoji('?')
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId(`apply_deny_${type}_${appId}`)
         .setLabel('Deny')
-        .setEmoji('❌')
+        .setEmoji('?')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId(`apply_interview_${type}_${appId}`)
         .setLabel('Interview')
-        .setEmoji('📅')
+        .setEmoji('??')
         .setStyle(ButtonStyle.Primary)
     );
 
@@ -258,11 +258,11 @@ module.exports.handleApplySubmit = async (interaction, client) => {
 
   const userDmEmbed = new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-    .setTitle('📨 Application Submitted Successfully')
+    .setTitle('?? Application Submitted Successfully')
     .setDescription(`Your **${type}** application in **${interaction.guild.name}** has been received.\n\nOur staff team will review it shortly. Please be patient, as this process can take some time.`)
-    .addFields({ name: '🎫 Application ID', value: `\`${appId}\`` })
+    .addFields({ name: '?? Application ID', value: `\`${appId}\`` })
     
     ;
 
@@ -271,7 +271,7 @@ module.exports.handleApplySubmit = async (interaction, client) => {
   } catch (e) { } // Ignore DM closed errors
 
   await interaction.reply({
-    content: `✅ Your ${type} application has been submitted to the staff team! ID: \`${appId}\``,
+    content: `? Your ${type} application has been submitted to the staff team! ID: \`${appId}\``,
     ephemeral: true
   });
 };
@@ -285,7 +285,7 @@ module.exports.handleAccept = async (interaction, client) => {
   const guild = await Guild.findOne({ guildId });
 
   if (!guild?.applicationConfig?.types?.[type]) {
-    return interaction.reply({ content: '❌ System not configured.', ephemeral: true });
+    return interaction.reply({ content: '? System not configured.', ephemeral: true });
   }
 
   const config = guild.applicationConfig.types[type];
@@ -293,7 +293,7 @@ module.exports.handleAccept = async (interaction, client) => {
   const staffRoleId = config.staffRole;
   const member = interaction.member;
   if (!member.roles.cache.has(staffRoleId) && !member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: '❌ You cannot review applications!', ephemeral: true });
+    return interaction.reply({ content: '? You cannot review applications!', ephemeral: true });
   }
 
   const users = await User.find({ 'applications.guildId': guildId, 'applications.id': appId });
@@ -304,9 +304,9 @@ module.exports.handleAccept = async (interaction, client) => {
     if (app) { targetUser = user; targetApplication = app; break; }
   }
 
-  if (!targetApplication) return interaction.reply({ content: '❌ Application not found!', ephemeral: true });
+  if (!targetApplication) return interaction.reply({ content: '? Application not found!', ephemeral: true });
   if (targetApplication.status !== 'pending') {
-    return interaction.reply({ content: '❌ This application has already been processed!', ephemeral: true });
+    return interaction.reply({ content: '? This application has already been processed!', ephemeral: true });
   }
 
   targetApplication.status = 'accepted';
@@ -320,9 +320,9 @@ module.exports.handleAccept = async (interaction, client) => {
       const color = type === 'staff' ? 0x2ecc71 : 0x57f287;
       const dmEmbed = new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-        .setTitle(`✅ ${type.toUpperCase()} Application Accepted!`)
+        .setTitle(`? ${type.toUpperCase()} Application Accepted!`)
         .setDescription(`Congratulations! Your ${type} application in **${interaction.guild.name}** has been accepted!`)
         
         ;
@@ -340,14 +340,14 @@ module.exports.handleAccept = async (interaction, client) => {
   const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
     
     .addFields({
-      name: '✅ Application Accepted',
+      name: '? Application Accepted',
       value: `Reviewed by <@${interaction.user.id}> (<t:${Math.floor(Date.now() / 1000)}:R>)`,
       inline: false
     });
 
   // Remove buttons
   await interaction.message.edit({ embeds: [newEmbed], components: [] });
-  await interaction.reply({ content: `✅ ${type} application accepted! User has been notified via DM.`, ephemeral: true });
+  await interaction.reply({ content: `? ${type} application accepted! User has been notified via DM.`, ephemeral: true });
 };
 
 module.exports.handleDeny = async (interaction, client) => {
@@ -359,7 +359,7 @@ module.exports.handleDeny = async (interaction, client) => {
   const guild = await Guild.findOne({ guildId });
 
   if (!guild?.applicationConfig?.types?.[type]) {
-    return interaction.reply({ content: '❌ System not configured.', ephemeral: true });
+    return interaction.reply({ content: '? System not configured.', ephemeral: true });
   }
 
   const config = guild.applicationConfig.types[type];
@@ -367,7 +367,7 @@ module.exports.handleDeny = async (interaction, client) => {
   const staffRoleId = config.staffRole;
   const member = interaction.member;
   if (!member.roles.cache.has(staffRoleId) && !member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: '❌ You cannot review applications!', ephemeral: true });
+    return interaction.reply({ content: '? You cannot review applications!', ephemeral: true });
   }
 
   const users = await User.find({ 'applications.guildId': guildId, 'applications.id': appId });
@@ -378,9 +378,9 @@ module.exports.handleDeny = async (interaction, client) => {
     if (app) { targetUser = user; targetApplication = app; break; }
   }
 
-  if (!targetApplication) return interaction.reply({ content: '❌ Application not found!', ephemeral: true });
+  if (!targetApplication) return interaction.reply({ content: '? Application not found!', ephemeral: true });
   if (targetApplication.status !== 'pending') {
-    return interaction.reply({ content: '❌ This application has already been processed!', ephemeral: true });
+    return interaction.reply({ content: '? This application has already been processed!', ephemeral: true });
   }
 
   targetApplication.status = 'denied';
@@ -393,9 +393,9 @@ module.exports.handleDeny = async (interaction, client) => {
     try {
       const dmEmbed = new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-        .setTitle(`❌ ${type.toUpperCase()} Application Denied`)
+        .setTitle(`? ${type.toUpperCase()} Application Denied`)
         .setDescription(`Your ${type} application has been denied. Thank you for applying!`)
         
         ;
@@ -406,13 +406,14 @@ module.exports.handleDeny = async (interaction, client) => {
   const newEmbed = EmbedBuilder.from(interaction.message.embeds[0])
      // Red
     .addFields({
-      name: '❌ Application Denied',
+      name: '? Application Denied',
       value: `Reviewed by <@${interaction.user.id}> (<t:${Math.floor(Date.now() / 1000)}:R>)`,
       inline: false
     });
 
   await interaction.message.edit({ embeds: [newEmbed], components: [] });
-  await interaction.reply({ content: `✅ ${type} application denied. User has been notified via DM.`, ephemeral: true });
+  await interaction.reply({ content: `? ${type} application denied. User has been notified via DM.`, ephemeral: true });
 };
+
 
 

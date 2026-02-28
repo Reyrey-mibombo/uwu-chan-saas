@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
@@ -32,15 +32,15 @@ module.exports = {
         return interaction.editReply({
           embeds: [new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp().setTitle('✅ Blacklist Clean').setDescription('No users are currently blacklisted from applying.')]
+      
+      .setTimestamp().setTitle('? Blacklist Clean').setDescription('No users are currently blacklisted from applying.')]
         });
       }
 
       const embed = createCoolEmbed()
-        .setTitle('🚫 Application Blacklist')
+        .setTitle('?? Application Blacklist')
         .setDescription(list.map((entry, i) =>
-          `**${i + 1}.** <@${entry.userId}> - ${entry.reason}\n└ Added by ${entry.addedBy} on <t:${Math.floor(new Date(entry.addedAt).getTime() / 1000)}:d>`
+          `**${i + 1}.** <@${entry.userId}> - ${entry.reason}\n+ Added by ${entry.addedBy} on <t:${Math.floor(new Date(entry.addedAt).getTime() / 1000)}:d>`
         ).join('\n\n'))
         
         
@@ -56,7 +56,7 @@ module.exports = {
       await guild.save();
 
       const embed = createCoolEmbed()
-        .setTitle('✅ User Unblacklisted')
+        .setTitle('? User Unblacklisted')
         .setDescription(`<@${target.id}> (\`${target.tag}\`) has been removed from the application blacklist.`)
         ;
       return interaction.editReply({ embeds: [embed] });
@@ -65,7 +65,7 @@ module.exports = {
     if (sub === 'add') {
       const reason = interaction.options.getString('reason');
       if (guild.applicationConfig.blacklist.find(e => e.userId === target.id)) {
-        return interaction.editReply('❌ User is already blacklisted!');
+        return interaction.editReply('? User is already blacklisted!');
       }
 
       guild.applicationConfig.blacklist.push({
@@ -79,7 +79,7 @@ module.exports = {
       await guild.save();
 
       const embed = createCoolEmbed()
-        .setTitle('🚫 User Blacklisted')
+        .setTitle('?? User Blacklisted')
         .setDescription(`<@${target.id}> (\`${target.tag}\`) has been blacklisted from applying.`)
         .addFields({ name: 'Reason', value: reason })
         
@@ -89,5 +89,6 @@ module.exports = {
     }
   }
 };
+
 
 

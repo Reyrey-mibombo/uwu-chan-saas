@@ -11,7 +11,7 @@ const EMBED_COLORS = {
     dark: '#2f3136'
 };
 
-const FOOTER_TEXT = 'UwU Chan SaaS • Premium Experience 💖';
+
 
 /**
  * Creates a base "cool" embed with consistent branding.
@@ -39,14 +39,16 @@ function createCoolEmbed(options = {}) {
     }
     embed.setColor(color);
 
-    // Set standard footer
-    const footerText = branding.footer || FOOTER_TEXT;
+    // Handle Custom Branding Footer
+    const footerText = branding.footer || null;
     const footerIcon = branding.iconURL || null;
 
-    if (footerIcon) {
+    if (footerText && footerIcon) {
         embed.setFooter({ text: footerText, iconURL: footerIcon });
-    } else {
+    } else if (footerText) {
         embed.setFooter({ text: footerText });
+    } else if (footerIcon) {
+        embed.setFooter({ text: '\u200B', iconURL: footerIcon }); // Discord requires text if iconURL is set
     }
 
     embed.setTimestamp();
@@ -99,7 +101,7 @@ function createPremiumEmbed(options = {}) {
         ...options,
         color: 'premium',
         title: options.title ? `✨ ${options.title}` : '✨ Premium Feature'
-    }).setFooter({ text: 'UwU Chan SaaS • Premium Tier 💎' });
+    });
 }
 
 /**
@@ -110,7 +112,7 @@ function createEnterpriseEmbed(options = {}) {
         ...options,
         color: 'enterprise',
         title: options.title ? `👑 ${options.title}` : '👑 Enterprise Feature'
-    }).setFooter({ text: 'UwU Chan SaaS • Enterprise Tier 🏢' });
+    });
 }
 
 module.exports = {

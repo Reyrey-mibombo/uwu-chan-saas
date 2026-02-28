@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCoolEmbed } = require('../../utils/embeds');
 const { Ticket } = require('../../database/mongo');
 
@@ -50,7 +50,7 @@ module.exports = {
       .lean();
 
     if (!tickets.length) {
-      return interaction.editReply({ content: '📭 No tickets found.', ephemeral: true });
+      return interaction.editReply({ content: '?? No tickets found.', ephemeral: true });
     }
 
     const pendingTickets = tickets.filter(t => t.status === 'open');
@@ -62,24 +62,24 @@ module.exports = {
     if (pendingTickets.length > 0) {
       for (const ticket of pendingTickets.slice(0, 5)) {
         const embed = createCoolEmbed()
-          .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report` : `💬 Feedback`)
+          .setTitle(ticket.category === 'report_staff' ? `?? Staff Report` : `?? Feedback`)
           
           .addFields(
-            { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true },
-            { name: '📊 Status', value: '⏳ **Pending** - Not claimed yet', inline: true }
+            { name: '?? Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
+            { name: '?? Submitted By', value: ticket.username || 'Unknown', inline: true },
+            { name: '?? Status', value: '? **Pending** - Not claimed yet', inline: true }
           )
           ;
 
         if (ticket.category === 'report_staff') {
           embed.addFields(
-            { name: '👨‍💼 Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '📝 Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: true },
-            { name: '📎 Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 100) : 'None', inline: false }
+            { name: '????? Staff Member', value: ticket.staffName || 'N/A', inline: true },
+            { name: '?? Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: true },
+            { name: '?? Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 100) : 'None', inline: false }
           );
         } else {
           embed.addFields(
-            { name: '💭 Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 150) : 'N/A', inline: false }
+            { name: '?? Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 150) : 'N/A', inline: false }
           );
           if (ticket.imageUrl) {
             embed.setImage(ticket.imageUrl);
@@ -93,24 +93,24 @@ module.exports = {
     if (claimedTickets.length > 0) {
       for (const ticket of claimedTickets.slice(0, 5)) {
         const embed = createCoolEmbed()
-          .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report (Claimed)` : `💬 Feedback (Claimed)`)
+          .setTitle(ticket.category === 'report_staff' ? `?? Staff Report (Claimed)` : `?? Feedback (Claimed)`)
           
           .addFields(
-            { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true },
-            { name: '📊 Status', value: `✅ Claimed by ${ticket.claimedByName || 'Staff'}`, inline: true }
+            { name: '?? Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
+            { name: '?? Submitted By', value: ticket.username || 'Unknown', inline: true },
+            { name: '?? Status', value: `? Claimed by ${ticket.claimedByName || 'Staff'}`, inline: true }
           )
           ;
 
         if (ticket.category === 'report_staff') {
           embed.addFields(
-            { name: '👨‍💼 Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '📝 Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: true },
-            { name: '📎 Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 100) : 'None', inline: false }
+            { name: '????? Staff Member', value: ticket.staffName || 'N/A', inline: true },
+            { name: '?? Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: true },
+            { name: '?? Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 100) : 'None', inline: false }
           );
         } else {
           embed.addFields(
-            { name: '💭 Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 150) : 'N/A', inline: false }
+            { name: '?? Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 150) : 'N/A', inline: false }
           );
         }
 
@@ -121,19 +121,19 @@ module.exports = {
     if (closedTickets.length > 0) {
       for (const ticket of closedTickets.slice(0, 5)) {
         const embed = createCoolEmbed()
-          .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report (Closed)` : `💬 Feedback (Closed)`)
+          .setTitle(ticket.category === 'report_staff' ? `?? Staff Report (Closed)` : `?? Feedback (Closed)`)
           
           .addFields(
-            { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true },
-            { name: '🔒 Closed By', value: ticket.closedByName || 'Staff', inline: true }
+            { name: '?? Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
+            { name: '?? Submitted By', value: ticket.username || 'Unknown', inline: true },
+            { name: '?? Closed By', value: ticket.closedByName || 'Staff', inline: true }
           )
           ;
 
         if (ticket.category === 'report_staff') {
           embed.addFields(
-            { name: '👨‍💼 Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '📝 Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: false }
+            { name: '????? Staff Member', value: ticket.staffName || 'N/A', inline: true },
+            { name: '?? Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: false }
           );
         }
 
@@ -143,14 +143,14 @@ module.exports = {
 
     const summaryEmbed = new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-      .setTitle('📊 Ticket Summary')
+      .setTitle('?? Ticket Summary')
       
       .addFields(
-        { name: '⏳ Pending', value: `${pendingTickets.length}`, inline: true },
-        { name: '✅ Claimed', value: `${claimedTickets.length}`, inline: true },
-        { name: '🔒 Closed', value: `${closedTickets.length}`, inline: true }
+        { name: '? Pending', value: `${pendingTickets.length}`, inline: true },
+        { name: '? Claimed', value: `${claimedTickets.length}`, inline: true },
+        { name: '?? Closed', value: `${closedTickets.length}`, inline: true }
       )
       
       ;
@@ -158,6 +158,7 @@ module.exports = {
     await interaction.editReply({ embeds: [summaryEmbed, ...embeds].slice(0, 10) });
   }
 };
+
 
 
 

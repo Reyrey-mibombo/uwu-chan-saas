@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -60,10 +60,10 @@ module.exports = {
             return interaction.editReply({
                 embeds: [new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-                    .setTitle('✅ Rank Role Set')
-                    .setDescription(`**${rank.toUpperCase()}** → <@&${role.id}>`)
+                    .setTitle('? Rank Role Set')
+                    .setDescription(`**${rank.toUpperCase()}** ? <@&${role.id}>`)
                     ]
             });
         }
@@ -75,9 +75,9 @@ module.exports = {
             return interaction.editReply({
                 embeds: [new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-                    .setTitle('✅ Promotion Channel Set')
+                    .setTitle('? Promotion Channel Set')
                     .setDescription(`Promotions will be announced in <#${channel.id}>`)]
             });
         }
@@ -95,14 +95,14 @@ module.exports = {
             return interaction.editReply({
                 embeds: [new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-                    .setTitle(`✅ Requirements Set for ${rank.toUpperCase()}`)
+                    .setTitle(`? Requirements Set for ${rank.toUpperCase()}`)
                     .addFields(
-                        { name: '⭐ Points', value: pts.toString(), inline: true },
-                        { name: '🔄 Shifts', value: shifts.toString(), inline: true },
-                        { name: '📈 Consistency', value: `${consistency}%`, inline: true },
-                        { name: '⚠️ Max Warnings', value: maxWarnings.toString(), inline: true }
+                        { name: '? Points', value: pts.toString(), inline: true },
+                        { name: '?? Shifts', value: shifts.toString(), inline: true },
+                        { name: '?? Consistency', value: `${consistency}%`, inline: true },
+                        { name: '?? Max Warnings', value: maxWarnings.toString(), inline: true }
                     )]
             });
         }
@@ -114,7 +114,7 @@ module.exports = {
             const fields = RANKS.map(r => {
                 const roleId = rankRoles[r];
                 const req = reqs[r];
-                const roleStr = roleId ? `<@&${roleId}>` : '❌ Not set';
+                const roleStr = roleId ? `<@&${roleId}>` : '? Not set';
                 const reqStr = req ? `${req.points}pts / ${req.shifts} shifts / ${req.consistency}% / max ${req.maxWarnings} warns` : '(defaults)';
                 return { name: `${r.toUpperCase()}`, value: `Role: ${roleStr}\nReqs: ${reqStr}`, inline: false };
             });
@@ -122,12 +122,13 @@ module.exports = {
             return interaction.editReply({
                 embeds: [new EmbedBuilder()
       .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
+      
       .setTimestamp()
-                    .setTitle('⚙️ Promotion Setup')
-                    .addFields({ name: '📢 Announcement Channel', value: ch ? `<#${ch}>` : '❌ Not set' }, ...fields)
+                    .setTitle('?? Promotion Setup')
+                    .addFields({ name: '?? Announcement Channel', value: ch ? `<#${ch}>` : '? Not set' }, ...fields)
                     ]
             });
         }
     }
 };
+

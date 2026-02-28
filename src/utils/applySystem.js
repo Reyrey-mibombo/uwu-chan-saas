@@ -31,7 +31,18 @@ async function handleApplyButton(interaction) {
     });
 
     modal.addComponents(...inputs);
-    await interaction.showModal(modal);
+
+    try {
+        await interaction.showModal(modal);
+    } catch (e) {
+        console.error("MODAL THREW:", e);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: `❌ **Failed to open Modal! Discord API Error:**\n\`\`\`js\n${e.message}\n\`\`\`\nJSON Payload Dump: \`${JSON.stringify(inputs.length)} components\``,
+                ephemeral: true
+            }).catch(() => { });
+        }
+    }
 }
 
 async function handleModalSubmit(interaction) {

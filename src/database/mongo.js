@@ -235,14 +235,18 @@ const ticketSchema = new mongoose.Schema({
 const applicationConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   enabled: { type: Boolean, default: false },
-  staffRole: { type: String, default: null },
-  logChannel: { type: String, default: null },
-  acceptedRole: { type: String, default: null },
-  applicationQuestions: [{
-    question: String,
-    type: { type: String, enum: ['text', 'textarea', 'number', 'boolean'], default: 'text' },
-    required: { type: Boolean, default: true }
-  }],
+  applyChannelId: { type: String, default: null },
+  reviewChannelId: { type: String, default: null },
+  reviewerRoleId: { type: String, default: null },
+  panelTitle: { type: String, default: 'Server Application' },
+  questions: {
+    type: [{ type: String }],
+    default: [
+      "Why do you want to join our team?",
+      "What experience do you have?",
+      "How active can you be?"
+    ]
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

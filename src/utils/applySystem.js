@@ -24,7 +24,7 @@ async function handleApplyButton(interaction) {
         return new ActionRowBuilder().addComponents(
             new TextInputBuilder()
                 .setCustomId(`question_${i}`)
-                .setLabel(q.substring(0, 45)) // Discord limits labels to 45 chars
+                .setLabel(String(q).substring(0, 45)) // Discord limits labels to 45 chars
                 .setStyle(TextInputStyle.Paragraph)
                 .setRequired(true)
         );

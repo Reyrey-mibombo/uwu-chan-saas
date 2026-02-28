@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -15,10 +16,7 @@ module.exports = {
     const top = users[0];
     const rankEmojis = { owner: '👑', admin: '💜', manager: '💎', senior: '🌟', staff: '⭐', trial: '🔰', member: '👤' };
     const alt = users.slice(1, 3).map(u => `• **${u.username || '?'}** (${u.staff?.rank || 'member'}) — ${u.staff?.points || 0} pts`).join('\n');
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🤖 Smart Staff Recommendation')
       
       .setThumbnail(interaction.guild.iconURL())
@@ -32,3 +30,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

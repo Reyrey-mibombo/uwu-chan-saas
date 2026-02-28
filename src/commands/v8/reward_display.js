@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -15,10 +16,7 @@ module.exports = {
     const BADGES = [{ min: 2000, badge: '👑 Legend' }, { min: 1000, badge: '💎 Diamond' }, { min: 500, badge: '🥇 Gold' }, { min: 150, badge: '🥈 Silver' }, { min: 50, badge: '🥉 Bronze' }];
     const earned = BADGES.filter(b => pts >= b.min).map(b => b.badge);
     const next = BADGES.find(b => pts < b.min);
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle(`🎁 Reward Display — ${target.username}`)
       
       .setThumbnail(target.displayAvatarURL())
@@ -33,3 +31,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

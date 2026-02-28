@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,10 +14,7 @@ module.exports = {
         const isActive = currentTier === 'premium' || currentTier === 'enterprise';
         const premiumUrl = process.env.STRIPE_CHECKOUT_URL || process.env.PAYPAL_CHECKOUT_URL || null;
 
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createCoolEmbed()
             .setTitle('💎 Premium Tier')
             
             .addFields(
@@ -47,3 +45,6 @@ module.exports = {
         await interaction.reply({ embeds: [embed] });
     }
 };
+
+
+

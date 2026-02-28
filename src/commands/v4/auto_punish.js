@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -47,10 +48,7 @@ module.exports = {
     };
     await guild.save();
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('⚙️ Auto-Punish Settings')
       
       .addFields(
@@ -63,3 +61,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

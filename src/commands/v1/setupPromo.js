@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -55,10 +56,7 @@ module.exports = {
       adminRole ? `👑 Admin: **${adminRole.name}**` : null
     ].filter(Boolean).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('✅ Promotion System Setup Complete!')
       
       .setDescription('Your promotion system is now configured!')
@@ -76,3 +74,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

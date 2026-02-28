@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 const ALL_ACHIEVEMENTS = ['🔥 First Shift', '⭐ Point Collector', '💎 Elite Member', '🎯 Consistent', '🏆 Top Performer', '⚡ Power User'];
@@ -25,10 +26,7 @@ module.exports = {
     const pct = Math.round((earned.length / ALL_ACHIEVEMENTS.length) * 100);
     const bar = '▓'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle(`🎯 Achievement Tracker — ${target.username}`)
       
       .setThumbnail(target.displayAvatarURL())
@@ -44,3 +42,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

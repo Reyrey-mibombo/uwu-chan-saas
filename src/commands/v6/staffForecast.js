@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -21,10 +22,7 @@ module.exports = {
 
     const list = forecast.map(f => `${f.status} **${f.rank}**: ${f.needed} more needed`).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🔮 Staff Forecast')
       .setDescription(list)
       .addFields(
@@ -37,3 +35,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

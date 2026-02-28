@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 
 const WEEKLY_EVENTS = [
   { name: '⚡ Speed Challenge', desc: 'Complete 20 commands in one day', reward: '+30 bonus pts', active: true },
@@ -31,10 +32,7 @@ module.exports = {
       inline: false
     }));
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle(`🎉 Event Rewards — Week of ${weekLabel}`)
       
       .addFields(
@@ -48,3 +46,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

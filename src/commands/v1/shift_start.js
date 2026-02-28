@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -22,10 +23,7 @@ module.exports = {
     
     const result = await staffSystem.startShift(userId, guildId);
     
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('✅ Shift Started')
       .setDescription(`Your shift has started!\nStarted at: <t:${Math.floor(Date.now() / 1000)}:T>`)
       .addFields(
@@ -37,3 +35,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

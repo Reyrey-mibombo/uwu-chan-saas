@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -48,10 +49,7 @@ module.exports = {
       await interaction.reply({ content: `Alert **${alertType}** has been ${enabled ? 'enabled' : 'disabled'}.` });
     } else {
       const alerts = guild.settings.alerts;
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createPremiumEmbed()
         .setTitle('🔔 Data Alerts Configuration')
         
         .addFields(
@@ -66,3 +64,6 @@ module.exports = {
     }
   }
 };
+
+
+

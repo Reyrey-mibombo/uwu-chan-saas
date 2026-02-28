@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -57,10 +58,7 @@ module.exports = {
       const [category, title] = fullChoice.split(':', 2);
       
       // Simple response without database
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         
         .setTitle(`🏆 Achievement Awarded`)
         .setDescription(`**${title}** awarded to ${targetUser}`)
@@ -81,3 +79,5 @@ module.exports = {
     }
   }
 };
+
+

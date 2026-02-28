@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -48,10 +49,7 @@ module.exports = {
       consistency >= reqConsistency &&
       warningCount <= reqMaxWarnings;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(canPromote ? '✅ CAN BE PROMOTED!' : '❌ CANNOT BE PROMOTED')
       .setThumbnail(user.displayAvatarURL())
       
@@ -76,3 +74,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

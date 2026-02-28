@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 // v6 (ENTERPRISE) — All 10 requirements
@@ -53,10 +54,7 @@ module.exports = {
 
         const off = (v) => v > 0 ? v.toString() : 'Disabled';
 
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createEnterpriseEmbed()
             .setTitle(`👑 Enterprise Full Requirements Set — ${rank.toUpperCase()}`)
             
             .setDescription('**Enterprise tier: All 10 requirements configured.**\nThis is the maximum customization level.')
@@ -77,3 +75,6 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
     }
 };
+
+
+

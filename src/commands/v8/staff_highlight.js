@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,10 +24,7 @@ module.exports = {
     const rank = user?.staff?.rank || 'member';
     const consistency = user?.staff?.consistency || 100;
     const achievements = user?.staff?.achievements || [];
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('⭐ Staff Highlight of the Week!')
       
       .setThumbnail(target.displayAvatarURL({ size: 256 }))
@@ -42,3 +40,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

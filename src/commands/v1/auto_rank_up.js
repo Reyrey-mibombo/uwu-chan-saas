@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 const RANK_ORDER = ['trial', 'staff', 'senior', 'manager', 'admin', 'owner'];
@@ -40,10 +41,7 @@ module.exports = {
       `\`${String(i + 1).padStart(2)}\` **${e.username}** — ${e.currentRank} → **${e.nextRank}** (${e.points}/${e.threshold} pts ✅)`
     ).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('⬆️ Automatic Rank-Up Eligible Staff')
       
       .setDescription(listText)
@@ -57,3 +55,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

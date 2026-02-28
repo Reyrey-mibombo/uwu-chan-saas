@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Ticket } = require('../../database/mongo');
 
 module.exports = {
@@ -60,10 +61,7 @@ module.exports = {
 
     if (pendingTickets.length > 0) {
       for (const ticket of pendingTickets.slice(0, 5)) {
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createCoolEmbed()
           .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report` : `💬 Feedback`)
           
           .addFields(
@@ -94,10 +92,7 @@ module.exports = {
 
     if (claimedTickets.length > 0) {
       for (const ticket of claimedTickets.slice(0, 5)) {
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createCoolEmbed()
           .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report (Claimed)` : `💬 Feedback (Claimed)`)
           
           .addFields(
@@ -125,10 +120,7 @@ module.exports = {
 
     if (closedTickets.length > 0) {
       for (const ticket of closedTickets.slice(0, 5)) {
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createCoolEmbed()
           .setTitle(ticket.category === 'report_staff' ? `📋 Staff Report (Closed)` : `💬 Feedback (Closed)`)
           
           .addFields(
@@ -166,3 +158,6 @@ module.exports = {
     await interaction.editReply({ embeds: [summaryEmbed, ...embeds].slice(0, 10) });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 // v3 (PREMIUM) — 7 requirements: + achievements, reputation
@@ -42,10 +43,7 @@ module.exports = {
         guildData.markModified('promotionRequirements');
         await guildData.save();
 
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createPremiumEmbed()
             .setTitle(`💎 Premium Requirements Set — ${rank.toUpperCase()}`)
             
             .setDescription('**Premium tier: 7 requirements configured.**\n🌟 Upgrade to Enterprise to unlock 3 more: days in server, clean record, and custom notes.')
@@ -63,3 +61,6 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
     }
 };
+
+
+

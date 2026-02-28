@@ -1,5 +1,7 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { PermissionFlagsBits } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -31,10 +33,7 @@ module.exports = {
     
     const result = await staffSystem.addWarning(user.id, interaction.guildId, reason, interaction.user.id, severity);
     
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('⚠️ User Warned')
       .addFields(
         { name: 'User', value: `${user.tag}`, inline: true },
@@ -61,3 +60,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

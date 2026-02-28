@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -23,10 +24,7 @@ module.exports = {
     const benefits = (tierEffects[tier] || tierEffects.free).join('\n');
     const colors = { free: 0x95a5a6, premium: 0x3498db, enterprise: 0xf1c40f };
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('💎 Premium Effects & Benefits')
       
       .addFields(
@@ -39,3 +37,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

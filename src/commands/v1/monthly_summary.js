@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild, Activity, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -20,10 +21,7 @@ module.exports = {
     const activeStaff = new Set(shifts.map(s => s.userId)).size;
     const totalShiftHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
     
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('📊 Monthly Summary')
       .setThumbnail(guild.iconURL())
       .addFields(
@@ -39,3 +37,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

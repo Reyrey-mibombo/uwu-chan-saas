@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -64,10 +65,7 @@ module.exports = {
 
     const total = Object.values(stats).reduce((a, b) => a + b, 0);
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle(`📊 Punishment Summary${user ? `: ${user.username}` : ''}`)
       
       .addFields(
@@ -84,3 +82,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -27,10 +28,7 @@ module.exports = {
       }, 0) / completed).toFixed(1)
       : '0';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('✅ Task Completion Report')
        >= 80 ? 0x2ecc71 : parseFloat(rate) >= 50 ? 0xf39c12 : 0xe74c3c)
       .addFields(
@@ -48,3 +46,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

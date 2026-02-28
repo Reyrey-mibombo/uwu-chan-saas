@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -30,10 +31,7 @@ module.exports = {
       return { name: `${m.val >= m.target ? '✅' : '🎯'} ${m.label}`, value: `\`${bar}\` **${pct}%** (${m.val}/${m.target})`, inline: true };
     });
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🎯 Milestone Tracker')
       
       .setThumbnail(interaction.guild.iconURL())
@@ -43,3 +41,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

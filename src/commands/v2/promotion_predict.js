@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User, Guild, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -28,10 +29,7 @@ module.exports = {
     const nextRank = rankOrder[currentIndex + 1];
 
     if (!nextRank) {
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle(`👑 ${user.username} - Max Rank!`)
         .setDescription('🎉 Already at maximum rank!')
         
@@ -75,10 +73,7 @@ module.exports = {
 
     const progressBar = '█'.repeat(Math.floor(avgProgress / 10)) + '░'.repeat(10 - Math.floor(avgProgress / 10));
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`🔮 Promotion Prediction - ${user.username}`)
       .setThumbnail(user.displayAvatarURL())
       
@@ -97,3 +92,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

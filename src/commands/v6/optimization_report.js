@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -42,10 +43,7 @@ module.exports = {
 
     const topText = topPerformers.map(u => `• **${u.username || 'Unknown'}** — ${u.staff?.points || 0} pts`).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🔧 Optimization Report')
       
       .addFields(
@@ -61,3 +59,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

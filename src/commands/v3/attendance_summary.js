@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -41,10 +42,7 @@ module.exports = {
       };
     }
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('📅 Attendance Summary')
       
       .setDescription(`Attendance for the last 30 days`);
@@ -82,3 +80,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -51,10 +52,7 @@ module.exports = {
       ? productivity.map((p, i) => `\`${String(i + 1).padStart(2)}\` <@${p.uid}> — **${p.productivityScore}** cmds/h | ${p.hours}h, ${p.cmds} cmds`).join('\n')
       : 'No data.';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('⚡ Productivity Analysis')
       
       .addFields(
@@ -69,3 +67,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

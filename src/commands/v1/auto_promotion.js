@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 const RANK_THRESHOLDS = {
@@ -33,10 +34,7 @@ module.exports = {
       .map(([rank, pts]) => `${rank.padEnd(10)} → **${pts}** points`)
       .join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('⬆️ Auto-Promotion Settings')
       
       .addFields(
@@ -52,3 +50,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

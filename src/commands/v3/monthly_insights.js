@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity, Shift, User } = require('../../database/mongo');
 
 module.exports = {
@@ -49,10 +50,7 @@ module.exports = {
       ? ((commandCount - lastMonthActivities.filter(a => a.type === 'command').length) / lastMonthActivities.filter(a => a.type === 'command').length * 100).toFixed(1)
       : 0;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('📊 Monthly Insights')
       
       .setDescription(`Statistics for ${interaction.guild.name} - ${now.toLocaleString('default', { month: 'long', year: 'numeric' })}`)
@@ -78,3 +76,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

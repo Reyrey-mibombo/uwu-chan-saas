@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -15,10 +16,7 @@ module.exports = {
     const staffCount = users.filter(u => u.staff?.rank).length;
     const activeUsers = users.filter(u => u.staff?.points > 0).length;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle(`📊 ${guild.name} - Member Stats`)
       
       .addFields(
@@ -32,3 +30,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

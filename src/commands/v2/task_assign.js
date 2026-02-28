@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -38,10 +39,7 @@ module.exports = {
         return `**#** - ${t.task${t.id}} (Assigned to: ${user?.username || 'Unknown'})`;
       }));
       
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle('📋 Pending Tasks')
         .setDescription(list.join('\n'))
         ;
@@ -65,3 +63,6 @@ module.exports = {
     }
   }
 };
+
+
+

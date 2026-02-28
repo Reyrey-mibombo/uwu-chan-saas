@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild, User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -16,10 +17,7 @@ module.exports = {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const recentActivity = await Activity.countDocuments({ guildId, createdAt: { $gte: weekAgo } });
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle(`📊 Server Overview: ${guild.name}`)
       
       .setThumbnail(guild.iconURL())
@@ -40,3 +38,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

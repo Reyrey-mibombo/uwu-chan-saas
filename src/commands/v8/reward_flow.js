@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -14,10 +15,7 @@ module.exports = {
     const totalBonus = rewards.reduce((s, r) => s + (r.data?.bonusPoints || 10), 0);
     const recipients = [...new Set(rewards.map(r => r.userId))];
     const recent = rewards.slice(-5).map(r => `🎁 <@${r.userId}> — <t:${Math.floor(new Date(r.createdAt).getTime() / 1000)}:R>`).join('\n');
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🎁 Reward Flow Dashboard')
       
       .addFields(
@@ -31,3 +29,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

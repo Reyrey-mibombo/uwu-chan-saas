@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Guild, Warning, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -32,10 +33,7 @@ module.exports = {
     if (suggestions.length === 0)
       suggestions.push({ name: '✅ Everything Looks Good!', value: 'Your server automation is well-configured. Keep monitoring your trends.' });
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🤖 Automation Suggestions')
       
       .setDescription('Based on your server\'s data, here are the top recommendations:')
@@ -51,3 +49,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

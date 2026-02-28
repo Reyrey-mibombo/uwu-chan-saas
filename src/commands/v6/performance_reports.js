@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -34,10 +35,7 @@ module.exports = {
     users.forEach(u => { const r = u.staff?.rank || 'member'; rankDist[r] = (rankDist[r] || 0) + 1; });
     const rankText = Object.entries(rankDist).map(([r, c]) => `${r}: **${c}**`).join(' | ');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('📋 Staff Performance Report')
       
       .addFields(
@@ -57,3 +55,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -44,10 +45,7 @@ module.exports = {
     const emptyBar = '░'.repeat(10 - Math.round(rate / 10));
     const progressBar = `\`[${filledBar}${emptyBar}]\` **${rate}%**`;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`📊 ${type === 'all' ? 'Overall' : type.charAt(0).toUpperCase() + type.slice(1)} Application Statistics`)
       .setDescription(`Current statistics for **${interaction.guild.name}** applications.`)
       .addFields(
@@ -73,3 +71,5 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+

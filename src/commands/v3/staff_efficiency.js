@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { User, Activity, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -38,10 +39,7 @@ module.exports = {
       const staff = user?.staff || {};
       const efficiency = calculateEfficiency(commands, warnings, completedShifts, staff.consistency || 100);
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createPremiumEmbed()
         .setTitle(`📊 Staff Efficiency - ${targetUser.username}`)
         
         .setThumbnail(targetUser.displayAvatarURL());
@@ -95,10 +93,7 @@ module.exports = {
 
       const sortedByEfficiency = userEfficiencies.sort((a, b) => b.efficiency - a.efficiency).slice(0, 10);
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createPremiumEmbed()
         .setTitle('📊 Staff Efficiency Rankings')
         
         .setDescription('Top 10 most efficient staff members');
@@ -134,3 +129,6 @@ function calculateEfficiency(commands, warnings, completedShifts, consistency) {
   const score = positiveScore - penalty + consistencyBonus;
   return Math.min(100, Math.max(0, Math.round(score / 2)));
 }
+
+
+

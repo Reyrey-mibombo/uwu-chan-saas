@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -26,10 +27,7 @@ module.exports = {
       ? badgeHolders.map(h => `${h.badge} **${h.username}** — ${h.pts} pts`).join('\n')
       : '🏅 No elite badge holders yet. Earn 500+ points to qualify!';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🏅 Elite Badge Holders')
       
       .setDescription(list)
@@ -44,3 +42,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

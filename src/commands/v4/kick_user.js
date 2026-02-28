@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -42,10 +43,7 @@ module.exports = {
       const modSystem = client.systems.moderation;
       await modSystem.createCase(guild.id, target.id, 'kick', reason, interaction.user.id);
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createPremiumEmbed()
         .setTitle('👢 User Kicked')
         
         .addFields(
@@ -73,3 +71,6 @@ module.exports = {
     }
   }
 };
+
+
+

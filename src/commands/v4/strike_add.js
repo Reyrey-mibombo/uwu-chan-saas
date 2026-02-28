@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -35,10 +36,7 @@ module.exports = {
       data: { action: 'strike', reason, moderatorId: interaction.user.id }
     });
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('⚡ Strike Added')
       
       .addFields(
@@ -52,3 +50,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -62,10 +63,7 @@ module.exports = {
     eligible.sort((a, b) => b.progress - a.progress);
 
     if (!eligible.length) {
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle('📋 Next Promotion Queue')
         .setDescription('No one is currently eligible for promotion.')
         
@@ -74,10 +72,7 @@ module.exports = {
       return interaction.editReply({ embeds: [embed] });
     }
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('📋 Next Promotion Queue')
       .setDescription(`**${eligible.length}** staff members ready for promotion!`)
       
@@ -102,3 +97,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

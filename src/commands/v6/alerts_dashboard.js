@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Warning, Shift, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -33,10 +34,7 @@ module.exports = {
       ? stuckShifts.slice(0, 3).map(s => `• <@${s.userId}> — Started <t:${Math.floor(new Date(s.startTime).getTime() / 1000)}:R>`).join('\n')
       : '✅ No stuck shifts';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🚨 Alerts Dashboard')
       
       .addFields(
@@ -55,3 +53,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

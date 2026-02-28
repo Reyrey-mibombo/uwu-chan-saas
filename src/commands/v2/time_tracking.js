@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -8,10 +9,7 @@ module.exports = {
   
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`⏱️ ${user.username}'s Time Tracking`)
       .addFields(
         { name: 'Today', value: '2h 30m', inline: true },
@@ -23,3 +21,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

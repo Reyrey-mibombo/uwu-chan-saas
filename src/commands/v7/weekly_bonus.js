@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,10 +24,7 @@ module.exports = {
       `${medals[i]} **${u.username || 'Unknown'}** — ${u.staff?.points || 0} pts total | +${weekMap[u.userId] || 0} this week`
     ).join('\n') || 'No data yet.';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('📅 Weekly Bonus Leaders')
       
       .setDescription(list)
@@ -40,3 +38,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

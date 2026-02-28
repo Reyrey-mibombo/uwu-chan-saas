@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -21,10 +22,7 @@ module.exports = {
     const pct = nextThresh ? Math.min(100, Math.round((pts / nextThresh) * 100)) : 100;
     const bar = '▓'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
     const steps = RANK_ORDER.map(r => `${r === rank ? `**→ ${rankEmojis[r]} ${r.toUpperCase()}** ←` : `${rankEmojis[r]} ${r}`}`).join(' | ');
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle(`🎭 Rank Animation — ${target.username}`)
       
       .setThumbnail(target.displayAvatarURL())
@@ -39,3 +37,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

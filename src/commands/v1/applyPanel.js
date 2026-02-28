@@ -47,10 +47,7 @@ module.exports = {
     const emoji = type === 'staff' ? '👮' : '🌟';
     const color = type === 'staff' ? 0x5865f2 : 0x9b59b6;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`${emoji} ${title}`)
       .setDescription(`${description}\n\n**Before you apply:**\n> • Ensure your DMs are open so we can contact you.\n> • Be detailed and honest in your responses.\n> • Troll or spam applications will result in a blacklist.`)
       .addFields(
@@ -205,10 +202,7 @@ module.exports.handleApplySubmit = async (interaction, client) => {
   const accountAgeStr = member ? `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>` : 'Unknown';
   const joinedAtStr = member ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown';
 
-  const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+  const embed = createCoolEmbed()
     .setTitle(`${emoji} New ${type.toUpperCase()} Application #${appId}`)
     
     .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 256 }))
@@ -420,3 +414,5 @@ module.exports.handleDeny = async (interaction, client) => {
   await interaction.message.edit({ embeds: [newEmbed], components: [] });
   await interaction.reply({ content: `✅ ${type} application denied. User has been notified via DM.`, ephemeral: true });
 };
+
+

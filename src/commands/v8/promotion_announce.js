@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -17,10 +18,7 @@ module.exports = {
     await User.findOneAndUpdate({ userId: target.id }, { $set: { 'staff.rank': newRank, username: target.username } }, { upsert: true });
     await Activity.create({ guildId: interaction.guildId, userId: target.id, type: 'promotion', data: { newRank, promotedBy: interaction.user.id } });
     const rankEmojis = { staff: '⭐', senior: '🌟', manager: '💎', admin: '👑' };
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🎊 ★ PROMOTION ANNOUNCEMENT ★ 🎊')
       
       .setThumbnail(target.displayAvatarURL({ size: 256 }))
@@ -35,3 +33,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

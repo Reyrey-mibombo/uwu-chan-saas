@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -23,10 +24,7 @@ module.exports = {
       value: rankGroups[r].slice(0, 5).map(n => `• **${n}**`).join('\n') + (rankGroups[r].length > 5 ? `\n*+${rankGroups[r].length - 5} more*` : ''),
       inline: true
     }));
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🎖️ Visual Rankings')
       
       .setThumbnail(interaction.guild.iconURL())
@@ -40,3 +38,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

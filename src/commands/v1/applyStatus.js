@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -33,10 +34,7 @@ module.exports = {
       const statusEmoji = app.status === 'pending' ? '⏳' : app.status === 'accepted' ? '✅' : '❌';
       const statusColor = app.status === 'pending' ? 0xf39c12 : app.status === 'accepted' ? 0x2ecc71 : 0xe74c3c;
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle(`📋 Application #${app.id}`)
         
         .addFields(
@@ -56,10 +54,7 @@ module.exports = {
     const latestApp = guildApps.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
     const statusEmoji = latestApp.status === 'pending' ? '⏳' : latestApp.status === 'accepted' ? '✅' : '❌';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('📋 Your Latest Application')
       
       .addFields(
@@ -75,3 +70,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -42,10 +43,7 @@ module.exports = {
 
     const efficiencyScore = calculateEfficiency(commands, warnings, messages, staff.consistency || 100);
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle(`📈 Efficiency Chart - ${targetUser.username}`)
       
       .setThumbnail(targetUser.displayAvatarURL());
@@ -98,3 +96,6 @@ function generateEfficiencyChart(score) {
   }
   return chart + ` ${score}%`;
 }
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,10 +25,7 @@ module.exports = {
     const hours = Math.floor(totalShiftTime / 3600);
     const minutes = Math.floor((totalShiftTime % 3600) / 60);
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`📊 ${user.username}'s Stats`)
       .setThumbnail(user.displayAvatarURL())
       .addFields(
@@ -44,3 +42,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

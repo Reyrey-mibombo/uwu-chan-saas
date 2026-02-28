@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,10 +16,7 @@ module.exports = {
     const consistency = await staffSystem.updateConsistency(user.id, interaction.guildId);
     const warnings = await staffSystem.getUserWarnings(user.id, interaction.guildId);
     
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`🎯 ${user.username}'s Staff Score`)
       .setDescription(`Overall Score: **${score}/100**`)
       .addFields(
@@ -31,3 +29,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -46,10 +47,7 @@ module.exports = {
       `\`${String(i + 1).padStart(2)}\` **${e.username || 'Unknown'}** — ${e.pts} pts / ${e.hours}h = **${e.efficiency} pts/h**`
     ).join('\n') || 'No data available.';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('⚡ Staff Efficiency Analysis')
       
       .addFields(
@@ -64,3 +62,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

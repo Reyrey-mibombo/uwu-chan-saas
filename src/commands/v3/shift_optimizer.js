@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Shift, User } = require('../../database/mongo');
 
 module.exports = {
@@ -63,10 +64,7 @@ module.exports = {
     const avgShiftsPerUser = staffData.length > 0 ? (totalShifts / staffData.length).toFixed(1) : 0;
     const completionRate = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('📅 Shift Optimizer')
       
       .setDescription(`Shift analysis for the last ${period} days`);
@@ -120,3 +118,6 @@ function generateSuggestions(staffData, period) {
 
   return suggestions.length > 0 ? suggestions.join('\n') : 'No major issues found';
 }
+
+
+

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -10,20 +11,14 @@ module.exports = {
     const commandName = interaction.options.getString('command');
     
     if (commandName) {
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle(`Help: /${commandName}`)
         .setDescription('Command details')
         ;
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
     
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('📚 Uwu-chan Bot Commands')
       .setDescription('Use `/buy` or `/premium` to upgrade!')
       .addFields(
@@ -39,3 +34,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

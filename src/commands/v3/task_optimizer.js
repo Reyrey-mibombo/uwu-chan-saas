@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
@@ -63,10 +64,7 @@ module.exports = {
       }))
       .sort((a, b) => b.efficiency - a.efficiency);
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('🎯 Task Optimizer')
       
       .setDescription(`Task analysis for the last ${period} days`);
@@ -114,3 +112,6 @@ function generateTaskSuggestions(userStats, period) {
 
   return suggestions.length > 0 ? suggestions.join('\n') : 'Team is performing well!';
 }
+
+
+

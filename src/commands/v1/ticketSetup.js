@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Ticket, Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -13,10 +14,7 @@ module.exports = {
     const channel = interaction.options.getChannel('channel');
     const title = interaction.options.getString('title') || '🎫 Support Tickets';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(title)
       .setDescription('Choose the type of ticket you want to create:')
       .addFields(
@@ -133,10 +131,7 @@ module.exports.handleReportSubmit = async (interaction, client) => {
 
   const ticketNum = Date.now().toString(36).toUpperCase();
 
-  const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+  const embed = createCoolEmbed()
     .setTitle(`📋 Staff Report #${ticketNum}`)
     
     .addFields(
@@ -207,10 +202,7 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
 
   const ticketNum = Date.now().toString(36).toUpperCase();
 
-  const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+  const embed = createCoolEmbed()
     .setTitle(`💬 Feedback #${ticketNum}`)
     
     .addFields(
@@ -289,10 +281,7 @@ module.exports.handleClaimTicket = async (interaction, client) => {
   const ticketChannelId = guild?.settings?.ticketChannel;
   const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
 
-  const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+  const embed = createCoolEmbed()
     .setTitle(`📋 Staff Report #${ticketNum}`)
     
     .addFields(
@@ -486,3 +475,6 @@ module.exports.handleCloseTicket = async (interaction, client) => {
 
   await interaction.reply({ content: `✅ Ticket #${ticketNum} has been closed!`, ephemeral: true });
 };
+
+
+

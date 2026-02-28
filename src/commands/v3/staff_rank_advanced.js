@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -43,10 +44,7 @@ module.exports = {
     const pointsForNextRank = getPointsForRank(nextRank);
     const pointsToNext = pointsForNextRank ? pointsForNextRank - points : 0;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle(`📈 Staff Rank - ${targetUser.username}`)
       )
       .setThumbnail(targetUser.displayAvatarURL());
@@ -123,3 +121,6 @@ function generateRankProgress(points, currentRankIndex) {
 
   return `${bar} ${points}/${nextThreshold}`;
 }
+
+
+

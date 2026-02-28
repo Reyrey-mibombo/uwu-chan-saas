@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 
 const MILESTONES = [
   { label: '👥 50 Members', type: 'members', target: 50 },
@@ -46,10 +47,7 @@ module.exports = {
 
     const nextMilestone = MILESTONES.find(m => getValue(m.type) < m.target);
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🎯 Server Milestone Progress')
       
       .setThumbnail(interaction.guild.iconURL())
@@ -65,3 +63,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

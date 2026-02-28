@@ -1,5 +1,7 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { PermissionFlagsBits } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,10 +20,7 @@ module.exports = {
     
     const result = await staffSystem.addPoints(user.id, interaction.guildId, amount, reason);
     
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('✅ Bonus Points Awarded')
       .addFields(
         { name: 'User', value: user.tag, inline: true },
@@ -35,3 +34,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

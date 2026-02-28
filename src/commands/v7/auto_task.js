@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -18,10 +19,7 @@ module.exports = {
     }).sort({ startTime: 1 }).lean();
 
     if (!openShifts.length) {
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createEnterpriseEmbed()
         .setTitle('✅ Auto-Task Monitor')
         
         .setDescription('No open tasks or stuck shifts detected. Everything is running smoothly!')
@@ -38,10 +36,7 @@ module.exports = {
 
     const critical = openShifts.filter(s => (Date.now() - new Date(s.startTime).getTime()) > 8 * 3600000).length;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('⚙️ Open Tasks & Shifts')
       
       .addFields(
@@ -56,3 +51,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

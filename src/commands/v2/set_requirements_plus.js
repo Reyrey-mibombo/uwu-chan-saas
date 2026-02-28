@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 // v2 (FREE) — 5 requirements: + maxWarnings, shiftHours
@@ -38,10 +39,7 @@ module.exports = {
         guildData.markModified('promotionRequirements');
         await guildData.save();
 
-        const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+        const embed = createCoolEmbed()
             .setTitle(`⚙️ Extended Requirements Set — ${rank.toUpperCase()}`)
             
             .setDescription('**Free tier: 5 requirements configured.**\n💎 Upgrade to Premium to unlock achievements & reputation requirements.\n🌟 Enterprise unlocks all 10.')
@@ -57,3 +55,6 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
     }
 };
+
+
+

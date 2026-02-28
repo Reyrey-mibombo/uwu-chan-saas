@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -23,10 +24,7 @@ module.exports = {
     const completedShifts = shifts.filter(s => s.endTime).length;
     const avgDuration = completedShifts > 0 ? Math.round(totalTime / completedShifts) : 0;
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle(`⏱️ Shift Stats - ${user.username}`)
       
       .setThumbnail(user.displayAvatarURL())
@@ -40,3 +38,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

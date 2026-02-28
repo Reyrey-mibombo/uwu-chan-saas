@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { User, Shift } = require('../../database/mongo');
 
 module.exports = {
@@ -35,10 +36,7 @@ module.exports = {
       return `\`${String(start + i + 1).padStart(2)}\` **${u.username || 'Unknown'}** - ${rank} (${points} pts)`;
     }).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createCoolEmbed()
       .setTitle('👥 Staff List')
       .setDescription(list || 'No staff found')
       
@@ -48,3 +46,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

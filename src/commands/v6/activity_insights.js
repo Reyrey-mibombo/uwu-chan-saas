@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
 function progressBar(value, max, len = 10) {
@@ -53,10 +54,7 @@ module.exports = {
       return `${name.slice(0,3)}: ${bar} ${dayCounts[i]}`;
     }).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🔍 Activity Insights — Last 7 Days')
       
       .setThumbnail(interaction.guild.iconURL())
@@ -76,3 +74,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

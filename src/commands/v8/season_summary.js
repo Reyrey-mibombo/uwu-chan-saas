@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -21,10 +22,7 @@ module.exports = {
     const promotions = acts.filter(a => a.type === 'promotion').length;
     const top = users.map((u, i) => `${['🥇', '🥈', '🥉'][i]} **${u.username || '?'}** — ${u.staff?.points || 0} pts`).join('\n');
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle(`${season} Season Summary — ${now.getFullYear()}`)
       
       .addFields(
@@ -39,3 +37,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

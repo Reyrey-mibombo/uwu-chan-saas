@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild, License } = require('../../database/mongo');
 
 module.exports = {
@@ -11,10 +12,7 @@ module.exports = {
     const guild = await Guild.findOne({ guildId });
 
     if (!guild || !guild.premium?.isActive) {
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createPremiumEmbed()
         .setTitle('💎 Premium Statistics')
         
         .setDescription('This server does not have premium active.')
@@ -31,10 +29,7 @@ module.exports = {
       ? Math.ceil((new Date(guild.premium.expiresAt) - new Date()) / (1000 * 60 * 60 * 24))
       : 'Unlimited';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createPremiumEmbed()
       .setTitle('💎 Premium Statistics')
       
       .addFields(
@@ -49,3 +44,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed] });
   }
 };
+
+
+

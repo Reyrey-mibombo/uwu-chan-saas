@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild, Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -47,10 +48,7 @@ module.exports = {
         }
       });
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createPremiumEmbed()
         .setTitle('🔊 User Unmuted')
         
         .addFields(
@@ -71,3 +69,6 @@ module.exports = {
     }
   }
 };
+
+
+

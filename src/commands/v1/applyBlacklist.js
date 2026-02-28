@@ -1,4 +1,5 @@
 ﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { createCoolEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
@@ -36,10 +37,7 @@ module.exports = {
         });
       }
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle('🚫 Application Blacklist')
         .setDescription(list.map((entry, i) =>
           `**${i + 1}.** <@${entry.userId}> - ${entry.reason}\n└ Added by ${entry.addedBy} on <t:${Math.floor(new Date(entry.addedAt).getTime() / 1000)}:d>`
@@ -57,10 +55,7 @@ module.exports = {
       guild.markModified('applicationConfig');
       await guild.save();
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle('✅ User Unblacklisted')
         .setDescription(`<@${target.id}> (\`${target.tag}\`) has been removed from the application blacklist.`)
         ;
@@ -83,10 +78,7 @@ module.exports = {
       guild.markModified('applicationConfig');
       await guild.save();
 
-      const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+      const embed = createCoolEmbed()
         .setTitle('🚫 User Blacklisted')
         .setDescription(`<@${target.id}> (\`${target.tag}\`) has been blacklisted from applying.`)
         .addFields({ name: 'Reason', value: reason })
@@ -97,3 +89,5 @@ module.exports = {
     }
   }
 };
+
+

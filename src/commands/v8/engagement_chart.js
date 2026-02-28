@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
@@ -26,10 +27,7 @@ module.exports = {
 
     const trend = weeks[3].count >= weeks[0].count ? '📈 Growing' : '📉 Declining';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('📊 4-Week Engagement Chart')
       
       .setDescription(`\`\`\`${chart}\n\n(W-0 = this week, W-3 = 3 weeks ago)\`\`\``)
@@ -43,3 +41,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

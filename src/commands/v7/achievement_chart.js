@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { createEnterpriseEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 module.exports = {
@@ -35,10 +36,7 @@ module.exports = {
     const totalAchievements = Object.values(achievementCounts).reduce((s, v) => s + v, 0);
     const avgPerStaff = users.length > 0 ? (totalAchievements / users.length).toFixed(1) : '0';
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setFooter({ text: 'UwU Chan SaaS • Premium Experience' })
-      .setTimestamp()
+    const embed = createEnterpriseEmbed()
       .setTitle('🏅 Achievement Distribution Chart')
       
       .addFields(
@@ -53,3 +51,6 @@ module.exports = {
     await interaction.editReply({ embeds: [embed] });
   }
 };
+
+
+

@@ -19,7 +19,8 @@ async function handleApplyButton(interaction) {
         .setCustomId('apply_modal_submit')
         .setTitle(config.panelTitle || 'Server Application');
 
-    const inputs = config.questions.map((q, i) => {
+    const activeQuestions = config.questions.slice(0, 5); // Strict Discord 5-item limit
+    const inputs = activeQuestions.map((q, i) => {
         return new ActionRowBuilder().addComponents(
             new TextInputBuilder()
                 .setCustomId(`question_${i}`)
@@ -40,7 +41,8 @@ async function handleModalSubmit(interaction) {
     const config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
     if (!config) return interaction.editReply({ embeds: [createErrorEmbed('Configuration error.')] });
 
-    const answers = config.questions.map((q, i) => {
+    const activeQuestions = config.questions.slice(0, 5);
+    const answers = activeQuestions.map((q, i) => {
         return {
             question: q,
             answer: interaction.fields.getTextInputValue(`question_${i}`)

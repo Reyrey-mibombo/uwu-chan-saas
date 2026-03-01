@@ -46,5 +46,42 @@ module.exports = {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
+  },
+
+  async handleButtonEndShift(interaction, client) {
+    try {
+      await interaction.deferUpdate();
+
+      const customId = interaction.customId;
+      const targetUserId = interaction.message.interaction?.user.id || interaction.user.id;
+
+      if (interaction.user.id !== targetUserId) {
+        return interaction.followUp({ content: '❌ You cannot end someone else\'s shift!', ephemeral: true });
+      }
+
+      const staffSystem = client.systems.staff;
+      if (!staffSystem) {
+        return interaction.followUp({ content: '❌ Staff system is offline.', ephemeral: true });
+      }
+
+      const result = await staffSystem.endShift(interaction.user.id, interaction.guildId);
+
+      if (!result.success) {
+        return interaction.followUp({ content: '❌ You do not have an active shift to end.', ephemeral: true });
+      }
+
+      const embed = createCoolEmbed()
+        .setTitle('✅ Shift Ended (Action)')
+        .setDescription('Your shift has successfully ended. Great work!')
+        .addFields(
+          { name: '⏱️ Duration', value: `\`${result.hours || 0}h ${result.minutes || 0}m\``, inline: true }
+        )
+        .setColor('success');
+
+      await interaction.editReply({ embeds: [embed], components: [] });
+    } catch (error) {
+      console.error('Error handling end shift button:', error);
+      await interaction.followUp({ content: '❌ An error occurred ending your shift.', ephemeral: true });
+    }
   }
 };

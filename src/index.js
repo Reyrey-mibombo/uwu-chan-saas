@@ -244,8 +244,30 @@ client.on('interactionCreate', async interaction => {
     } catch (error) {
       logger.error('Application button error', error);
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: '❌ An error occurred processing this application button!', ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: '❌ An error occurred processing this application button!', ephemeral: true }).catch(() => { });
       }
+    }
+
+    // --- Phase 2 Interactive Buttons ---
+    if (interaction.customId === 'approve_all_promotions') {
+      await require('./commands/v1/auto_rank_up').handleApproveAll(interaction, client);
+      return;
+    }
+    if (interaction.customId.startsWith('end_shift_')) {
+      await require('./commands/v1/shift_end').handleButtonEndShift(interaction, client);
+      return;
+    }
+    if (interaction.customId.startsWith('export_stats_')) {
+      await require('./commands/v1/staff_profile').handleExportStats(interaction, client);
+      return;
+    }
+  }
+
+  // --- Select Menu Interactions ---
+  if (interaction.isStringSelectMenu()) {
+    if (interaction.customId.startsWith('quick_action_')) {
+      await require('./commands/v1/warn').handleQuickAction(interaction, client);
+      return;
     }
   }
 
@@ -261,7 +283,7 @@ client.on('interactionCreate', async interaction => {
     } catch (error) {
       logger.error('Modal submit error', error);
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: '❌ Failed to submit application!', ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: '❌ Failed to submit application!', ephemeral: true }).catch(() => { });
       }
     }
 
@@ -379,7 +401,7 @@ client.on('interactionCreate', async interaction => {
       });
     } catch (error) {
       logger.error('Promo modal submit error', error);
-      await interaction.reply({ content: '❌ An error occurred while saving configuration.', ephemeral: true }).catch(() => {});
+      await interaction.reply({ content: '❌ An error occurred while saving configuration.', ephemeral: true }).catch(() => { });
     }
   }
 

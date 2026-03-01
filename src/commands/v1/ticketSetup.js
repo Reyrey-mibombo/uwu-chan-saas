@@ -468,11 +468,28 @@ module.exports.handleCloseTicket = async (interaction, client) => {
       )
       .setColor('dark');
 
+    // Generate Transcript
+    const { AttachmentBuilder } = require('discord.js');
+    let transcriptContent = `Transcript for Ticket #${ticketNum}\nReported by: ${ticket.username}\nClosed by: ${interaction.user.tag}\n-----------------------------------\n\n`;
+
+    ticket.messages.forEach(m => {
+      transcriptContent += `[${new Date(m.createdAt).toLocaleString()}] User ${m.userId}:\n${m.content}\n\n`;
+    });
+
+    const buffer = Buffer.from(transcriptContent, 'utf-8');
+    const attachment = new AttachmentBuilder(buffer, { name: `transcript-${ticketNum}.txt` });
+
     if (ticketChannel) {
-      await ticketChannel.send({ embeds: [closedEmbed] });
+      await ticketChannel.send({ embeds: [closedEmbed], files: [attachment] });
     }
 
-    await interaction.reply({ embeds: [createSuccessEmbed('Ticket Closed', `Ticket **#${ticketNum}** has been permanently closed.`)], ephemeral: true });
+    if (reporter) {
+      try {
+        await reporter.send({ content: 'Here is a copy of your ticket transcript:', files: [attachment] });
+      } catch (e) { }
+    }
+
+    await interaction.reply({ embeds: [createSuccessEmbed('Ticket Closed', `Ticket **#${ticketNum}** has been permanently closed. Transcript generated.`)], ephemeral: true });
   } catch (err) {
     console.error(err);
     await interaction.reply({ embeds: [createErrorEmbed('Failed to close ticket.')], ephemeral: true });

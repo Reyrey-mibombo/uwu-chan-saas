@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/embeds');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -39,7 +39,7 @@ module.exports = {
 
       const embed = createCoolEmbed()
         .setTitle('⚠️ User Warned')
-        .setThumbnail(user.displayAvatarURL())
+        .setThumbnail(user.displayAvatarURL({ dynamic: true }))
         .addFields(
           { name: '👤 User', value: `${user.tag} (<@${user.id}>)`, inline: true },
           { name: '🛡️ Moderator', value: interaction.user.tag, inline: true },
@@ -64,7 +64,20 @@ module.exports = {
       }
 
       embed.setFooter({ text: dmStatus });
-      await interaction.editReply({ embeds: [embed] });
+
+      const row = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId(`quick_action_${user.id}`)
+          .setPlaceholder('⚡ Quick Actions (Stack Punishment)')
+          .addOptions([
+            { label: 'Mute (10 Mins)', value: 'mute_10m', emoji: '🔇', description: 'Timeout user for 10 minutes' },
+            { label: 'Mute (1 Hour)', value: 'mute_1h', emoji: '🔇', description: 'Timeout user for 1 hour' },
+            { label: 'Kick', value: 'kick', emoji: '👢', description: 'Kick user from the server' },
+            { label: 'Ban', value: 'ban', emoji: '🔨', description: 'Permanently ban user' }
+          ])
+      );
+
+      await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while warning the user.');
@@ -73,6 +86,61 @@ module.exports = {
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
+    }
+  },
+
+  async handleQuickAction(interaction, client) {
+    try {
+      if (!interaction.member.permissions.has('ModerateMembers') && !interaction.member.permissions.has('ManageGuild')) {
+        return interaction.reply({ content: '❌ You don\'t have permission to perform moderation actions.', ephemeral: true });
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+      const targetUserId = interaction.customId.replace('quick_action_', '');
+      const actionRaw = interaction.values[0];
+      const targetMember = interaction.guild.members.cache.get(targetUserId);
+
+      if (!targetMember) {
+        return interaction.editReply({ content: '❌ Target member is no longer in the server.' });
+      }
+
+      if (interaction.user.id === targetUserId) {
+        return interaction.editReply({ content: '❌ You cannot punish yourself.' });
+      }
+
+      let actionDesc = '';
+
+      if (actionRaw === 'mute_10m') {
+        const ms = 10 * 60 * 1000;
+        await targetMember.timeout(ms, 'Quick Action Mute');
+        actionDesc = 'Muted for 10 minutes';
+      } else if (actionRaw === 'mute_1h') {
+        const ms = 60 * 60 * 1000;
+        await targetMember.timeout(ms, 'Quick Action Mute');
+        actionDesc = 'Muted for 1 hour';
+      } else if (actionRaw === 'kick') {
+        await targetMember.kick('Quick Action Kick');
+        actionDesc = 'Kicked from server';
+      } else if (actionRaw === 'ban') {
+        await targetMember.ban({ reason: 'Quick Action Ban' });
+        actionDesc = 'Banned from server';
+      }
+
+      const embed = createCoolEmbed()
+        .setTitle('⚡ Quick Action Executed')
+        .setDescription(`Successfully executed **${actionDesc}** on <@${targetUserId}>`)
+        .setColor('success');
+
+      await interaction.editReply({ embeds: [embed] });
+
+      // Attempt to disable the menu so it can't be spammed
+      try {
+        await interaction.message.edit({ components: [] });
+      } catch (e) { }
+
+    } catch (error) {
+      console.error('Quick Action execution error:', error);
+      await interaction.editReply({ content: '❌ An error occurred executing the quick action. Ensure my role is higher than the target.' });
     }
   }
 };

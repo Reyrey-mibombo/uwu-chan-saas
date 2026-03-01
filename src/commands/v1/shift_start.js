@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
@@ -31,13 +31,21 @@ module.exports = {
 
       const embed = createCoolEmbed()
         .setTitle('✅ Shift Started')
-        .setDescription(`Your shift has successfully started!\n\n⏱️ **Started at:** <t:${Math.floor(Date.now() / 1000)}:T> (<t:${Math.floor(Date.now() / 1000)}:R>)`)
+        .setDescription(`Your shift has successfully started!\n\n⏱️ **Started at:** <t:${Math.floor(Date.now() / 1000)}:t> (<t:${Math.floor(Date.now() / 1000)}:R>)`)
         .addFields(
           { name: 'Shift ID', value: `\`${result.shiftId.toString()}\``, inline: true }
         )
         .setColor('success');
 
-      await interaction.editReply({ embeds: [embed] });
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(`end_shift_${result.shiftId.toString()}`)
+            .setLabel('⏹️ End Shift')
+            .setStyle(ButtonStyle.Danger)
+        );
+
+      await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while starting your shift.');

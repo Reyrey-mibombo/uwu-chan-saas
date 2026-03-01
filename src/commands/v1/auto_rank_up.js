@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
@@ -47,11 +47,19 @@ module.exports = {
         .setDescription(listText)
         .addFields(
           { name: '✅ Eligible Count', value: eligible.length.toString(), inline: true },
-          { name: '📌 Next Step', value: 'Use `/promote` or `/rank_announce` to officially promote them', inline: true }
+          { name: '📌 Next Step', value: 'Click the button below to **approve** all promotions instantly!', inline: true }
         )
         .setColor('success');
 
-      await interaction.editReply({ embeds: [embed] });
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('approve_all_promotions')
+          .setLabel(`Approve All ${eligible.length} Promotions`)
+          .setStyle(ButtonStyle.Success)
+          .setEmoji('🎉')
+      );
+
+      await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while checking eligible staff.');
@@ -60,6 +68,55 @@ module.exports = {
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
+    }
+  },
+
+  async handleApproveAll(interaction, client) {
+    try {
+      await interaction.deferUpdate();
+      if (!interaction.member.permissions.has('ModerateMembers') && !interaction.member.permissions.has('ManageGuild')) {
+        return interaction.followUp({ embeds: [createErrorEmbed('You do not have permission to approve promotions.')], ephemeral: true });
+      }
+
+      const users = await User.find({ 'staff.points': { $gt: 0 } }).lean();
+      let promotedCount = 0;
+
+      for (const u of users) {
+        const currentRank = u.staff?.rank || 'trial';
+        const points = u.staff?.points || 0;
+        const currentIdx = RANK_ORDER.indexOf(currentRank);
+        const nextRank = RANK_ORDER[currentIdx + 1];
+        if (!nextRank) continue;
+        const threshold = RANK_THRESHOLDS[nextRank];
+
+        if (points >= threshold) {
+          await User.findOneAndUpdate({ userId: u.userId }, { 'staff.rank': nextRank });
+          promotedCount++;
+        }
+      }
+
+      if (promotedCount === 0) {
+        return interaction.followUp({ embeds: [createErrorEmbed('No staff were eligible for promotion.')], ephemeral: true });
+      }
+
+      const embed = createCoolEmbed()
+        .setTitle('✅ Mass Promotion Successful')
+        .setDescription(`Successfully promoted **${promotedCount}** eligible staff members to their next ranks!`)
+        .setColor('success');
+
+      // Disable the button after use
+      const disabledRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('approve_all_promotions')
+          .setLabel(`Approved ${promotedCount} Staff`)
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled(true)
+      );
+
+      await interaction.editReply({ embeds: [embed], components: [disabledRow] });
+    } catch (error) {
+      console.error(error);
+      await interaction.followUp({ content: '❌ An error occurred while mass approving promotions.', ephemeral: true });
     }
   }
 };

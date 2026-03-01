@@ -1,19 +1,20 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('Staff activity leaderboard rankings')
-    .addIntegerOption(opt => opt.setName('limit').setDescription('Number of users to show (max 25)').setRequired(false)),
+    .setDescription('Staff activity leaderboard rankings with interactive pages'),
 
   async execute(interaction, client) {
     try {
       await interaction.deferReply();
-      const limit = Math.min(interaction.options.getInteger('limit') || 10, 25);
       const staffSystem = client.systems.staff;
       const redisClient = require('../../utils/cache');
-      const cacheKey = `leaderboard:${interaction.guildId}:${limit}`;
+
+      // Fetch top 50 for pagination cache
+      const fetchLimit = 50;
+      const cacheKey = `leaderboard:${interaction.guildId}:${fetchLimit}`;
 
       let leaderboard;
       try {
@@ -27,9 +28,9 @@ module.exports = {
         if (!staffSystem) {
           return interaction.editReply({ embeds: [createErrorEmbed('Staff system is currently offline.')] });
         }
-        leaderboard = await staffSystem.getLeaderboard(interaction.guildId, limit);
+        leaderboard = await staffSystem.getLeaderboard(interaction.guildId, fetchLimit);
         try {
-          await redisClient.setEx(cacheKey, 300, JSON.stringify(leaderboard)); // 5 minute cache
+          await redisClient.setEx(cacheKey, 300, JSON.stringify(leaderboard)); // 5 min cache
         } catch (err) {
           console.error('Redis cache error:', err);
         }
@@ -39,23 +40,84 @@ module.exports = {
         return interaction.editReply({ embeds: [createErrorEmbed('No staff data available yet. Start earning points!')] });
       }
 
-      const leaderboardText = await Promise.all(leaderboard.map(async (entry, index) => {
-        const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
-        let medal = `**${index + 1}.**`;
-        if (index === 0) medal = '🥇';
-        else if (index === 1) medal = '🥈';
-        else if (index === 2) medal = '🥉';
+      const perPage = 10;
+      const totalPages = Math.ceil(leaderboard.length / perPage);
+      let currentPage = 1;
 
-        return `${medal} **${user?.username || 'Unknown'}** • \`${entry.points} pts\``;
-      }));
+      const generateEmbed = async (page) => {
+        const start = (page - 1) * perPage;
+        const pageData = leaderboard.slice(start, start + perPage);
 
-      const embed = createCoolEmbed()
-        .setTitle('🏆 Top Staff Leaderboard')
-        .setDescription(leaderboardText.join('\n\n'))
-        .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-        .setColor('enterprise');
+        const leaderboardText = await Promise.all(pageData.map(async (entry, index) => {
+          const globalIndex = start + index;
+          const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
+          let medal = `**${globalIndex + 1}.**`;
+          if (globalIndex === 0) medal = '🥇';
+          else if (globalIndex === 1) medal = '🥈';
+          else if (globalIndex === 2) medal = '🥉';
 
-      await interaction.editReply({ embeds: [embed] });
+          return `${medal} **${user?.username || 'Unknown'}** • \`${entry.points} pts\``;
+        }));
+
+        return createCoolEmbed()
+          .setTitle('🏆 Top Staff Leaderboard')
+          .setDescription(leaderboardText.join('\n\n'))
+          .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
+          .setFooter({ text: `Page ${page} of ${totalPages}` })
+          .setColor('enterprise');
+      };
+
+      const getButtons = (page) => {
+        return new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('lb_prev')
+            .setLabel('◀ Previous')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(page === 1),
+          new ButtonBuilder()
+            .setCustomId('lb_next')
+            .setLabel('Next ▶')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(page === totalPages)
+        );
+      };
+
+      const initialEmbed = await generateEmbed(currentPage);
+      const message = await interaction.editReply({
+        embeds: [initialEmbed],
+        components: totalPages > 1 ? [getButtons(currentPage)] : []
+      });
+
+      if (totalPages <= 1) return;
+
+      const collector = message.createMessageComponentCollector({
+        componentType: ComponentType.Button,
+        time: 120000
+      });
+
+      collector.on('collect', async (i) => {
+        if (i.user.id !== interaction.user.id) {
+          return i.reply({ content: '❌ You cannot use these buttons.', ephemeral: true });
+        }
+
+        if (i.customId === 'lb_prev') currentPage--;
+        if (i.customId === 'lb_next') currentPage++;
+
+        const newEmbed = await generateEmbed(currentPage);
+        await i.update({
+          embeds: [newEmbed],
+          components: [getButtons(currentPage)]
+        });
+      });
+
+      collector.on('end', () => {
+        const disabledRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
+          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(true)
+        );
+        interaction.editReply({ components: [disabledRow] }).catch(() => { });
+      });
+
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while fetching the leaderboard.');

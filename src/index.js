@@ -36,6 +36,17 @@ client.commands = new Collection();
 client.cooldowns = new Collection();
 client.systems = {};
 
+/**
+ * Global authorization check for system-level operations.
+ * Validates if a user has sufficient administrative clearance.
+ */
+client.isOwner = (user) => {
+  // In a multi-server context, we typically check for Administrator permissions
+  // inside the interaction handlers. For global bot owners, you can add IDs here.
+  const owners = [process.env.OWNER_ID]; // Add support for OWNER_ID env
+  return owners.includes(user.id);
+};
+
 async function initializeSystems() {
   client.systems.license = new LicenseSystem(client);
   await client.systems.license.initialize();

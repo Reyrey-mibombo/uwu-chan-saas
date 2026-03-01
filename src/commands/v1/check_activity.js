@@ -32,16 +32,12 @@ module.exports = {
 
         // Offline check (invisible is reported as 'offline')
         if (!presence || presence.status === 'offline') {
-            const offlineEmbed = new EmbedBuilder()
-                .setColor('#747f8d')
-                .setAuthor({
-                    name: `${targetUser.tag} is Offline`,
-                    iconURL: targetUser.displayAvatarURL({ dynamic: true })
-                })
-                .setDescription('🔒 This user is currently offline, invisible, or has their activity privacy settings enabled.')
-                .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
-                .setFooter({ text: `Checked by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
-                .setTimestamp();
+            const offlineEmbed = await createCustomEmbed(interaction, {
+                title: `${targetUser.username} is Offline`,
+                description: '🔒 This user is currently offline, invisible, or has their activity privacy settings enabled.',
+                thumbnail: targetUser.displayAvatarURL({ dynamic: true, size: 512 }),
+                color: 'error'
+            });
 
             return interaction.editReply({ embeds: [offlineEmbed] });
         }

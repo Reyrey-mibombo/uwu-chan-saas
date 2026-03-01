@@ -52,14 +52,12 @@ module.exports = {
 
       let dmStatus = '✅ DM Alert: Delivered';
       try {
-        await user.send({
-          embeds: [new EmbedBuilder()
-            .setColor('#faa61a')
-            .setTimestamp()
-            .setTitle(`⚠️ Disciplinary Alert: ${interaction.guild.name}`)
-            .setDescription(`**Notification:** You have received a formal warning.\n**Violation:** ${reason}\n**Severity:** ${severity.toUpperCase()}\n\nPlease adhere strictly to server protocols moving forward.`)
-          ]
+        const dmEmbed = await createCustomEmbed(interaction, {
+          title: `⚠️ Disciplinary Alert: ${interaction.guild.name}`,
+          description: `**Notification:** You have received a formal warning.\n**Violation:** ${reason}\n**Severity:** ${severity.toUpperCase()}\n\nPlease adhere strictly to server protocols moving forward.`,
+          color: 'warning'
         });
+        await user.send({ embeds: [dmEmbed] });
       } catch (e) {
         dmStatus = '❌ DM Alert: Delivery Blocked';
       }
@@ -114,23 +112,24 @@ module.exports = {
       if (actionRaw === 'mute_10m') {
         const ms = 10 * 60 * 1000;
         await targetMember.timeout(ms, 'Quick Action Mute');
-        actionDesc = 'Muted for 10 minutes';
+        actionDesc = 'Muted (10m)';
       } else if (actionRaw === 'mute_1h') {
         const ms = 60 * 60 * 1000;
         await targetMember.timeout(ms, 'Quick Action Mute');
-        actionDesc = 'Muted for 1 hour';
+        actionDesc = 'Muted (1h)';
       } else if (actionRaw === 'kick') {
         await targetMember.kick('Quick Action Kick');
-        actionDesc = 'Kicked from server';
+        actionDesc = 'Kicked';
       } else if (actionRaw === 'ban') {
         await targetMember.ban({ reason: 'Quick Action Ban' });
-        actionDesc = 'Banned from server';
+        actionDesc = 'Banned';
       }
 
-      const embed = createCoolEmbed()
-        .setTitle('⚡ Quick Action Executed')
-        .setDescription(`Successfully executed **${actionDesc}** on <@${targetUserId}>`)
-        .setColor('success');
+      const embed = await createCustomEmbed(interaction, {
+        title: '⚡ Dynamic Punishment Applied',
+        description: `Successfully executed mandatory **${actionDesc}** protocol on <@${targetUserId}>.`,
+        color: 'success'
+      });
 
       await interaction.editReply({ embeds: [embed] });
 

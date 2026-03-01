@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, PermissionFlagsBits } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/embeds');
 const { Ticket, Guild } = require('../../database/mongo');
 
@@ -281,8 +281,9 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
 
 module.exports.handleClaimTicket = async (interaction, client) => {
   try {
-    if (!client.isOwner(interaction.user)) {
-      return interaction.reply({ embeds: [createErrorEmbed('Strictly restricted to **Bot Executive** personnel.')], ephemeral: true });
+    const isMod = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || (client.isOwner && client.isOwner(interaction.user));
+    if (!isMod) {
+      return interaction.reply({ embeds: [createErrorEmbed('Strictly restricted to **Administrative** personnel.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -450,8 +451,9 @@ module.exports.handleDMReply = async (interaction, client) => {
 
 module.exports.handleCloseTicket = async (interaction, client) => {
   try {
-    if (!client.isOwner(interaction.user)) {
-      return interaction.reply({ embeds: [createErrorEmbed('Access denied. Executive override required.')], ephemeral: true });
+    const isMod = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || (client.isOwner && client.isOwner(interaction.user));
+    if (!isMod) {
+      return interaction.reply({ embeds: [createErrorEmbed('Access denied. Administrative oversight required.')], ephemeral: true });
     }
 
     const customId = interaction.customId;

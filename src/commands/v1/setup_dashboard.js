@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ChannelType } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {

@@ -1,5 +1,5 @@
 ﻿const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { createSuccessEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { User, Guild } = require('../../database/mongo');
 
 module.exports = {

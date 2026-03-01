@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, PermissionFlagsBits } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed, createSuccessEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { Ticket, Guild } = require('../../database/mongo');
 
 module.exports = {

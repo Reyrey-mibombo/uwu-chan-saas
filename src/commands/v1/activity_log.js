@@ -1,5 +1,5 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { createPieChart } = require('../../utils/charts');
 
 module.exports = {

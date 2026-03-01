@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { Ticket } = require('../../database/mongo');
 
 module.exports = {

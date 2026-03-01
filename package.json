@@ -24,7 +24,8 @@
     "helmet": "^7.1.0",
     "cors": "^2.8.5",
     "quickchart-js": "^1.4.2",
-    "redis": "^4.6.10"
+    "redis": "^4.6.10",
+    "qrcode": "^1.5.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

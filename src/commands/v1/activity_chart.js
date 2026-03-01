@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const QuickChart = require('quickchart-js');
 const { Activity } = require('../../database/mongo');
-const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 
 module.exports = {
     data: new SlashCommandBuilder()

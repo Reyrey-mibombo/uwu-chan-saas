@@ -110,7 +110,7 @@ client.once('ready', async () => {
 
   async function checkActivityAlerts() {
     try {
-      logger.log('[Activity Alert] Checking activity levels...');
+      logger.info('[Activity Alert] Checking activity levels...');
       // Get all guilds with alerts enabled and a channel set
       const guilds = await Guild.find({
         'settings.alerts.enabled': true,
@@ -131,7 +131,7 @@ client.once('ready', async () => {
 
           const discordGuild = client.guilds.cache.get(guildId);
           if (!discordGuild) {
-            logger.log(`[Activity Alert] Guild ${guildId} not found (bot left?)`);
+            logger.info(`[Activity Alert] Guild ${guildId} not found (bot left?)`);
             continue;
           }
 
@@ -166,7 +166,7 @@ client.once('ready', async () => {
 
             const content = roleId ? `<@&${roleId}>` : '';
             await channel.send({ content, embeds: [embed] });
-            logger.log(`[Activity Alert] Alert sent for guild ${guildId} (${messageCount} < ${threshold})`);
+            logger.info(`[Activity Alert] Alert sent for guild ${guildId} (${messageCount} < ${threshold})`);
           }
         } catch (err) {
           logger.error(`[Activity Alert] Error processing guild ${guildData.guildId}:`, err);

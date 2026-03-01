@@ -20,33 +20,44 @@ async function handleCommandXP(interaction) {
             user = new User({ userId, username: interaction.user.username });
         }
 
-        if (!user.stats) user.stats = {};
+        if (!user.staff) user.staff = {};
+        if (!user.staff.commandUsage) user.staff.commandUsage = {};
 
-        const currentXP = user.stats.xp || 0;
-        const currentLevel = user.stats.level || 1;
+        // Track Mastery
+        const cmdName = interaction.commandName;
+        user.staff.commandUsage[cmdName] = (user.staff.commandUsage[cmdName] || 0) + 1;
+
+        const currentXP = user.staff.xp || 0;
+        const currentLevel = user.staff.level || 1;
 
         // Random XP granted between 10 and 25
         const xpGained = XP_PER_COMMAND + Math.floor(Math.random() * (XP_MAX_VARIANCE - XP_MIN_VARIANCE + 1)) + XP_MIN_VARIANCE;
 
-        user.stats.xp = currentXP + xpGained;
+        user.staff.xp = currentXP + xpGained;
 
         const xpNeeded = calculateXPNeeded(currentLevel);
 
         let leveledUp = false;
-        if (user.stats.xp >= xpNeeded) {
-            user.stats.level = currentLevel + 1;
-            user.stats.xp = user.stats.xp - xpNeeded; // Carry over XP
+        if (user.staff.xp >= xpNeeded) {
+            user.staff.level = currentLevel + 1;
+            user.staff.xp = user.staff.xp - xpNeeded; // Carry over XP
             leveledUp = true;
         }
 
         await user.save();
 
         if (leveledUp) {
+            const { broadcastMilestone } = require('./milestone_broadcast');
+            await broadcastMilestone(interaction, 'RANK_UP', {
+                userId: userId,
+                newRank: `Level ${user.staff.level}`
+            });
+
             const embed = createPremiumEmbed({
-                title: '🎉 LEVEL UP!',
-                description: `Congratulations <@${userId}>! You are a power user!\n\nYou have leveled up to **Bot Level ${user.stats.level}**!`,
-                thumbnail: interaction.user.displayAvatarURL()
-            }).setColor('#ffaa00').setImage('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZtMTMwaXZuOTVybWJ2ODRqaGdyNnZyZW94eTVxYTh4ODdrbDBycyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif'); // Celebration GIF
+                title: '🎉 PERSONNEL LEVEL UP!',
+                description: `Congratulations <@${userId}>! Your operational clearance has increased!\n\nYou have transitioned to **Staff Level ${user.staff.level}**!`,
+                thumbnail: interaction.user.displayAvatarURL({ dynamic: true })
+            }).setColor('#ffaa00');
 
             await interaction.followUp({ embeds: [embed], ephemeral: true });
         }

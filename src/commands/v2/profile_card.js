@@ -29,6 +29,18 @@ module.exports = {
             const achievements = userData.staff.achievements || [];
             const totalShifts = shifts.length;
 
+            // [Ultra] Leveling & Personalization
+            const level = userData.staff.level || 1;
+            const xp = userData.staff.xp || 0;
+            const { calculateXPNeeded } = require('../../utils/xpSystem');
+            const xpNeeded = calculateXPNeeded(level);
+            const xpPercent = Math.min(100, Math.floor((xp / xpNeeded) * 100));
+            const xpFilled = Math.floor(xpPercent / 10);
+            const xpBar = `\`${'■'.repeat(xpFilled)}${'□'.repeat(10 - xpFilled)}\` **${xpPercent}%**`;
+
+            const tagline = userData.staff.tagline || 'Operational Personnel';
+            const customColor = userData.staff.profileColor || null;
+
             // Calculate efficiency (completion rate)
             const completedShifts = shifts.filter(s => s.endTime).length;
             const efficiency = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
@@ -40,16 +52,18 @@ module.exports = {
             const embed = await createCustomEmbed(interaction, {
                 title: `📇 Staff Passport: ${targetUser.username}`,
                 thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
-                description: `### 🛡️ Sector Identity: ${interaction.guild.name}\nAuthorized personnel profile for **${targetUser.username}**. All telemetry verified.`,
+                description: `### 🛡️ Sector Identity: ${interaction.guild.name}\n> *${tagline}*\nAuthorized personnel profile for **${targetUser.username}**. All telemetry verified.`,
                 fields: [
                     { name: '📂 Classification', value: `\`${rank}\``, inline: true },
+                    { name: '✨ Level Clearance', value: `\`LVL ${level}\``, inline: true },
                     { name: '⭐ Strategic Points', value: `\`${points.toLocaleString()}\``, inline: true },
+                    { name: '🔋 Level Progress', value: xpBar, inline: false },
                     { name: '📊 Efficiency', value: `\`${efficiency}%\``, inline: true },
                     { name: '🔄 Lifetime Patrols', value: `\`${totalShifts.toLocaleString()}\``, inline: true },
                     { name: '🏅 Active Merits', value: badgeList, inline: false }
                 ],
-                footer: 'Blockchain-verified Operational Identity • V2 Enterprise',
-                color: efficiency >= 90 ? 'success' : efficiency >= 70 ? 'premium' : 'primary'
+                footer: 'Blockchain-verified Operational Identity • V2 Ultra',
+                color: customColor || (efficiency >= 90 ? 'success' : 'premium')
             });
 
             await interaction.editReply({ embeds: [embed] });

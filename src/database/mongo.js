@@ -152,7 +152,12 @@ const userSchema = new mongoose.Schema({
     consistency: { type: Number, default: 100 },
     reputation: { type: Number, default: 0 },
     achievements: [String],
-    // [Phase 3] Gamification
+    // [Phase 3] Gamification & Personalization (V2 Ultra)
+    tagline: { type: String, default: 'Operational Personnel' },
+    profileColor: { type: String, default: null },
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    commandUsage: { type: mongoose.Schema.Types.Mixed, default: {} },
     trophies: { type: [String], default: [] },
     streak: { type: Number, default: 0 },
     promotionPending: { type: Boolean, default: false },

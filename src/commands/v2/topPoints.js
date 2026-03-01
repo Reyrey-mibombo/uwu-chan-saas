@@ -11,7 +11,15 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      // STRICT SCOPING: Only query users tracked inside THIS specific Discord server
+      // Macroscopic Analytics
+      const totalStaff = await User.countDocuments({ guildId: interaction.guildId, 'staff.points': { $gt: 0 } });
+      const avgPointsData = await User.aggregate([
+        { $match: { guildId: interaction.guildId, 'staff.points': { $gt: 0 } } },
+        { $group: { _id: null, avg: { $avg: "$staff.points" } } }
+      ]);
+      const avgPoints = avgPointsData[0]?.avg || 0;
+
+      // Initial Fetch (Page 1)
       const users = await User.find({ guildId: interaction.guildId, 'staff.points': { $gt: 0 } })
         .sort({ 'staff.points': -1 })
         .limit(10)
@@ -24,24 +32,29 @@ module.exports = {
       const list = await Promise.all(users.map(async (u, i) => {
         const medals = ['🥇', '🥈', '🥉'];
         const position = medals[i] || `\`#${i + 1}\``;
-
-        let username = u.username;
-        if (!username) {
-          const fetched = await interaction.client.users.fetch(u.userId).catch(() => null);
-          username = fetched ? fetched.username : 'Unknown Personnel';
-        }
-
-        return `${position} **${username}** — \`${u.staff?.points?.toLocaleString() || 0}\` **PTS**`;
+        return `${position} **${u.username || 'Unknown'}** — \`${u.staff?.points?.toLocaleString() || 0}\` **PTS**`;
       }));
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🏆 Enterprise Economy Leaderboard',
+        title: '🏆 Macroscopic Economy Leaderboard',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `High-value personnel within the **${interaction.guild.name}** sector:\n\n${list.join('\n')}\n\n*Rankings are updated in real-time based on local server performance.*`,
+        description: `### 🛡️ Sector Performance Ranking\nHigh-value personnel within the **${interaction.guild.name}** sector hierarchy.\n\n${list.join('\n')}`,
+        fields: [
+          { name: '👤 Staff Capacity', value: `\`${totalStaff.toLocaleString()}\` Members`, inline: true },
+          { name: '📊 Average Yield', value: `\`${Math.round(avgPoints).toLocaleString()}\` PTS`, inline: true }
+        ],
+        footer: 'Paginated Interface • Use buttons below to navigate personnel registry.',
         color: 'premium'
       });
 
-      await interaction.editReply({ embeds: [embed] });
+      // Add Pagination Buttons in V2 Expansion logic
+      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('top_prev').setLabel('Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
+        new ButtonBuilder().setCustomId('top_next').setLabel('Next').setStyle(ButtonStyle.Primary).setDisabled(totalStaff <= 10)
+      );
+
+      await interaction.editReply({ embeds: [embed], components: [row] });
 
     } catch (error) {
       console.error('Top Points Error:', error);

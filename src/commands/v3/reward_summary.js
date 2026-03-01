@@ -1,123 +1,99 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
-const { User } = require('../../database/mongo');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { User, Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('reward_summary')
-    .setDescription('View reward summary')
+    .setDescription('Poll individual operator reward parameters locally indexing server configurations.')
     .addUserOption(option =>
       option.setName('user')
-        .setDescription('User to view rewards for')
+        .setDescription('Target specific explicit operator profile')
         .setRequired(false)),
 
   async execute(interaction) {
-    const targetUser = interaction.options.getUser('user') || interaction.user;
-    const guildId = interaction.guildId;
+    try {
+      await interaction.deferReply();
+      const targetUser = interaction.options.getUser('user') || interaction.user;
+      const guildId = interaction.guildId;
 
-    let user = await User.findOne({ userId: targetUser.id });
-    if (!user) {
-      user = new User({ userId: targetUser.id, username: targetUser.username });
-      await user.save();
-    }
+      let user = await User.findOne({ userId: targetUser.id, guildId }).lean();
+      if (!user || !user.staff) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`Unregistered Target\n <@${targetUser.id}> isn't mapped inside **${interaction.guild.name}** database clusters.`)] });
+      }
 
-    const staff = user.staff || {};
-    const points = staff.points || 0;
-    const reputation = staff.reputation || 0;
-    const achievements = staff.achievements || [];
+      const staff = user.staff;
+      const points = staff.points || 0;
+      const reputation = staff.reputation || 0;
+      const achievements = staff.achievements || [];
 
-    const tierInfo = getTierInfo(points);
-    const rewards = getAvailableRewards(tierInfo.tier);
+      // Dynamic Database Tier Polling instead of legacy Hardcoded Limits
+      const guild = await Guild.findOne({ guildId }).lean();
+      if (!guild || !guild.promotionRequirements) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`This server has no backend hierarchy thresholds setup. Admin must map limits via \`/promo_setup\`.`)] });
+      }
 
-    const embed = createPremiumEmbed()
-      .setTitle(`🎁 Reward Summary - ${targetUser.username}`)
-      
-      .setThumbnail(targetUser.displayAvatarURL());
+      const rankHierarchy = Object.keys(guild.promotionRequirements);
+      if (!rankHierarchy.includes('member')) rankHierarchy.unshift('member');
 
-    embed.addFields(
-      { name: 'Current Tier', value: tierInfo.tier, inline: true },
-      { name: 'Points', value: points.toString(), inline: true },
-      { name: 'Next Tier', value: tierInfo.nextTier, inline: true },
-      { name: 'Points to Next', value: tierInfo.pointsToNext.toString(), inline: true }
-    );
+      // Find user's tier based on mapping against actual database limits
+      let currentTier = rankHierarchy[0];
+      let nextTier = null;
+      let pointsToNext = 0;
+      let nextTierPoints = 0;
 
-    embed.addFields(
-      { name: 'Reputation', value: reputation.toString(), inline: true },
-      { name: 'Achievements', value: achievements.length.toString(), inline: true }
-    );
+      for (let i = 0; i < rankHierarchy.length; i++) {
+        const r = rankHierarchy[i];
+        const reqPoints = guild.promotionRequirements[r]?.points || 0;
+        if (points >= reqPoints) {
+          currentTier = r;
+          if (i + 1 < rankHierarchy.length) {
+            nextTier = rankHierarchy[i + 1];
+            nextTierPoints = guild.promotionRequirements[nextTier]?.points || 0;
+            pointsToNext = Math.max(0, nextTierPoints - points);
+          } else {
+            nextTier = null;
+          }
+        }
+      }
 
-    const rewardList = rewards.map(r => `${r.icon} **${r.name}** - ${r.cost} pts`);
-    embed.addFields({ name: 'Available Rewards', value: rewardList.join('\n') || 'No rewards available', inline: false });
+      const progressStr = generateProgressBar(points, nextTierPoints);
 
-    const progress = generateProgressBar(points, tierInfo.nextTierPoints);
-    embed.addFields({ name: 'Progress to Next Tier', value: progress, inline: false });
+      const embed = await createCustomEmbed(interaction, {
+        title: `🎁 Point Metrics Strategy: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL(),
+        description: `Aggregating hierarchy thresholds directly against dynamic logic initialized by **${interaction.guild.name}**.\n\n${progressStr}`,
+        fields: [
+          { name: '⭐ Lifetime Yield', value: `\`${points}\` Pts`, inline: true },
+          { name: '🎖️ Target Tier', value: `\`${currentTier.toUpperCase()}\``, inline: true },
+          { name: '📈 Promotion Vector', value: nextTier ? `\`${nextTier.toUpperCase()}\` ➔ (\`${pointsToNext} req\`)` : '`MAXIMUM`', inline: true },
+          { name: '🌟 Server Reputation', value: `\`${reputation}\` Auth`, inline: true },
+          { name: '🏆 Milestone Count', value: `\`${achievements.length}\` Nodes`, inline: true }
+        ]
+      });
 
-    await interaction.reply({ embeds: [embed] });
-  }
-};
+      await interaction.editReply({ embeds: [embed] });
 
-function getTierInfo(points) {
-  const tiers = [
-    { name: 'Bronze', min: 0, color: 0xcd7f32 },
-    { name: 'Silver', min: 500, color: 0xc0c0c0 },
-    { name: 'Gold', min: 1500, color: 0xffd700 },
-    { name: 'Platinum', min: 3000, color: 0xe5e4e2 },
-    { name: 'Diamond', min: 5000, color: 0xb9f2ff }
-  ];
-
-  let currentTier = tiers[0];
-  let nextTier = null;
-  let pointsToNext = 0;
-
-  for (const tier of tiers) {
-    if (points >= tier.min) {
-      currentTier = tier;
-      const nextIndex = tiers.indexOf(tier) + 1;
-      if (nextIndex < tiers.length) {
-        nextTier = tiers[nextIndex];
-        pointsToNext = nextTier.min - points;
+    } catch (error) {
+      console.error('Reward Summary Error:', error);
+      const errEmbed = createErrorEmbed('A database tracking error occurred generating hierarchical yield states.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
-
-  return {
-    tier: currentTier.name,
-    color: currentTier.color,
-    nextTier: nextTier ? nextTier.name : 'Max',
-    nextTierPoints: nextTier ? nextTier.min : points,
-    pointsToNext
-  };
-}
-
-function getAvailableRewards(tier) {
-  const allRewards = [
-    { name: 'Custom Role', cost: 200, icon: '🎭', tier: 'Bronze' },
-    { name: 'Profile Badge', cost: 300, icon: '🏅', tier: 'Bronze' },
-    { name: 'Priority Queue', cost: 400, icon: '⏩', tier: 'Silver' },
-    { name: 'Name Color', cost: 500, icon: '🎨', tier: 'Silver' },
-    { name: 'Exclusive Channel', cost: 800, icon: '💬', tier: 'Gold' },
-    { name: 'VIP Badge', cost: 1000, icon: '✨', tier: 'Gold' },
-    { name: 'Event Host', cost: 1500, icon: '🎪', tier: 'Platinum' },
-    { name: 'Server Boost', cost: 2000, icon: '🚀', tier: 'Diamond' }
-  ];
-
-  const tierOrder = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
-  const userTierIndex = tierOrder.indexOf(tier);
-
-  return allRewards.filter(r => tierOrder.indexOf(r.tier) <= userTierIndex);
-}
+};
 
 function generateProgressBar(points, nextTierPoints) {
   const total = 20;
-  const progress = nextTierPoints > 0 ? Math.min(total, Math.round((points / nextTierPoints) * total)) : total;
-  
+  if (!nextTierPoints || nextTierPoints === 0) return `\`████████████████████\` **LOCKED**`;
+
+  const progress = Math.min(total, Math.round((points / nextTierPoints) * total));
   let bar = '';
   for (let i = 0; i < total; i++) {
-    bar += i < progress ? '🟩' : '⬜';
+    bar += i < progress ? '█' : '░';
   }
-  
-  return `${bar} ${points}/${nextTierPoints}`;
+  return `\`${bar}\` **${points} / ${nextTierPoints}**`;
 }
-
-
-

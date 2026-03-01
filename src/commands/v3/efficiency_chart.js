@@ -1,11 +1,11 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('efficiency_chart')
-    .setDescription('View efficiency chart')
+    .setDescription('Visualize a performance efficiency scale.')
     .addUserOption(option =>
       option.setName('user')
         .setDescription('User to view efficiency for')
@@ -21,66 +21,75 @@ module.exports = {
         )),
 
   async execute(interaction) {
-    const targetUser = interaction.options.getUser('user') || interaction.user;
-    const guildId = interaction.guildId;
-    const period = parseInt(interaction.options.getString('period') || '30');
+    try {
+      await interaction.deferReply();
+      const targetUser = interaction.options.getUser('user') || interaction.user;
+      const guildId = interaction.guildId;
+      const period = parseInt(interaction.options.getString('period') || '30');
 
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - period);
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.getDate() - period);
 
-    const activities = await Activity.find({
-      guildId,
-      userId: targetUser.id,
-      createdAt: { $gte: daysAgo }
-    }).lean();
+      const activities = await Activity.find({
+        guildId,
+        userId: targetUser.id,
+        createdAt: { $gte: daysAgo }
+      }).lean();
 
-    const user = await User.findOne({ userId: targetUser.id });
-    const staff = user?.staff || {};
+      const user = await User.findOne({ userId: targetUser.id, guildId }).lean();
 
-    const commands = activities.filter(a => a.type === 'command').length;
-    const warnings = activities.filter(a => a.type === 'warning').length;
-    const messages = activities.filter(a => a.type === 'message').length;
+      if (!user || !user.staff) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`No analytics found. <@${targetUser.id}> is unmapped in this server.`)] });
+      }
 
-    const efficiencyScore = calculateEfficiency(commands, warnings, messages, staff.consistency || 100);
+      const staff = user.staff || {};
 
-    const embed = createPremiumEmbed()
-      .setTitle(`📈 Efficiency Chart - ${targetUser.username}`)
-      
-      .setThumbnail(targetUser.displayAvatarURL());
+      const commands = activities.filter(a => a.type === 'command').length;
+      const warnings = activities.filter(a => a.type === 'warning').length;
+      const messages = activities.filter(a => a.type === 'message').length;
 
-    embed.addFields(
-      { name: 'Period', value: `${period} Days`, inline: true },
-      { name: 'Efficiency Score', value: `${efficiencyScore}%`, inline: true }
-    );
+      const efficiencyScore = calculateEfficiency(commands, warnings, messages, staff.consistency || 100);
+      const chart = generateEfficiencyChart(efficiencyScore);
 
-    embed.addFields(
-      { name: 'Commands', value: commands.toString(), inline: true },
-      { name: 'Warnings', value: warnings.toString(), inline: true },
-      { name: 'Messages', value: messages.toString(), inline: true }
-    );
+      const embed = await createCustomEmbed(interaction, {
+        title: `📈 Performance Yield: ${targetUser.username}`,
+        description: `Trailing analysis generated over a designated **${period} Day** window.`,
+        thumbnail: targetUser.displayAvatarURL(),
+        fields: [
+          { name: '📊 Efficiency Grade', value: chart, inline: false },
+          { name: '⚙️ Yield Constraints:', value: 'Commands / Interactions / Chat', inline: false },
+          { name: '✅ Command Ping', value: `\`${commands}\``, inline: true },
+          { name: '💬 Total Processed', value: `\`${messages}\``, inline: true },
+          { name: '⚠️ Server Warnings', value: `\`${warnings}\``, inline: true },
+          { name: '🛡️ Local Consistency', value: `\`${staff.consistency || 100}%\``, inline: true },
+          { name: '💫 Reputation Yield', value: `\`${staff.reputation || 0}\``, inline: true },
+          { name: '⭐ Lifetime Points', value: `\`${staff.points || 0}\``, inline: true }
+        ]
+      });
 
-    embed.addFields(
-      { name: 'Consistency', value: `${staff.consistency || 100}%`, inline: true },
-      { name: 'Reputation', value: (staff.reputation || 0).toString(), inline: true },
-      { name: 'Total Points', value: (staff.points || 0).toString(), inline: true }
-    );
+      await interaction.editReply({ embeds: [embed] });
 
-    const chart = generateEfficiencyChart(efficiencyScore);
-    embed.addFields({ name: 'Efficiency', value: chart, inline: false });
-
-    await interaction.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Efficiency Chart Error:', error);
+      const errEmbed = createErrorEmbed('A database error occurred tracking trailing chart efficiency metrics.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
+    }
   }
 };
 
 function calculateEfficiency(commands, warnings, messages, consistency) {
   const positiveActions = commands + messages;
   const totalActions = positiveActions + warnings;
-  
+
   if (totalActions === 0) return 50;
-  
+
   const actionScore = (positiveActions / Math.max(totalActions, 1)) * 70;
   const consistencyScore = (consistency / 100) * 30;
-  
+
   return Math.min(100, Math.max(0, Math.round(actionScore + consistencyScore)));
 }
 
@@ -94,8 +103,5 @@ function generateEfficiencyChart(score) {
       chart += '⬜';
     }
   }
-  return chart + ` ${score}%`;
+  return chart + ` **${score}%**`;
 }
-
-
-

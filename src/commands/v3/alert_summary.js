@@ -1,69 +1,77 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('alert_summary')
-    .setDescription('View alert summary')
+    .setDescription('Review algorithmic server alerts filtered by state')
     .addStringOption(option =>
       option.setName('status')
-        .setDescription('Filter by status')
+        .setDescription('Filter logs by priority state')
         .setRequired(false)
         .addChoices(
-          { name: 'Active', value: 'active' },
-          { name: 'Resolved', value: 'resolved' },
-          { name: 'All', value: 'all' }
+          { name: 'Active / Pending', value: 'active' },
+          { name: 'Resolved / Mitigated', value: 'resolved' },
+          { name: 'All Chronological Logs', value: 'all' }
         )),
 
   async execute(interaction) {
-    const guildId = interaction.guildId;
-    const status = interaction.options.getString('status') || 'all';
+    try {
+      await interaction.deferReply();
+      const guildId = interaction.guildId;
+      const status = interaction.options.getString('status') || 'all';
 
-    const query = { guildId };
-    if (status !== 'all') {
-      query['data.status'] = status;
-    }
+      const query = { guildId, type: 'alert' };
+      if (status !== 'all') {
+        query['data.status'] = status;
+      }
 
-    const alerts = await Activity.find({
-      guildId,
-      type: 'alert',
-      ...(status !== 'all' ? { 'data.status': status } : {})
-    })
-    .sort({ createdAt: -1 })
-    .limit(20)
-    .lean();
+      const alerts = await Activity.find(query)
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
 
-    const embed = createPremiumEmbed()
-      .setTitle('🚨 Alert Summary')
-      
-      .setDescription(`Server alerts for ${interaction.guild.name}`);
+      if (alerts.length === 0) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`No log traces found mapping to the \`${status}\` parameter on this server.`)] });
+      }
 
-    const totalAlerts = await Activity.countDocuments({ guildId, type: 'alert' });
-    const activeAlerts = await Activity.countDocuments({ guildId, type: 'alert', 'data.status': 'active' });
-    const resolvedAlerts = await Activity.countDocuments({ guildId, type: 'alert', 'data.status': 'resolved' });
+      const totalAlerts = await Activity.countDocuments({ guildId, type: 'alert' });
+      const activeAlerts = await Activity.countDocuments({ guildId, type: 'alert', 'data.status': 'active' });
+      const resolvedAlerts = await Activity.countDocuments({ guildId, type: 'alert', 'data.status': 'resolved' });
 
-    embed.addFields(
-      { name: 'Total Alerts', value: totalAlerts.toString(), inline: true },
-      { name: 'Active', value: activeAlerts.toString(), inline: true },
-      { name: 'Resolved', value: resolvedAlerts.toString(), inline: true }
-    );
+      const embed = await createCustomEmbed(interaction, {
+        title: `🚨 Server Alert Aggregator`,
+        description: `Tracing infrastructure events recorded within **${interaction.guild.name}**.`,
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        fields: [
+          { name: '🛡️ Parameter Bounds', value: `\`${status.toUpperCase()}\``, inline: false },
+          { name: '✅ Resolved Matrices', value: `\`${resolvedAlerts}\` Cleared`, inline: true },
+          { name: '⚠️ Pending Trajectories', value: `\`${activeAlerts}\` Active`, inline: true },
+          { name: '🌐 Total Lifetime Logs', value: `\`${totalAlerts}\` Traces`, inline: true }
+        ],
+        footer: 'Background network engine intercepts automated alerts based on thresholds.'
+      });
 
-    if (alerts.length > 0) {
       const alertList = alerts.map(alert => {
         const alertStatus = alert.data?.status || 'unknown';
         const emoji = alertStatus === 'active' ? '🔴' : '🟢';
-        const date = new Date(alert.createdAt).toLocaleDateString();
-        return `${emoji} ${alert.data?.title || 'Alert'} - ${date}`;
+        const unixTime = Math.floor(new Date(alert.createdAt).getTime() / 1000);
+        return `> ${emoji} **${alert.data?.title || 'Unknown Alert Hash'}** (<t:${unixTime}:R>)`;
       });
-      embed.addFields({ name: 'Recent Alerts', value: alertList.join('\n'), inline: false });
-    } else {
-      embed.addFields({ name: 'Recent Alerts', value: 'No alerts found', inline: false });
-    }
 
-    await interaction.reply({ embeds: [embed] });
+      embed.addFields({ name: `📋 Target Filter: ${status}`, value: alertList.join('\n'), inline: false });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Alert Summary Error:', error);
+      const errEmbed = createErrorEmbed('A database error occurred parsing the algorithmic alert summary tree.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
+    }
   }
 };
-
-
-

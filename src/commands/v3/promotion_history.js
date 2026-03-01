@@ -1,80 +1,93 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('promotion_history')
-    .setDescription('View promotion history')
+    .setDescription('Poll chronologically authenticated execution histories governing server ranks.')
     .addUserOption(option =>
       option.setName('user')
-        .setDescription('User to view promotion history for')
+        .setDescription('Filter logs resolving explicitly against a single operator')
         .setRequired(false)),
 
   async execute(interaction) {
-    const guildId = interaction.guildId;
-    const targetUser = interaction.options.getUser('user');
+    try {
+      await interaction.deferReply();
+      const guildId = interaction.guildId;
+      const targetUser = interaction.options.getUser('user');
 
-    const query = { guildId, type: 'promotion' };
-    if (targetUser) query.userId = targetUser.id;
+      const query = { guildId, type: 'promotion' };
+      if (targetUser) query.userId = targetUser.id;
 
-    const promotions = await Activity.find(query)
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
+      const promotions = await Activity.find(query)
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
 
-    const allUsers = await User.find({
-      'guilds.guildId': guildId,
-      'staff.rank': { $ne: 'member' }
-    }).lean();
+      // Bind strictly
+      const allUsers = await User.find({
+        guildId,
+        'staff.rank': { $exists: true, $ne: 'member' }
+      }).lean();
 
-    const embed = createPremiumEmbed()
-      .setTitle('⬆️ Promotion History')
-      
-      .setDescription(targetUser ? `Promotions for ${targetUser.username}` : 'Server promotion history');
+      if (promotions.length === 0 && allUsers.length === 0) {
+        if (targetUser) return interaction.editReply({ embeds: [createErrorEmbed(`No hierarchical footprints exist tracking <@${targetUser.id}>.`)] });
+        return interaction.editReply({ embeds: [createErrorEmbed('No automated promotions or manual boundary modifications have deployed on this server.')] });
+      }
 
-    const promotedUsers = [...new Set(promotions.map(p => p.userId))];
-    embed.addFields(
-      { name: 'Total Promotions', value: promotions.length.toString(), inline: true },
-      { name: 'Promoted Users', value: promotedUsers.length.toString(), inline: true }
-    );
+      const embedPayload = {
+        title: '⬆️ Network Hierarchy Ledgers',
+        description: targetUser
+          ? `Filtering footprint sequences explicitly mapped to <@${targetUser.id}> in **${interaction.guild.name}**.`
+          : `Reviewing the top ${Math.min(20, promotions.length)} rank executions logged inside **${interaction.guild.name}**.`,
+        thumbnail: targetUser ? targetUser.displayAvatarURL() : interaction.guild.iconURL({ dynamic: true }),
+        fields: []
+      };
 
-    if (promotions.length > 0) {
-      const promoList = await Promise.all(promotions.slice(0, 10).map(async promo => {
-        const fromRank = promo.data?.fromRank || 'member';
-        const toRank = promo.data?.toRank || 'member';
-        const date = new Date(promo.createdAt).toLocaleDateString();
-        
-        let userName = 'Unknown';
-        try {
-          const user = await interaction.client.users.fetch(promo.userId);
-          userName = user?.username || 'Unknown';
-        } catch {}
+      const promotedUsers = [...new Set(promotions.map(p => p.userId))];
+      embedPayload.fields.push(
+        { name: '🌐 Global Operations', value: `\`${promotions.length}\` Sequences`, inline: true },
+        { name: '👥 Target Subjects', value: `\`${promotedUsers.length}\` Operators`, inline: true }
+      );
 
-        return `**${userName}**: ${fromRank} → ${toRank} (${date})`;
-      }));
-      embed.addFields({ name: 'Recent Promotions', value: promoList.join('\n'), inline: false });
-    } else {
-      embed.addFields({ name: 'Recent Promotions', value: 'No promotions found', inline: false });
+      if (promotions.length > 0) {
+        const promoList = await Promise.all(promotions.slice(0, 10).map(async promo => {
+          const fromRank = promo.data?.fromRank || 'member';
+          const toRank = promo.data?.toRank || 'undefined';
+          const unixTime = Math.floor(new Date(promo.createdAt).getTime() / 1000);
+
+          return `> **<@${promo.userId}>:** \`${fromRank.toUpperCase()}\` ➔ \`${toRank.toUpperCase()}\` (<t:${unixTime}:d>)`;
+        }));
+
+        embedPayload.fields.push({ name: '📝 Recent Trailing Matrix', value: promoList.join('\n'), inline: false });
+      }
+
+      const rankCounts = {};
+      allUsers.forEach(u => {
+        const rank = u.staff?.rank || 'member';
+        rankCounts[rank] = (rankCounts[rank] || 0) + 1;
+      });
+
+      const rankSummary = Object.entries(rankCounts)
+        .map(([rank, count]) => `\`${rank.toUpperCase()}: ${count}\``)
+        .join(', ');
+
+      if (rankSummary && !targetUser) {
+        embedPayload.fields.push({ name: '📊 Cumulative Network Bounds', value: rankSummary, inline: false });
+      }
+
+      const embed = await createCustomEmbed(interaction, embedPayload);
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Promotion History Error:', error);
+      const errEmbed = createErrorEmbed('A database tracking error occurred generating trailing propagation ranks.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
-
-    const rankCounts = {};
-    allUsers.forEach(u => {
-      const rank = u.staff?.rank || 'member';
-      rankCounts[rank] = (rankCounts[rank] || 0) + 1;
-    });
-
-    const rankSummary = Object.entries(rankCounts)
-      .map(([rank, count]) => `${rank}: ${count}`)
-      .join(', ');
-
-    if (rankSummary) {
-      embed.addFields({ name: 'Staff by Rank', value: rankSummary, inline: false });
-    }
-
-    await interaction.reply({ embeds: [embed] });
   }
 };
-
-
-

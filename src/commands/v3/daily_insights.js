@@ -1,71 +1,82 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Activity, Shift, User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('daily_insights')
-    .setDescription('View daily insights and statistics'),
+    .setDescription('Algorithmic breakdown of server metrics compiled within the last 24 hours.'),
 
   async execute(interaction) {
-    const guildId = interaction.guildId;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    try {
+      await interaction.deferReply();
+      const guildId = interaction.guildId;
 
-    const activities = await Activity.find({
-      guildId,
-      createdAt: { $gte: today, $lt: tomorrow }
-    }).lean();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const shifts = await Shift.find({
-      guildId,
-      startTime: { $gte: today, $lt: tomorrow }
-    }).lean();
+      const activities = await Activity.find({
+        guildId,
+        createdAt: { $gte: today, $lt: tomorrow }
+      }).lean();
 
-    const commandCount = activities.filter(a => a.type === 'command').length;
-    const messageCount = activities.filter(a => a.type === 'message').length;
-    const warningCount = activities.filter(a => a.type === 'warning').length;
+      const shifts = await Shift.find({
+        guildId,
+        startTime: { $gte: today, $lt: tomorrow }
+      }).lean();
 
-    const activeStaff = [...new Set(shifts.map(s => s.userId))];
-    const totalShiftHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 60;
+      const commandCount = activities.filter(a => a.type === 'command').length;
+      const messageCount = activities.filter(a => a.type === 'message').length;
+      const warningCount = activities.filter(a => a.type === 'warning').length;
 
-    const users = await User.find({
-      'guilds.guildId': guildId
-    }).lean();
+      const activeStaff = [...new Set(shifts.map(s => s.userId))];
+      const totalShiftHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
 
-    const staffWithActivity = users.filter(u => {
-      const todayActivity = activities.find(a => a.userId === u.userId);
-      return todayActivity;
-    });
+      const users = await User.find({
+        guildId, // MUST ISOLATE DB OR ACTIVITY LEAKS GLOBALLY
+        staff: { $exists: true }
+      }).lean();
 
-    const embed = createPremiumEmbed()
-      .setTitle('📊 Daily Insights')
-      
-      .setDescription(`Statistics for ${interaction.guild.name} - ${today.toDateString()}`)
-      ;
+      const staffWithActivity = users.filter(u => {
+        return activities.find(a => a.userId === u.userId);
+      });
 
-    embed.addFields(
-      { name: 'Commands Used', value: commandCount.toString(), inline: true },
-      { name: 'Messages', value: messageCount.toString(), inline: true },
-      { name: 'Warnings', value: warningCount.toString(), inline: true },
-      { name: 'Active Staff', value: activeStaff.length.toString(), inline: true },
-      { name: 'Total Shift Hours', value: totalShiftHours.toFixed(1), inline: true },
-      { name: 'Staff with Activity', value: staffWithActivity.length.toString(), inline: true }
-    );
+      const activePercentage = users.length > 0 ? ((activeStaff.length / users.length) * 100).toFixed(0) : 0;
 
-    if (activeStaff.length > 0) {
-      const staffList = await Promise.all(activeStaff.slice(0, 5).map(async userId => {
-        const user = await interaction.client.users.fetch(userId).catch(() => null);
-        return user?.username || 'Unknown';
-      }));
-      embed.addFields({ name: 'Active Staff Members', value: staffList.join(', '), inline: false });
+      const embed = await createCustomEmbed(interaction, {
+        title: `📊 24-Hour Network Insights`,
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        description: `A snapshot of authenticated ledger events and patrol durations recorded since Midnight.`,
+        fields: [
+          { name: '✅ Command Usage', value: `\`${commandCount}\` Invocations`, inline: true },
+          { name: '💬 Total Processed', value: `\`${messageCount}\` Messages`, inline: true },
+          { name: '⚠️ Server Warnings', value: `\`${warningCount}\` Issued`, inline: true },
+          { name: '🛡️ Active Patrollers', value: `\`${activeStaff.length}\` Personnel`, inline: true },
+          { name: '⏱️ Total Shift Hours', value: `\`${totalShiftHours.toFixed(1)}h\``, inline: true },
+          { name: '📈 Activity Yield', value: `\`${staffWithActivity.length}\` Logs Tracked`, inline: true }
+        ],
+        footer: `${activePercentage}% of the registered hierarchy deployed today.`
+      });
+
+      if (activeStaff.length > 0) {
+        const staffList = activeStaff.slice(0, 10).map(userId => `<@${userId}>`).join(', ');
+        embed.addFields({ name: '👥 Primary Responders', value: staffList || '*None available.*', inline: false });
+      } else {
+        embed.addFields({ name: '👥 Primary Responders', value: '*No staff members have clocked in today.*', inline: false });
+      }
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Daily Insights Error:', error);
+      const errEmbed = createErrorEmbed('A database error occurred tracking 24-hour log footprints.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
-
-    await interaction.reply({ embeds: [embed] });
   }
 };
-
-
-

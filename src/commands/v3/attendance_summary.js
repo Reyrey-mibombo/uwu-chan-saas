@@ -1,85 +1,81 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('attendance_summary')
-    .setDescription('View attendance summary')
+    .setDescription('Trailing algorithmic attendance analysis matrix.')
     .addUserOption(option =>
       option.setName('user')
-        .setDescription('User to check attendance for')
+        .setDescription('Target specific user explicitly')
         .setRequired(false)),
 
   async execute(interaction) {
-    const guildId = interaction.guildId;
-    const targetUser = interaction.options.getUser('user');
-    const query = { guildId };
-    if (targetUser) query.userId = targetUser.id;
+    try {
+      await interaction.deferReply();
+      const guildId = interaction.guildId;
+      const targetUser = interaction.options.getUser('user');
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Dynamic search vector maps target constraints locally to prevent leaking
+      const query = { guildId };
+      if (targetUser) query.userId = targetUser.id;
 
-    const shifts = await Shift.find({
-      ...query,
-      startTime: { $gte: thirtyDaysAgo }
-    }).lean();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const totalShifts = shifts.length;
-    const completedShifts = shifts.filter(s => s.endTime).length;
-    const attendanceRate = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
-
-    const totalHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 60;
-
-    const userIds = [...new Set(shifts.map(s => s.userId))];
-    const userAttendance = {};
-    for (const userId of userIds) {
-      const userShifts = shifts.filter(s => s.userId === userId);
-      userAttendance[userId] = {
-        total: userShifts.length,
-        completed: userShifts.filter(s => s.endTime).length,
-        hours: userShifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 60
-      };
-    }
-
-    const embed = createPremiumEmbed()
-      .setTitle('📅 Attendance Summary')
-      
-      .setDescription(`Attendance for the last 30 days`);
-
-    if (targetUser) {
-      const userShifts = await Shift.find({
-        guildId,
-        userId: targetUser.id,
+      const shifts = await Shift.find({
+        ...query,
         startTime: { $gte: thirtyDaysAgo }
       }).lean();
 
-      const userTotal = userShifts.length;
-      const userCompleted = userShifts.filter(s => s.endTime).length;
-      const userRate = userTotal > 0 ? Math.round((userCompleted / userTotal) * 100) : 0;
-      const userHours = userShifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 60;
+      if (shifts.length === 0) {
+        if (targetUser) return interaction.editReply({ embeds: [createErrorEmbed(`No attendance footprint mapped for <@${targetUser.id}> inside this server over the last 30 days.`)] });
+        return interaction.editReply({ embeds: [createErrorEmbed('No attendance vectors recorded globally in this server boundary over the last month.')] });
+      }
 
-      embed.setThumbnail(targetUser.displayAvatarURL());
-      embed.addFields(
-        { name: 'User', value: targetUser.username, inline: true },
-        { name: 'Total Shifts', value: userTotal.toString(), inline: true },
-        { name: 'Completed', value: userCompleted.toString(), inline: true },
-        { name: 'Attendance Rate', value: `${userRate}%`, inline: true },
-        { name: 'Total Hours', value: userHours.toFixed(1), inline: true }
-      );
-    } else {
-      embed.addFields(
-        { name: 'Total Staff', value: userIds.length.toString(), inline: true },
-        { name: 'Total Shifts', value: totalShifts.toString(), inline: true },
-        { name: 'Completed', value: completedShifts.toString(), inline: true },
-        { name: 'Attendance Rate', value: `${attendanceRate}%`, inline: true },
-        { name: 'Total Hours', value: totalHours.toFixed(1), inline: true }
-      );
+      const totalShifts = shifts.length;
+      const completedShifts = shifts.filter(s => s.endTime).length;
+      const attendanceRate = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
+      const totalHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
+
+      let embedPayload = {
+        title: `📅 Trailing Attendance Index`,
+        description: `A 30-day tracking analysis aggregated securely for **${interaction.guild.name}**.`,
+        fields: []
+      };
+
+      if (targetUser) {
+        embedPayload.thumbnail = targetUser.displayAvatarURL();
+        embedPayload.description += `\nTargeted explicitly against <@${targetUser.id}>.`;
+        embedPayload.fields.push({ name: '🔄 Operational Count', value: `\`${totalShifts}\` Patrols`, inline: true });
+        embedPayload.fields.push({ name: '✅ Successful Output', value: `\`${completedShifts}\` Pings`, inline: true });
+        embedPayload.fields.push({ name: '📈 Retention Trajectory', value: `\`${attendanceRate}%\``, inline: true });
+        embedPayload.fields.push({ name: '⏱️ Total Shift Volume', value: `\`${totalHours.toFixed(1)}h\``, inline: true });
+      } else {
+        embedPayload.thumbnail = interaction.guild.iconURL({ dynamic: true });
+
+        // Map strictly to user indexes
+        const userIds = [...new Set(shifts.map(s => s.userId))];
+
+        embedPayload.fields.push({ name: '👥 Active Hierarchy', value: `\`${userIds.length}\` Personnel`, inline: true });
+        embedPayload.fields.push({ name: '🔄 Operational Output', value: `\`${totalShifts}\` Pings`, inline: true });
+        embedPayload.fields.push({ name: '✅ Retention Success', value: `\`${completedShifts}\` Patrols`, inline: true });
+        embedPayload.fields.push({ name: '📈 Trajectory Rate', value: `\`${attendanceRate}%\``, inline: true });
+        embedPayload.fields.push({ name: '⏱️ Total Network Yield', value: `\`${totalHours.toFixed(1)}h\``, inline: true });
+      }
+
+      const embed = await createCustomEmbed(interaction, embedPayload);
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Attendance Summary Error:', error);
+      const errEmbed = createErrorEmbed('A database error occurred tracking algorithmic attendance models.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
-
-    await interaction.reply({ embeds: [embed] });
   }
 };
-
-
-

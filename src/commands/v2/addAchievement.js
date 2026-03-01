@@ -73,6 +73,13 @@ module.exports = {
 
       await Promise.all([userData.save(), activity.save()]);
 
+      // V2 Expansion: Automated Milestone Broadcast
+      const { broadcastMilestone } = require('../../utils/milestone_broadcast');
+      await broadcastMilestone(interaction, 'ACHIEVEMENT', {
+        userId: targetUser.id,
+        achievement: title
+      });
+
       const embed = await createCustomEmbed(interaction, {
         title: `🏆 Strategic Merit Authenticated`,
         description: `### 🛡️ Professional Achievement Awarded\nThe high-command has officially recognized <@${targetUser.id}> with the **${title}** classification for exemplary service.`,

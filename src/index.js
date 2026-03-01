@@ -276,6 +276,24 @@ client.on('interactionCreate', async interaction => {
       await require('./commands/v1/shift_end').handleButtonPauseShift(interaction, client);
       return;
     }
+
+    // --- V2 Staff Hub Handlers ---
+    if (interaction.customId.startsWith('hub_')) {
+      try {
+        if (interaction.customId === 'hub_identity') {
+          return await client.commands.get('profile_card').execute(interaction, client);
+        }
+        if (interaction.customId === 'hub_promo') {
+          return await client.commands.get('promotion_status').execute(interaction, client);
+        }
+        if (interaction.customId === 'hub_tasks') {
+          return await client.commands.get('task_assign').execute(interaction, client);
+        }
+      } catch (err) {
+        logger.error('Staff Hub Button Error:', err);
+        return interaction.followUp({ content: '❌ System failure: Unable to bridge to the requested module.', ephemeral: true });
+      }
+    }
   }
 
   // --- Select Menu Interactions ---

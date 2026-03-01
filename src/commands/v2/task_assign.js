@@ -45,13 +45,14 @@ module.exports = {
         await guildData.save();
 
         const embed = await createCustomEmbed(interaction, {
-          title: '📋 Secure Task Assigned',
-          description: `Successfully generated assignment **#${taskId}**!`,
+          title: '📋 Strategic Objective Assigned',
+          description: `Successfully registered a new tactical requirement designated as assignment **#${taskId}**.`,
           fields: [
             { name: '👤 Officer', value: `<@${user.id}>`, inline: true },
-            { name: '🛡️ Enforcer', value: `<@${interaction.user.id}>`, inline: true },
+            { name: '🛡️ Authorized By', value: `<@${interaction.user.id}>`, inline: true },
             { name: '🎯 Objective', value: `\`${taskText}\``, inline: false }
-          ]
+          ],
+          color: 'primary'
         });
 
         return interaction.editReply({ embeds: [embed] });
@@ -61,16 +62,17 @@ module.exports = {
         const tasks = guildData.tasks.filter(t => t.status === 'pending');
 
         if (tasks.length === 0) {
-          return interaction.editReply({ embeds: [createErrorEmbed('No pending tasks are currently recorded on this server.')] });
+          return interaction.editReply({ embeds: [createErrorEmbed('Operational failure: No pending objectives detected within the current sector.')] });
         }
 
         // Group tasks by mapping user chunks
         const taskMap = tasks.map(t => `> **#${t.id}** \`${t.task}\` ➔ <@${t.userId}>`);
 
         const embed = await createCustomEmbed(interaction, {
-          title: '📋 Pending Tasks Registry',
-          description: `Active operations queued across the server hierarchy:\n\n${taskMap.join('\n')}`,
-          thumbnail: interaction.guild.iconURL({ dynamic: true })
+          title: '📋 Strategic Objective Registry',
+          description: `### 🛡️ Active Operational Queue\nThe following objectives are currently awaiting fulfillment within the **${interaction.guild.name}** hierarchy:\n\n${taskMap.join('\n')}`,
+          thumbnail: interaction.guild.iconURL({ dynamic: true }),
+          color: 'premium'
         });
 
         return interaction.editReply({ embeds: [embed] });
@@ -81,11 +83,11 @@ module.exports = {
         const task = guildData.tasks.find(t => t.id === taskId);
 
         if (!task) {
-          return interaction.editReply({ embeds: [createErrorEmbed(`Task **#${taskId}** not found in the server database.`)] });
+          return interaction.editReply({ embeds: [createErrorEmbed(`Search failed: No tactical requirement designated **#${taskId}** exists.`)] });
         }
 
         if (task.status === 'completed') {
-          return interaction.editReply({ embeds: [createErrorEmbed(`Task **#${taskId}** has already been marked completed.`)] });
+          return interaction.editReply({ embeds: [createErrorEmbed(`Audit failure: Objective **#${taskId}** is already marked as fulfilled.`)] });
         }
 
         task.status = 'completed';
@@ -93,8 +95,9 @@ module.exports = {
         await guildData.save();
 
         const embed = await createCustomEmbed(interaction, {
-          title: '✅ Objective Cleared',
-          description: `Registry updated. Task **#${taskId}** (\`${task.task}\`) assigned to <@${task.userId}> is now completed!`
+          title: '✅ Objective Fulfilled',
+          description: `Strategic registry updated. Objective **#${taskId}** (\`${task.task}\`) for <@${task.userId}> has been successfully cleared.`,
+          color: 'success'
         });
 
         return interaction.editReply({ embeds: [embed] });

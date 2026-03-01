@@ -302,6 +302,10 @@ client.on('interactionCreate', async interaction => {
       await require('./commands/v1/warn').handleQuickAction(interaction, client);
       return;
     }
+    if (interaction.customId === 'equip_perk') {
+      await require('./commands/v2/staff_perks').handleSelect(interaction);
+      return;
+    }
   }
 
   if (interaction.isChannelSelectMenu()) {

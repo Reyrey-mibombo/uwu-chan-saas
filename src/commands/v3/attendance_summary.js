@@ -39,30 +39,32 @@ module.exports = {
       const attendanceRate = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
       const totalHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
 
-      let embedPayload = {
-        title: `📅 Trailing Attendance Index`,
-        description: `A 30-day tracking analysis aggregated securely for **${interaction.guild.name}**.`,
-        fields: []
+      const embedPayload = {
+        title: targetUser ? `📅 Attendance Index: ${targetUser.username}` : '📅 Sector Retention Index',
+        thumbnail: targetUser ? targetUser.displayAvatarURL({ dynamic: true }) : interaction.guild.iconURL({ dynamic: true }),
+        description: `### 🛡️ Network Stability Report: ${interaction.guild.name}\nAutomated 30-day tracking analysis aggregated securely from operational patrol telemetry.`,
+        fields: [],
+        footer: 'Predictive Attendance Modeling • V3 Strategic Suite',
+        color: attendanceRate >= 80 ? 'success' : 'premium'
       };
 
       if (targetUser) {
-        embedPayload.thumbnail = targetUser.displayAvatarURL();
-        embedPayload.description += `\nTargeted explicitly against <@${targetUser.id}>.`;
-        embedPayload.fields.push({ name: '🔄 Operational Count', value: `\`${totalShifts}\` Patrols`, inline: true });
-        embedPayload.fields.push({ name: '✅ Successful Output', value: `\`${completedShifts}\` Pings`, inline: true });
-        embedPayload.fields.push({ name: '📈 Retention Trajectory', value: `\`${attendanceRate}%\``, inline: true });
-        embedPayload.fields.push({ name: '⏱️ Total Shift Volume', value: `\`${totalHours.toFixed(1)}h\``, inline: true });
+        embedPayload.fields.push(
+          { name: '🔄 Operational Count', value: `\`${totalShifts}\` Patrols`, inline: true },
+          { name: '✅ Retention Success', value: `\`${completedShifts}\` Retained`, inline: true },
+          { name: '📈 Trajectory', value: `\`${attendanceRate}%\``, inline: true },
+          { name: '⏱️ Man-Hours', value: `\`${totalHours.toFixed(1)}h\``, inline: true },
+          { name: '⚖️ Reliability', value: attendanceRate >= 90 ? '`Optimal`' : '`Standard`', inline: true }
+        );
       } else {
-        embedPayload.thumbnail = interaction.guild.iconURL({ dynamic: true });
-
-        // Map strictly to user indexes
         const userIds = [...new Set(shifts.map(s => s.userId))];
-
-        embedPayload.fields.push({ name: '👥 Active Hierarchy', value: `\`${userIds.length}\` Personnel`, inline: true });
-        embedPayload.fields.push({ name: '🔄 Operational Output', value: `\`${totalShifts}\` Pings`, inline: true });
-        embedPayload.fields.push({ name: '✅ Retention Success', value: `\`${completedShifts}\` Patrols`, inline: true });
-        embedPayload.fields.push({ name: '📈 Trajectory Rate', value: `\`${attendanceRate}%\``, inline: true });
-        embedPayload.fields.push({ name: '⏱️ Total Network Yield', value: `\`${totalHours.toFixed(1)}h\``, inline: true });
+        embedPayload.fields.push(
+          { name: '👥 Network Density', value: `\`${userIds.length}\` Personnel`, inline: true },
+          { name: '🔄 Operational Output', value: `\`${totalShifts}\` Pings`, inline: true },
+          { name: '✅ Retention Yield', value: `\`${completedShifts}\` Patrols`, inline: true },
+          { name: '📈 Sector Health', value: `\`${attendanceRate}%\``, inline: true },
+          { name: '⏱️ Aggregate Hours', value: `\`${totalHours.toFixed(1)}h\``, inline: true }
+        );
       }
 
       const embed = await createCustomEmbed(interaction, embedPayload);
@@ -70,12 +72,7 @@ module.exports = {
 
     } catch (error) {
       console.error('Attendance Summary Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred tracking algorithmic attendance models.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Retention Analytics failure: Unable to decode attendance telemetry.')] });
     }
   }
 };

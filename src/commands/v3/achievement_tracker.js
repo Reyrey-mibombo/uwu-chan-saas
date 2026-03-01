@@ -36,43 +36,30 @@ module.exports = {
         { id: 'mentor', name: 'Mentor', desc: 'Aided an onboarding prospect', icon: '🎓' }
       ];
 
-      let unlockedCount = 0;
-      const unlockedAchievements = [];
-      const lockedAchievements = [];
-
-      for (const achievement of achievementList) {
-        const isUnlocked = achievements.includes(achievement.id) || achievements.includes(achievement.name);
-        if (isUnlocked) {
-          unlockedCount++;
-          unlockedAchievements.push(`${achievement.icon} **${achievement.name}** - \`${achievement.desc}\``);
-        } else {
-          lockedAchievements.push(`${achievement.icon} ${achievement.name} - *${achievement.desc}*`);
-        }
-      }
+      const progress = Math.round((unlockedCount / achievementList.length) * 100);
+      const filled = Math.floor(progress / 10);
+      const progressBar = `\`${'■'.repeat(filled)}${'□'.repeat(10 - filled)}\` **${progress}%**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🏆 Achievement Tracker: ${targetUser.username}`,
-        description: `Reviewing unlocked milestones authenticated within **${interaction.guild.name}**.`,
-        thumbnail: targetUser.displayAvatarURL(),
+        title: `🏆 Personnel Achievement Matrix: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Operational Milestone Registry\nReviewing unlocked achievements authenticated within sector **${interaction.guild.name}**. Cross-referencing personnel behavior logs.`,
         fields: [
-          { name: '📊 Timeline Progress', value: `\`${unlockedCount}/${achievementList.length}\` Unlocked`, inline: true },
-          { name: '⭐ Validated Points', value: `\`${user.staff.points || 0}\` Acquired`, inline: true },
-          { name: '✅ Server Unlocks', value: unlockedAchievements.join('\n') || '*None yet.*', inline: false },
-          { name: '🔒 Hidden Objectives', value: lockedAchievements.join('\n'), inline: false }
+          { name: '🔋 Unlocked Trajectory', value: progressBar, inline: true },
+          { name: '⭐ Strategic Points', value: `\`${(user.staff.points || 0).toLocaleString()}\``, inline: true },
+          { name: '✨ Level Clearance', value: `\`LVL ${user.staff.level || 1}\``, inline: true },
+          { name: '✅ Operational Unlocks', value: unlockedAchievements.join('\n') || '*No authenticated milestones detected.*', inline: false },
+          { name: '🔒 Classified Objectives', value: lockedAchievements.join('\n'), inline: false }
         ],
-        footer: 'Keep executing shifts to unlock more tiers.'
+        footer: 'Continuous operational execution required for high-tier unlocks. • V3 Strategic',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Achievement Tracker Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred while fetching the achievement arrays.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Milestone Registry failure: Unable to decode personnel achievement arrays.')] });
     }
   }
 };

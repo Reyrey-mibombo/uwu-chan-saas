@@ -1,68 +1,113 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('task_assign')
-    .setDescription('Assign tasks to staff members')
-    .addSubcommand(sub => sub.setName('add').setDescription('Add a task').addUserOption(opt => opt.setName('user').setDescription('Assign to').setRequired(true)).addStringOption(opt => opt.setName('task').setDescription('Task description').setRequired(true)))
-    .addSubcommand(sub => sub.setName('list').setDescription('List all tasks'))
-    .addSubcommand(sub => sub.setName('complete').setDescription('Mark task as complete').addIntegerOption(opt => opt.setName('task_id').setDescription('Task ID').setRequired(true))),
+    .setDescription('Assign and manage trackable tasks for your staff members')
+    .addSubcommand(sub => sub.setName('add').setDescription('Add a new trackable task')
+      .addUserOption(opt => opt.setName('user').setDescription('Assign to').setRequired(true))
+      .addStringOption(opt => opt.setName('task').setDescription('Task description').setRequired(true)))
+    .addSubcommand(sub => sub.setName('list').setDescription('List all pending tasks within this server'))
+    .addSubcommand(sub => sub.setName('complete').setDescription('Mark an assigned task as complete')
+      .addIntegerOption(opt => opt.setName('task_id').setDescription('Task ID').setRequired(true))),
 
   async execute(interaction) {
-    const subcommand = interaction.options.getSubcommand();
+    try {
+      await interaction.deferReply({ ephemeral: true });
+      const subcommand = interaction.options.getSubcommand();
+      const guildId = interaction.guildId;
 
-    const guildData = await Guild.findOne({ guildId: interaction.guild.id }) || new Guild({ guildId: interaction.guild.id });
-    if (!guildData.tasks) guildData.tasks = [];
-
-    if (subcommand === 'add') {
-      const user = interaction.options.getUser('user');
-      const task = interaction.options.getString('task');
-
-      const taskId = guildData.tasks.length + 1;
-      guildData.tasks.push({ id: taskId, userId: user.id, task, createdBy: interaction.user.id, status: 'pending', createdAt: new Date() });
-      await guildData.save();
-
-      return interaction.reply({ content: `✅ Task assigned to ${user.tag}: "${task}"`, ephemeral: true });
-    }
-
-    if (subcommand === 'list') {
-      const tasks = guildData.tasks.filter(t => t.status === 'pending');
-
-      if (tasks.length === 0) {
-        return interaction.reply({ content: 'No pending tasks', ephemeral: true });
+      let guildData = await Guild.findOne({ guildId });
+      if (!guildData) {
+        guildData = new Guild({ guildId, name: interaction.guild.name, ownerId: interaction.guild.ownerId });
       }
 
-      const list = await Promise.all(tasks.map(async t => {
-        const user = await interaction.client.users.fetch(t.userId).catch(() => null);
-        return `**#${t.id}** - ${t.task} (Assigned to: ${user?.username || 'Unknown'})`;
-      }));
+      if (!guildData.tasks) guildData.tasks = [];
 
-      const embed = createCoolEmbed()
-        .setTitle('📋 Pending Tasks')
-        .setDescription(list.join('\n'))
-        ;
+      if (subcommand === 'add') {
+        const user = interaction.options.getUser('user');
+        const taskText = interaction.options.getString('task');
 
-      return interaction.reply({ embeds: [embed], ephemeral: true });
-    }
+        // Unique incremental ID fallback if length shifts
+        const taskId = guildData.tasks.length > 0 ? Math.max(...guildData.tasks.map(t => t.id)) + 1 : 1;
 
-    if (subcommand === 'complete') {
-      const taskId = interaction.options.getInteger('task_id');
-      const task = guildData.tasks.find(t => t.id === taskId);
+        guildData.tasks.push({
+          id: taskId,
+          userId: user.id,
+          task: taskText,
+          createdBy: interaction.user.id,
+          status: 'pending',
+          createdAt: new Date()
+        });
 
-      if (!task) {
-        return interaction.reply({ content: 'Task not found', ephemeral: true });
+        await guildData.save();
+
+        const embed = await createCustomEmbed(interaction, {
+          title: '📋 Secure Task Assigned',
+          description: `Successfully generated assignment **#${taskId}**!`,
+          fields: [
+            { name: '👤 Officer', value: `<@${user.id}>`, inline: true },
+            { name: '🛡️ Enforcer', value: `<@${interaction.user.id}>`, inline: true },
+            { name: '🎯 Objective', value: `\`${taskText}\``, inline: false }
+          ]
+        });
+
+        return interaction.editReply({ embeds: [embed] });
       }
 
-      task.status = 'completed';
-      task.completedAt = new Date();
-      await guildData.save();
+      if (subcommand === 'list') {
+        const tasks = guildData.tasks.filter(t => t.status === 'pending');
 
-      return interaction.reply({ content: '✅ Task marked as complete!', ephemeral: true });
+        if (tasks.length === 0) {
+          return interaction.editReply({ embeds: [createErrorEmbed('No pending tasks are currently recorded on this server.')] });
+        }
+
+        // Group tasks by mapping user chunks
+        const taskMap = tasks.map(t => `> **#${t.id}** \`${t.task}\` ➔ <@${t.userId}>`);
+
+        const embed = await createCustomEmbed(interaction, {
+          title: '📋 Pending Tasks Registry',
+          description: `Active operations queued across the server hierarchy:\n\n${taskMap.join('\n')}`,
+          thumbnail: interaction.guild.iconURL({ dynamic: true })
+        });
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      if (subcommand === 'complete') {
+        const taskId = interaction.options.getInteger('task_id');
+        const task = guildData.tasks.find(t => t.id === taskId);
+
+        if (!task) {
+          return interaction.editReply({ embeds: [createErrorEmbed(`Task **#${taskId}** not found in the server database.`)] });
+        }
+
+        if (task.status === 'completed') {
+          return interaction.editReply({ embeds: [createErrorEmbed(`Task **#${taskId}** has already been marked completed.`)] });
+        }
+
+        task.status = 'completed';
+        task.completedAt = new Date();
+        await guildData.save();
+
+        const embed = await createCustomEmbed(interaction, {
+          title: '✅ Objective Cleared',
+          description: `Registry updated. Task **#${taskId}** (\`${task.task}\`) assigned to <@${task.userId}> is now completed!`
+        });
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+    } catch (error) {
+      console.error('Task Assign Error:', error);
+      const errEmbed = createErrorEmbed('A database error occurred while modifying the assignment logs.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
   }
 };
-
-
-

@@ -1,79 +1,90 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('check_requirements')
-    .setDescription('[Premium] Quick check if user can be promoted')
+    .setDescription('[Premium] Quick check if a user is mathematically ready to be promoted')
     .addUserOption(opt => opt.setName('user').setDescription('User to check').setRequired(true)),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
-    const user = interaction.options.getUser('user');
-    const guildId = interaction.guildId;
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
+      const targetUser = interaction.options.getUser('user');
+      const guildId = interaction.guildId;
 
-    const userData = await User.findOne({ userId: user.id });
-    const guild = await Guild.findOne({ guildId });
+      const userData = await User.findOne({ userId: targetUser.id, guildId: guildId }).lean();
+      const guild = await Guild.findOne({ guildId: guildId }).lean();
 
-    if (!userData?.staff) {
-      return interaction.editReply({ content: '❌ User is not a staff member.' });
+      if (!userData || !userData.staff) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`The user <@${targetUser.id}> is not enrolled as staff in this server.`)] });
+      }
+      if (!guild || !guild.promotionRequirements) {
+        return interaction.editReply({ embeds: [createErrorEmbed('No promotion requirements have been established in this server.')] });
+      }
+
+      const currentRank = userData.staff.rank || 'member';
+      const points = userData.staff.points || 0;
+      const consistency = userData.staff.consistency || 0;
+
+      const shiftCount = await Shift.countDocuments({ userId: targetUser.id, guildId, endTime: { $ne: null } });
+      const warningCount = await Warning.countDocuments({ userId: targetUser.id, guildId });
+
+      const ranks = Object.keys(guild.promotionRequirements);
+      if (!ranks.includes('member')) ranks.unshift('member');
+      if (!ranks.includes('trial')) ranks.splice(1, 0, 'trial');
+
+      const currentIndex = ranks.indexOf(currentRank);
+      const nextRankName = ranks[currentIndex + 1];
+
+      if (!nextRankName || !guild.promotionRequirements[nextRankName]) {
+        const maxEmbed = await createCustomEmbed(interaction, {
+          title: `👑 Maximum Rank: ${targetUser.username}`,
+          description: `🎉 <@${targetUser.id}> is already at the maximum achievable rank in this server!`,
+          thumbnail: targetUser.displayAvatarURL()
+        });
+        return interaction.editReply({ embeds: [maxEmbed] });
+      }
+
+      const req = guild.promotionRequirements[nextRankName];
+      const reqPoints = req.points || 100;
+      const reqShifts = req.shifts || 5;
+      const reqConsistency = req.consistency || 70;
+      const reqMaxWarnings = req.maxWarnings ?? 3;
+
+      const canPromote =
+        points >= reqPoints &&
+        shiftCount >= reqShifts &&
+        consistency >= reqConsistency &&
+        warningCount <= reqMaxWarnings;
+
+      const embed = await createCustomEmbed(interaction, {
+        title: canPromote ? '✅ ELIGIBLE FOR PROMOTION' : '❌ REQUIREMENTS NOT MET',
+        description: canPromote
+          ? `🎉 **${targetUser.username}** has cleared all hurdles for **${nextRankName.toUpperCase()}**!`
+          : `💪 Keep grinding! **${targetUser.username}** needs more activity to reach **${nextRankName.toUpperCase()}**.`,
+        thumbnail: targetUser.displayAvatarURL(),
+        fields: [
+          { name: '🏆 Current Rank', value: `\`${currentRank.toUpperCase()}\``, inline: true },
+          { name: '⬆️ Target Rank', value: `\`${nextRankName.toUpperCase()}\``, inline: true },
+          { name: '⭐ Points Target', value: `\`${points} / ${reqPoints}\` ${points >= reqPoints ? '✅' : '❌'}`, inline: false },
+          { name: '🔄 Shifts Target', value: `\`${shiftCount} / ${reqShifts}\` ${shiftCount >= reqShifts ? '✅' : '❌'}`, inline: true },
+          { name: '📈 Consistency', value: `\`${consistency}% / ${reqConsistency}%\` ${consistency >= reqConsistency ? '✅' : '❌'}`, inline: true },
+          { name: '⚠️ Warning Limit', value: `\`${warningCount} / ${reqMaxWarnings}\` ${warningCount <= reqMaxWarnings ? '✅' : '❌'}`, inline: true }
+        ]
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Check Requirements Error:', error);
+      const errEmbed = createErrorEmbed('A database error occurred while calculating milestone eligibility.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
-
-    const currentRank = userData.staff.rank || 'member';
-    const points = userData.staff.points || 0;
-    const consistency = userData.staff.consistency || 0;
-    const reputation = userData.staff.reputation || 0;
-    const achievements = userData.staff.achievements?.length || 0;
-
-    const shiftCount = await Shift.countDocuments({ userId: user.id, guildId, endTime: { $ne: null } });
-    const warningCount = await Warning.countDocuments({ userId: user.id, guildId });
-
-    const rankOrder = ['member', 'trial', 'staff', 'senior', 'manager', 'admin'];
-    const currentIndex = rankOrder.indexOf(currentRank);
-    const nextRank = rankOrder[currentIndex + 1];
-
-    if (!nextRank) {
-      return interaction.editReply({ content: '🎉 User is at max rank!' });
-    }
-
-    const req = guild?.promotionRequirements?.[nextRank] || {};
-    const reqPoints = req.points || 100;
-    const reqShifts = req.shifts || 5;
-    const reqConsistency = req.consistency || 70;
-    const reqMaxWarnings = req.maxWarnings ?? 3;
-
-    const canPromote = 
-      points >= reqPoints &&
-      shiftCount >= reqShifts &&
-      consistency >= reqConsistency &&
-      warningCount <= reqMaxWarnings;
-
-    const embed = createCoolEmbed()
-      .setTitle(canPromote ? '✅ CAN BE PROMOTED!' : '❌ CANNOT BE PROMOTED')
-      .setThumbnail(user.displayAvatarURL())
-      
-      .addFields(
-        { name: '👤 User', value: user.tag, inline: true },
-        { name: '🏆 Current Rank', value: currentRank.toUpperCase(), inline: true },
-        { name: '⬆️ Next Rank', value: nextRank.toUpperCase(), inline: true }
-      )
-      .addFields(
-        { name: '⭐ Points', value: `${points}/${reqPoints} ${points >= reqPoints ? '✅' : '❌'}`, inline: true },
-        { name: '🔄 Shifts', value: `${shiftCount}/${reqShifts} ${shiftCount >= reqShifts ? '✅' : '❌'}`, inline: true },
-        { name: '📈 Consistency', value: `${consistency}%/${reqConsistency}% ${consistency >= reqConsistency ? '✅' : '❌'}`, inline: true },
-        { name: '⚠️ Warnings', value: `${warningCount}/${reqMaxWarnings} ${warningCount <= reqMaxWarnings ? '✅' : '❌'} (max)`, inline: true }
-      );
-
-    if (canPromote) {
-      embed.setDescription(`🎉 **${user.username}** is ready for promotion to **${nextRank.toUpperCase()}**!`);
-    } else {
-      embed.setDescription(`💪 Keep going, **${user.username}**! You need to meet more requirements.`);
-    }
-
-    await interaction.editReply({ embeds: [embed] });
   }
 };
-
-
-

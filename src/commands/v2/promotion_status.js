@@ -1,108 +1,121 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('promotion_status')
-    .setDescription('[Premium] Check promotion status and requirements')
-    .addUserOption(opt => opt.setName('user').setDescription('Staff member').setRequired(false)),
+    .setDescription('[Premium] Check your authentic promotion status against server requirements')
+    .addUserOption(opt => opt.setName('user').setDescription('Staff member (Optional)').setRequired(false)),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
-    const user = interaction.options.getUser('user') || interaction.user;
-    const guildId = interaction.guildId;
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
+      const targetUser = interaction.options.getUser('user') || interaction.user;
+      const guildId = interaction.guildId;
 
-    const userData = await User.findOne({ userId: user.id });
-    const guild = await Guild.findOne({ guildId });
+      const userData = await User.findOne({ userId: targetUser.id, guildId: guildId }).lean();
+      const guild = await Guild.findOne({ guildId: guildId }).lean();
 
-    if (!userData?.staff) {
-      return interaction.editReply({ content: '❌ User is not a staff member yet.' });
+      if (!userData || !userData.staff) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`The user <@${targetUser.id}> is not registered in the staff system for this server.`)] });
+      }
+      if (!guild || !guild.promotionRequirements) {
+        return interaction.editReply({ embeds: [createErrorEmbed('This server has not configured any promotion requirements.')] });
+      }
+
+      const currentRank = userData.staff.rank || 'member';
+      const points = userData.staff.points || 0;
+      const consistency = userData.staff.consistency || 0;
+      const reputation = userData.staff.reputation || 0;
+      const achievements = userData.staff.achievements?.length || 0;
+
+      const shiftCount = await Shift.countDocuments({ userId: targetUser.id, guildId, endTime: { $ne: null } });
+      const warningCount = await Warning.countDocuments({ userId: targetUser.id, guildId });
+
+      const ranks = Object.keys(guild.promotionRequirements);
+      if (!ranks.includes('member')) ranks.unshift('member');
+      if (!ranks.includes('trial')) ranks.splice(1, 0, 'trial');
+
+      const currentIndex = ranks.indexOf(currentRank);
+      const nextRankName = ranks[currentIndex + 1];
+
+      if (!nextRankName || !guild.promotionRequirements[nextRankName]) {
+        const maxEmbed = await createCustomEmbed(interaction, {
+          title: `👑 Maximum Rank: ${targetUser.username}`,
+          description: `🎉 <@${targetUser.id}> is already at the maximum achievable rank in this server!`,
+          thumbnail: targetUser.displayAvatarURL(),
+          fields: [
+            { name: '🏆 Current Rank', value: `\`${currentRank.toUpperCase()}\``, inline: true },
+            { name: '⭐ Lifetime Points', value: `\`${points}\``, inline: true }
+          ]
+        });
+        return interaction.editReply({ embeds: [maxEmbed] });
+      }
+
+      const req = guild.promotionRequirements[nextRankName];
+      const reqPoints = req.points || 100;
+      const reqShifts = req.shifts || 5;
+      const reqConsistency = req.consistency || 70;
+      const reqMaxWarnings = req.maxWarnings ?? 3;
+      const reqAchievements = req.achievements || 0;
+      const reqReputation = req.reputation || 0;
+
+      const meetsPoints = points >= reqPoints;
+      const meetsShifts = shiftCount >= reqShifts;
+      const meetsConsistency = consistency >= reqConsistency;
+      const meetsWarnings = warningCount <= reqMaxWarnings;
+      const meetsAchievements = achievements >= reqAchievements;
+      const meetsReputation = reputation >= reqReputation;
+
+      const requirements = [
+        { name: '⭐ Points', current: points, required: reqPoints, met: meetsPoints },
+        { name: '🔄 Shifts', current: shiftCount, required: reqShifts, met: meetsShifts },
+        { name: '📈 Consistency', current: `${consistency}%`, required: `${reqConsistency}%`, met: meetsConsistency },
+        { name: '⚠️ Max Warnings', current: warningCount, required: reqMaxWarnings, met: meetsWarnings, reverse: true }
+      ];
+
+      if (reqAchievements > 0) {
+        requirements.push({ name: '🏅 Achievements', current: achievements, required: reqAchievements, met: meetsAchievements });
+      }
+      if (reqReputation > 0) {
+        requirements.push({ name: '💫 Reputation', current: reputation, required: reqReputation, met: meetsReputation });
+      }
+
+      const metCount = requirements.filter(r => r.met).length;
+      const totalCount = requirements.length;
+      const progress = Math.round((metCount / totalCount) * 100) || 0;
+
+      const filled = Math.min(10, Math.floor(progress / 10));
+      const progressBar = `\`${'█'.repeat(filled)}${'░'.repeat(10 - filled)}\``;
+
+      const reqList = requirements.map(r => {
+        const emoji = r.met ? '✅' : '❌';
+        return `${emoji} **${r.name}**: \`${r.current} / ${r.required}\` ${r.reverse ? '(Max Allowed)' : ''}`;
+      }).join('\n');
+
+      const embed = await createCustomEmbed(interaction, {
+        title: `📈 Promotion Status: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL(),
+        description: `Analyzing requirements to advance to **${nextRankName.toUpperCase()}** in **${interaction.guild.name}**...`,
+        fields: [
+          { name: '🏆 Current Rank', value: `\`${currentRank.toUpperCase()}\``, inline: true },
+          { name: '⬆️ Target Rank', value: `\`${nextRankName.toUpperCase()}\``, inline: true },
+          { name: '📊 Cumulative Progress', value: `${progressBar} **${progress}%**\n(${metCount}/${totalCount} Milestones Met)`, inline: false },
+          { name: '📋 Objective Checklist', value: reqList, inline: false }
+        ]
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Promotion Status Error:', error);
+      const errEmbed = createErrorEmbed('An error occurred while fetching the promotion status.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
-
-    const currentRank = userData.staff.rank || 'member';
-    const points = userData.staff.points || 0;
-    const consistency = userData.staff.consistency || 0;
-    const reputation = userData.staff.reputation || 0;
-    const achievements = userData.staff.achievements?.length || 0;
-
-    const shiftCount = await Shift.countDocuments({ userId: user.id, guildId, endTime: { $ne: null } });
-    const warningCount = await Warning.countDocuments({ userId: user.id, guildId });
-
-    const rankOrder = ['member', 'trial', 'staff', 'senior', 'manager', 'admin'];
-    const currentIndex = rankOrder.indexOf(currentRank);
-    const nextRank = rankOrder[currentIndex + 1];
-
-    if (!nextRank) {
-      const embed = createCoolEmbed()
-        .setTitle(`👑 ${user.username} - Max Rank Reached!`)
-        .setThumbnail(user.displayAvatarURL())
-        .addFields(
-          { name: '🏆 Current Rank', value: currentRank.toUpperCase(), inline: true },
-          { name: '⭐ Points', value: points.toString(), inline: true },
-          { name: '📊 Status', value: '🎉 Maximum rank achieved!', inline: false }
-        )
-        
-        ;
-
-      return interaction.editReply({ embeds: [embed] });
-    }
-
-    const req = guild?.promotionRequirements?.[nextRank] || {};
-    const reqPoints = req.points || 100;
-    const reqShifts = req.shifts || 5;
-    const reqConsistency = req.consistency || 70;
-    const reqMaxWarnings = req.maxWarnings ?? 3;
-    const reqAchievements = req.achievements || 0;
-    const reqReputation = req.reputation || 0;
-
-    const meetsPoints = points >= reqPoints;
-    const meetsShifts = shiftCount >= reqShifts;
-    const meetsConsistency = consistency >= reqConsistency;
-    const meetsWarnings = warningCount <= reqMaxWarnings;
-    const meetsAchievements = achievements >= reqAchievements;
-    const meetsReputation = reputation >= reqReputation;
-
-    const requirements = [
-      { name: '⭐ Points', current: points, required: reqPoints, met: meetsPoints },
-      { name: '🔄 Shifts', current: shiftCount, required: reqShifts, met: meetsShifts },
-      { name: '📈 Consistency', current: `${consistency}%`, required: `${reqConsistency}%`, met: meetsConsistency },
-      { name: '⚠️ Max Warnings', current: warningCount, required: reqMaxWarnings, met: meetsWarnings, reverse: true }
-    ];
-
-    if (reqAchievements > 0) {
-      requirements.push({ name: '🏅 Achievements', current: achievements, required: reqAchievements, met: meetsAchievements });
-    }
-    if (reqReputation > 0) {
-      requirements.push({ name: '💫 Reputation', current: reputation, required: reqReputation, met: meetsReputation });
-    }
-
-    const metCount = requirements.filter(r => r.met).length;
-    const totalCount = requirements.length;
-    const progress = Math.round((metCount / totalCount) * 100);
-    const progressBar = '█'.repeat(Math.floor(progress / 10)) + '░'.repeat(10 - Math.floor(progress / 10));
-
-    const reqList = requirements.map(r => {
-      const emoji = r.met ? '✅' : '❌';
-      return `${emoji} **${r.name}**: ${r.current} / ${r.required}${r.reverse ? ' (max)' : ''}`;
-    }).join('\n');
-
-    const embed = createCoolEmbed()
-      .setTitle(`📈 ${user.username}'s Promotion Status`)
-      .setThumbnail(user.displayAvatarURL())
-      
-      .addFields(
-        { name: '🏆 Current Rank', value: currentRank.toUpperCase(), inline: true },
-        { name: '⬆️ Next Rank', value: nextRank.toUpperCase(), inline: true },
-        { name: '📊 Progress', value: `\`${progressBar}\` **${progress}%**\n${metCount}/${totalCount} requirements met`, inline: false },
-        { name: '📋 Requirements', value: reqList, inline: false }
-      )
-      
-      ;
-
-    await interaction.editReply({ embeds: [embed] });
   }
 };
-
-
-

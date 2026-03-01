@@ -1,27 +1,38 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
-const { createSuccessEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('promo_toggle')
-        .setDescription('🔄 Toggle the auto-promotion system on or off')
-        .addBooleanOption(opt => opt.setName('enabled').setDescription('Whether auto-promotion should be active').setRequired(true))
+        .setDescription('🔄 Toggle the auto-promotion background engine on or off')
+        .addBooleanOption(opt => opt.setName('enabled').setDescription('Whether auto-promotion should be active in this server').setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
-        const enabled = interaction.options.getBoolean('enabled');
+        try {
+            await interaction.deferReply({ ephemeral: true });
+            const enabled = interaction.options.getBoolean('enabled');
 
-        await Guild.findOneAndUpdate(
-            { guildId: interaction.guildId },
-            { $set: { 'settings.modules.automation': enabled } },
-            { upsert: true }
-        );
+            await Guild.findOneAndUpdate(
+                { guildId: interaction.guildId },
+                { $set: { 'settings.modules.automation': enabled } },
+                { upsert: true }
+            );
 
-        const status = enabled ? '✅ ENABLED' : '❌ DISABLED';
-        await interaction.reply({
-            embeds: [createSuccessEmbed('System Updated', `The interactive auto-promotion system is now **${status}** for this server.`)],
-            ephemeral: true
-        });
+            const statusStr = enabled ? '✅ ENGINE ONLINE' : '❌ ENGINE OFFLINE';
+
+            const embed = await createCustomEmbed(interaction, {
+                title: '⚙️ Promotion System Updated',
+                description: `The interactive auto-promotion background scanner is now **${statusStr}** for this server.`,
+                footer: enabled ? 'The bot will now auto-rank users who reach their threshold!' : 'Promotions must be granted manually.'
+            });
+
+            await interaction.editReply({ embeds: [embed] });
+
+        } catch (error) {
+            console.error('Promo Toggle Error:', error);
+            await interaction.editReply({ embeds: [createErrorEmbed('An error occurred while toggling the promotion engine.')] });
+        }
     }
 };

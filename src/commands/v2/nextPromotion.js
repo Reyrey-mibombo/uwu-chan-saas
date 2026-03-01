@@ -1,102 +1,110 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('next_promotion')
-    .setDescription('[Premium] See who is next in line for promotion'),
+    .setDescription('[Premium] See who is next in line for promotion within this server'),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
-    const guildId = interaction.guildId;
-    const guild = await Guild.findOne({ guildId });
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
+      const guildId = interaction.guildId;
+      const guild = await Guild.findOne({ guildId }).lean();
 
-    const users = await User.find({ 
-      'guilds.guildId': guildId,
-      'staff.rank': { $ne: null }
-    }).lean();
+      if (!guild || !guild.promotionRequirements) {
+        return interaction.editReply({ embeds: [createErrorEmbed('This server has not configured any promotion requirements.')] });
+      }
 
-    const eligible = [];
+      const users = await User.find({
+        guildId: guildId,
+        'staff.rank': { $ne: null }
+      }).lean();
 
-    for (const user of users) {
-      const currentRank = user.staff?.rank || 'member';
-      const points = user.staff?.points || 0;
-      const consistency = user.staff?.consistency || 0;
+      const eligible = [];
+      const rankOrder = Object.keys(guild.promotionRequirements);
+      // Let's ensure "member" and "trial" are considered preliminary ranks before the formal track if they exist implicitly
+      if (!rankOrder.includes('member')) rankOrder.unshift('member');
+      if (!rankOrder.includes('trial')) rankOrder.splice(1, 0, 'trial');
 
-      const rankOrder = ['member', 'trial', 'staff', 'senior', 'manager', 'admin'];
-      const currentIndex = rankOrder.indexOf(currentRank);
-      const nextRank = rankOrder[currentIndex + 1];
+      for (const user of users) {
+        const currentRank = user.staff?.rank || 'member';
+        const points = user.staff?.points || 0;
+        const consistency = user.staff?.consistency || 0;
 
-      if (!nextRank) continue;
+        const currentIndex = rankOrder.indexOf(currentRank);
+        const nextRank = rankOrder[currentIndex + 1];
 
-      const shiftCount = await Shift.countDocuments({ userId: user.userId, guildId, endTime: { $ne: null } });
-      const warningCount = await Warning.countDocuments({ userId: user.userId, guildId });
+        if (!nextRank || !guild.promotionRequirements[nextRank]) continue;
 
-      const req = guild?.promotionRequirements?.[nextRank] || {};
-      const reqPoints = req.points || 100;
-      const reqShifts = req.shifts || 5;
-      const reqConsistency = req.consistency || 70;
-      const reqMaxWarnings = req.maxWarnings ?? 3;
+        const shiftCount = await Shift.countDocuments({ userId: user.userId, guildId, endTime: { $ne: null } });
+        const warningCount = await Warning.countDocuments({ userId: user.userId, guildId });
 
-      const canPromote = 
-        points >= reqPoints &&
-        shiftCount >= reqShifts &&
-        consistency >= reqConsistency &&
-        warningCount <= reqMaxWarnings;
+        const req = guild.promotionRequirements[nextRank];
+        const reqPoints = req.points || 100;
+        const reqShifts = req.shifts || 5;
+        const reqConsistency = req.consistency || 70;
+        const reqMaxWarnings = req.maxWarnings ?? 3;
 
-      if (canPromote) {
-        const progress = Math.round(((points / reqPoints) + (shiftCount / reqShifts) + (consistency / 100)) / 3 * 100);
-        eligible.push({
-          userId: user.userId,
-          username: user.username,
-          currentRank,
-          nextRank,
-          points,
-          shiftCount,
-          consistency,
-          progress
-        });
+        const canPromote =
+          points >= reqPoints &&
+          shiftCount >= reqShifts &&
+          consistency >= reqConsistency &&
+          warningCount <= reqMaxWarnings;
+
+        if (canPromote) {
+          const progress = Math.round(((points / reqPoints) + (shiftCount / reqShifts) + (consistency / 100)) / 3 * 100);
+
+          let username = user.username;
+          if (!username) {
+            const fetched = await interaction.client.users.fetch(user.userId).catch(() => null);
+            username = fetched ? fetched.username : 'Unknown';
+          }
+
+          eligible.push({
+            userId: user.userId,
+            username: username,
+            currentRank,
+            nextRank,
+            points,
+            shiftCount,
+            consistency,
+            progress
+          });
+        }
+      }
+
+      eligible.sort((a, b) => b.progress - a.progress);
+
+      if (!eligible.length) {
+        return interaction.editReply({ embeds: [createErrorEmbed('No staff members are currently eligible for promotion.')] });
+      }
+
+      const top5 = eligible.slice(0, 10);
+      const list = top5.map((e, i) => {
+        const medals = ['', '🥇', '🥈', '🥉'];
+        const medal = medals[i + 1] || `${i + 1}.`;
+        return `${medal} **${e.username}** → \`${e.nextRank.toUpperCase()}\`\n└ ⭐ \`${e.points}\` 🔄 \`${e.shiftCount}\` 📈 \`${e.consistency}%\``;
+      }).join('\n\n');
+
+      const embed = await createCustomEmbed(interaction, {
+        title: '📋 Next Promotion Queue',
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        description: `**${eligible.length}** staff members are ready for promotion in this server!\n\n${list}`,
+        footer: 'Automatically calculating dynamic server milestones'
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Next Promotion Error:', error);
+      const errEmbed = createErrorEmbed('An error occurred while calculating the promotion queue.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
-
-    eligible.sort((a, b) => b.progress - a.progress);
-
-    if (!eligible.length) {
-      const embed = createCoolEmbed()
-        .setTitle('📋 Next Promotion Queue')
-        .setDescription('No one is currently eligible for promotion.')
-        
-        ;
-
-      return interaction.editReply({ embeds: [embed] });
-    }
-
-    const embed = createCoolEmbed()
-      .setTitle('📋 Next Promotion Queue')
-      .setDescription(`**${eligible.length}** staff members ready for promotion!`)
-      
-      ;
-
-    const top5 = eligible.slice(0, 10);
-    const list = top5.map((e, i) => {
-      const medals = ['', '🥇', '🥈', '🥉'];
-      const medal = medals[i + 1] || `${i + 1}.`;
-      return `${medal} **${e.username || 'Unknown'}** → ${e.nextRank.toUpperCase()}\n   ⭐${e.points} 🔄${e.shiftCount} 📈${e.consistency}%`;
-    }).join('\n\n');
-
-    embed.addFields({ name: '🎯 Ready for Promotion', value: list });
-
-    const pending = users.filter(u => {
-      const uRank = u.staff?.rank || 'member';
-      return rankOrder.indexOf(uRank) < 5;
-    }).length - eligible.length;
-
-    embed;
-
-    await interaction.editReply({ embeds: [embed] });
   }
 };
-
-
-

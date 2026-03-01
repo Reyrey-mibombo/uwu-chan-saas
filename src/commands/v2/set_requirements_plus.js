@@ -1,13 +1,14 @@
-﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+﻿const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
-// v2 (FREE) — 5 requirements: + maxWarnings, shiftHours
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('set_requirements_plus')
-        .setDescription('[Free+] Set 5 promotion requirements including warnings and shift hours')
+        .setDescription('[Free+] Set 5 promotion requirements including warnings and shift hours for a target rank')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        // Note: the choices here CAN be statically defined because Discord registering slash commands happens before DB calls
+        // However, admins will overwrite keys. To prevent confusion, let's keep the standard 4 but note they act as dict keys.
         .addStringOption(opt => opt.setName('rank').setDescription('Which rank to configure').setRequired(true)
             .addChoices(
                 { name: 'Staff', value: 'staff' },
@@ -21,40 +22,53 @@ module.exports = {
         .addIntegerOption(opt => opt.setName('max_warnings').setDescription('Req 4: Max allowed warnings (0 = zero tolerance)').setRequired(true).setMinValue(0).setMaxValue(99))
         .addIntegerOption(opt => opt.setName('shift_hours').setDescription('Req 5: Min total shift hours (0 = disabled)').setRequired(true).setMinValue(0).setMaxValue(9999)),
 
-    async execute(interaction, client) {
-        await interaction.deferReply({ ephemeral: true });
-        const guildId = interaction.guildId;
-        const rank = interaction.options.getString('rank');
-        const points = interaction.options.getInteger('points');
-        const shifts = interaction.options.getInteger('shifts');
-        const consistency = interaction.options.getInteger('consistency');
-        const maxWarnings = interaction.options.getInteger('max_warnings');
-        const shiftHours = interaction.options.getInteger('shift_hours');
+    async execute(interaction) {
+        try {
+            await interaction.deferReply({ ephemeral: true });
+            const guildId = interaction.guildId;
+            const rank = interaction.options.getString('rank');
+            const points = interaction.options.getInteger('points');
+            const shifts = interaction.options.getInteger('shifts');
+            const consistency = interaction.options.getInteger('consistency');
+            const maxWarnings = interaction.options.getInteger('max_warnings');
+            const shiftHours = interaction.options.getInteger('shift_hours');
 
-        let guildData = await Guild.findOne({ guildId }) || new Guild({ guildId, name: interaction.guild.name, ownerId: interaction.guild.ownerId });
+            let guildData = await Guild.findOne({ guildId });
+            if (!guildData) {
+                guildData = new Guild({ guildId, name: interaction.guild.name, ownerId: interaction.guild.ownerId });
+            }
 
-        if (!guildData.promotionRequirements) guildData.promotionRequirements = {};
-        if (!guildData.promotionRequirements[rank]) guildData.promotionRequirements[rank] = {};
-        Object.assign(guildData.promotionRequirements[rank], { points, shifts, consistency, maxWarnings, shiftHours });
-        guildData.markModified('promotionRequirements');
-        await guildData.save();
+            if (!guildData.promotionRequirements) guildData.promotionRequirements = {};
+            if (!guildData.promotionRequirements[rank]) guildData.promotionRequirements[rank] = {};
 
-        const embed = createCoolEmbed()
-            .setTitle(`⚙️ Extended Requirements Set — ${rank.toUpperCase()}`)
-            
-            .setDescription('**Free tier: 5 requirements configured.**\n💎 Upgrade to Premium to unlock achievements & reputation requirements.\n🌟 Enterprise unlocks all 10.')
-            .addFields(
-                { name: '1️⃣ ⭐ Min Points', value: points.toString(), inline: true },
-                { name: '2️⃣ 🔄 Min Shifts', value: shifts.toString(), inline: true },
-                { name: '3️⃣ 📈 Min Consistency %', value: `${consistency}%`, inline: true },
-                { name: '4️⃣ ⚠️ Max Warnings', value: maxWarnings.toString(), inline: true },
-                { name: '5️⃣ ⏱️ Min Shift Hours', value: shiftHours > 0 ? `${shiftHours}h` : 'Disabled', inline: true }
-            )
-            ;
+            Object.assign(guildData.promotionRequirements[rank], { points, shifts, consistency, maxWarnings, shiftHours });
 
-        await interaction.editReply({ embeds: [embed] });
+            guildData.markModified('promotionRequirements');
+            await guildData.save();
+
+            const embed = await createCustomEmbed(interaction, {
+                title: `⚙️ Requirements Overwritten: ${rank.toUpperCase()}`,
+                description: `Successfully locked in 5 advanced requirements for the **${rank.toUpperCase()}** milestone!`,
+                fields: [
+                    { name: '1️⃣ ⭐ Minimum Points', value: `\`${points}\``, inline: true },
+                    { name: '2️⃣ 🔄 Minimum Shifts', value: `\`${shifts}\``, inline: true },
+                    { name: '3️⃣ 📈 Min Consistency', value: `\`${consistency}%\``, inline: true },
+                    { name: '4️⃣ ⚠️ Max Warnings', value: `\`${maxWarnings}\``, inline: true },
+                    { name: '5️⃣ ⏱️ Min Shift Hours', value: shiftHours > 0 ? `\`${shiftHours}h\`` : '`Disabled`', inline: true }
+                ],
+                footer: 'Upgrade to Enterprise to unlock all 10 custom milestone constraints'
+            });
+
+            await interaction.editReply({ embeds: [embed] });
+
+        } catch (error) {
+            console.error('Set Req Plus Error:', error);
+            const errEmbed = createErrorEmbed('An error occurred while attempting to write settings to the configuration server.');
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [errEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+            }
+        }
     }
 };
-
-
-

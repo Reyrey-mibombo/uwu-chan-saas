@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, PermissionFlagsBits } = require('discord.js');
 const { Guild } = require('../../database/mongo');
-const { createCoolEmbed, createSuccessEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -9,33 +9,54 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        try {
+            await interaction.deferReply({ ephemeral: true });
 
-        const guild = await Guild.findOne({ guildId: interaction.guildId });
-        if (!guild) return interaction.editReply('❌ Configuration not found.');
+            const guild = await Guild.findOne({ guildId: interaction.guildId }).lean();
+            if (!guild || !guild.promotionRequirements) {
+                return interaction.editReply({ embeds: [createErrorEmbed('Configuration not found for this server.')] });
+            }
 
-        const embed = createCoolEmbed({
-            title: '⚙️ Promotion System Setup',
-            description: 'Welcome to the premium promotion setup! Use the menu below to configure each rank\'s requirements and link them to Discord roles.',
-            color: 'primary'
-        }).addFields(
-            { name: '📋 Instructions', value: '1. Select a rank to configure.\n2. Set the point thresholds, shift counts, and consistency.\n3. Link the rank to a Discord role for automatic assignment.', inline: false },
-            { name: '✨ Pro Tip', value: 'Enable the `Automation` module in `/settings` to start the auto-promotion engine.', inline: false }
-        );
+            const embed = await createCustomEmbed(interaction, {
+                title: '⚙️ Promotion System Setup',
+                description: 'Welcome to the premium server promotion setup engine! Use the dropdown menu below to configure each rank\'s minimum requirements and link them to Discord roles.',
+                fields: [
+                    { name: '📋 Instructions', value: '1. Select a rank to configure.\n2. Set the point thresholds, shift counts, and consistency requirements.\n3. Link the rank to a Discord role for automatic assignment.', inline: false },
+                    { name: '✨ Pro Tip', value: 'Enable the `Automation` module utilizing `/promo_toggle` to activate the automatic background promotion engine.', inline: false }
+                ],
+                footer: 'Interactive Configuration Pipeline'
+            });
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('promo_setup_select')
-            .setPlaceholder('Select a rank to configure...')
-            .addOptions([
-                { label: 'Trial', value: 'trial', emoji: '🌱', description: 'Configure Trial Staff requirements' },
-                { label: 'Staff', value: 'staff', emoji: '🛡️', description: 'Configure Staff requirements' },
-                { label: 'Senior', value: 'senior', emoji: '🌟', description: 'Configure Senior Staff requirements' },
-                { label: 'Manager', value: 'manager', emoji: '💎', description: 'Configure Manager requirements' },
-                { label: 'Admin', value: 'admin', emoji: '👑', description: 'Configure Admin requirements' }
-            ]);
+            // Dynamically load available ranks from the database keys
+            const ranks = Object.keys(guild.promotionRequirements);
+            const emojis = ['🌱', '🛡️', '🌟', '💎', '👑', '🔥'];
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
+            const options = ranks.map((rank, i) => {
+                const labelName = rank.charAt(0).toUpperCase() + rank.slice(1);
+                return {
+                    label: labelName,
+                    value: rank,
+                    emoji: emojis[i % emojis.length],
+                    description: `Configure ${labelName} requirements`
+                };
+            });
 
-        await interaction.editReply({ embeds: [embed], components: [row] });
+            if (options.length === 0) {
+                return interaction.editReply({ embeds: [createErrorEmbed('No rank configurations exist in the database to setup.')] });
+            }
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('promo_setup_select')
+                .setPlaceholder('Select a server rank to configure...')
+                .addOptions(options);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            await interaction.editReply({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Promo Setup UI Error:', error);
+            await interaction.editReply({ embeds: [createErrorEmbed('An error occurred while generating the setup UI.')] });
+        }
     }
 };

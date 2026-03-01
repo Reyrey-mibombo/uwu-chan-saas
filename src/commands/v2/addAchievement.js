@@ -1,10 +1,11 @@
-﻿const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+﻿const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCustomEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/embeds');
+const { User, Activity } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('add_achievement')
-    .setDescription('[Premium] Award a specific staff achievement')
+    .setDescription('[Premium] Award an authentic system achievement to a staff member')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addUserOption(option =>
       option
@@ -17,34 +18,16 @@ module.exports = {
         .setDescription('Specific achievement to award')
         .setRequired(true)
         .addChoices(
-          // MONTHLY - 12 months
-          { name: 'Staff of the Month – January', value: 'MONTHLY:Staff of the Month – January' },
-          { name: 'Staff of the Month – February', value: 'MONTHLY:Staff of the Month – February' },
-          { name: 'Staff of the Month – March', value: 'MONTHLY:Staff of the Month – March' },
-          { name: 'Staff of the Month – April', value: 'MONTHLY:Staff of the Month – April' },
-          { name: 'Staff of the Month – May', value: 'MONTHLY:Staff of the Month – May' },
-          { name: 'Staff of the Month – June', value: 'MONTHLY:Staff of the Month – June' },
-          { name: 'Staff of the Month – July', value: 'MONTHLY:Staff of the Month – July' },
-          { name: 'Staff of the Month – August', value: 'MONTHLY:Staff of the Month – August' },
-          { name: 'Staff of the Month – September', value: 'MONTHLY:Staff of the Month – September' },
-          { name: 'Staff of the Month – October', value: 'MONTHLY:Staff of the Month – October' },
-          { name: 'Staff of the Month – November', value: 'MONTHLY:Staff of the Month – November' },
-          { name: 'Staff of the Month – December', value: 'MONTHLY:Staff of the Month – December' },
-
-          // MODERATION
+          { name: 'Staff of the Month', value: 'MONTHLY:Staff of the Month' },
           { name: 'Exemplary Moderator', value: 'MOD:Exemplary Moderator' },
           { name: 'Rule Enforcer Elite', value: 'MOD:Rule Enforcer Elite' },
           { name: 'Peacekeeper', value: 'MOD:Peacekeeper' },
           { name: 'Spam Slayer', value: 'MOD:Spam Slayer' },
           { name: 'Conflict Resolver', value: 'MOD:Conflict Resolver' },
-
-          // SUPPORT
           { name: 'Support Legend', value: 'SUPPORT:Support Legend' },
           { name: 'Ticket Master', value: 'SUPPORT:Ticket Master' },
           { name: 'Patience Champion', value: 'SUPPORT:Patience Champion' },
           { name: 'Welcome Wizard', value: 'SUPPORT:Welcome Wizard' },
-
-          // ACTIVITY
           { name: 'Hyper Active Staff', value: 'ACTIVITY:Hyper Active Staff' },
           { name: 'Voice Chat Legend', value: 'ACTIVITY:Voice Chat Legend' },
           { name: 'Message Marathon', value: 'ACTIVITY:Message Marathon' },
@@ -53,31 +36,65 @@ module.exports = {
 
   async execute(interaction) {
     try {
+      await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const fullChoice = interaction.options.getString('achievement');
       const [category, title] = fullChoice.split(':', 2);
-      
-      // Simple response without database
-      const embed = createCoolEmbed()
-        
-        .setTitle(`🏆 Achievement Awarded`)
-        .setDescription(`**${title}** awarded to ${targetUser}`)
-        .addFields(
-          { name: 'Category', value: category, inline: true },
-          { name: 'Awarded by', value: interaction.user.tag, inline: true }
-        )
-        ;
+      const guildId = interaction.guildId;
 
-      await interaction.reply({ embeds: [embed] });
-      
-    } catch (error) {
-      console.error('Error:', error);
-      await interaction.reply({ 
-        content: '❌ Failed to award achievement.', 
-        ephemeral: true 
+      // Fetch User with strict Scoping
+      let userData = await User.findOne({ userId: targetUser.id, guildId });
+
+      if (!userData) {
+        userData = new User({ userId: targetUser.id, guildId });
+      }
+
+      if (!userData.staff) userData.staff = {};
+      if (!userData.staff.achievements) userData.staff.achievements = [];
+
+      // Check for duplicates
+      if (userData.staff.achievements.includes(title)) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`<@${targetUser.id}> already possesses the **${title}** achievement.`)] });
+      }
+
+      userData.staff.achievements.push(title);
+
+      // Log the achievement activity
+      const activity = new Activity({
+        guildId,
+        userId: targetUser.id,
+        type: 'task',
+        data: {
+          taskName: 'Achievement Granted',
+          award: title,
+          managerId: interaction.user.id
+        }
       });
+
+      await Promise.all([userData.save(), activity.save()]);
+
+      const embed = await createCustomEmbed(interaction, {
+        title: `🏆 Achievement Unlocked!`,
+        description: `**${title}** has been securely awarded to <@${targetUser.id}>.`,
+        thumbnail: targetUser.displayAvatarURL(),
+        fields: [
+          { name: '📋 Category', value: `\`${category}\``, inline: true },
+          { name: '🏅 Granted By', value: `<@${interaction.user.id}>`, inline: true },
+          { name: '🔢 Total Medals', value: `\`${userData.staff.achievements.length}\``, inline: true }
+        ],
+        footer: 'Achievements boost eligibility during automated promotion checks.'
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Add Achievement Error:', error);
+      const errEmbed = createErrorEmbed('An error occurred while attempting to grant the achievement in the database.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
   }
 };
-
-

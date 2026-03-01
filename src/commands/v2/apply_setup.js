@@ -1,15 +1,15 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
-const { createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { ApplicationConfig } = require('../../database/mongo');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('apply_setup')
-        .setDescription('Configure the application system for your server')
+        .setDescription('⚙️ Configure the interactive application panel for your server')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addChannelOption(opt =>
             opt.setName('apply_channel')
-                .setDescription('The channel where the application panel should be placed')
+                .setDescription('The text channel where the spawning /apply_panel should live')
                 .addChannelTypes(ChannelType.GuildText)
                 .setRequired(true))
         .addChannelOption(opt =>
@@ -23,40 +23,52 @@ module.exports = {
                 .setRequired(false)),
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
-
-        const applyChannel = interaction.options.getChannel('apply_channel');
-        const reviewChannel = interaction.options.getChannel('review_channel');
-        const reviewerRole = interaction.options.getRole('reviewer_role');
-
         try {
-            let config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
+            await interaction.deferReply({ ephemeral: true });
 
+            const applyChannel = interaction.options.getChannel('apply_channel');
+            const reviewChannel = interaction.options.getChannel('review_channel');
+            const reviewerRole = interaction.options.getRole('reviewer_role');
+
+            let config = await ApplicationConfig.findOne({ guildId: interaction.guildId });
             if (!config) {
                 config = new ApplicationConfig({ guildId: interaction.guildId });
             }
 
+            // Map strict ID values
             config.applyChannelId = applyChannel.id;
             config.reviewChannelId = reviewChannel.id;
-            if (reviewerRole) config.reviewerRoleId = reviewerRole.id;
+            if (reviewerRole) {
+                config.reviewerRoleId = reviewerRole.id;
+            } else {
+                config.reviewerRoleId = null;
+            }
             config.enabled = true;
 
             await config.save();
 
-            const embed = createSuccessEmbed(
-                '✨ Application System Configured',
-                'Your custom application system is now successfully linked to your channels!'
-            ).addFields(
-                { name: '📝 Panel Channel', value: `<#${applyChannel.id}>`, inline: true },
-                { name: '🕵️ Review Channel', value: `<#${reviewChannel.id}>`, inline: true },
-                { name: '🔔 Ping Role', value: reviewerRole ? `<@&${reviewerRole.id}>` : 'None', inline: true }
-            );
+            const embed = await createCustomEmbed(interaction, {
+                title: '✨ Application Pipeline Deployed',
+                description: `Your custom application listener is now successfully linked to your server channels in **${interaction.guild.name}**!`,
+                thumbnail: interaction.guild.iconURL({ dynamic: true }),
+                fields: [
+                    { name: '📝 Panel Channel', value: `<#${applyChannel.id}>`, inline: true },
+                    { name: '🕵️ Review Channel', value: `<#${reviewChannel.id}>`, inline: true },
+                    { name: '🔔 Reviewer Ping', value: reviewerRole ? `<@&${reviewerRole.id}>` : '*None*', inline: true }
+                ],
+                footer: 'Execute /apply_panel in the intended channel to spawn the UI menu.'
+            });
 
             await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Apply Setup Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('There was a database error while trying to configure the application system.')] });
+            const errEmbed = createErrorEmbed('A database error occurred while trying to configure the application system.');
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [errEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+            }
         }
     }
 };

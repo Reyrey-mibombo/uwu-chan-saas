@@ -1,65 +1,76 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createEnterpriseEmbed } = require('../../utils/embeds');
-const { Guild, Warning, Shift, Activity } = require('../../database/mongo');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { validatePremiumLicense } = require('../../utils/premium_guard');
+const { Guild, Shift, Activity } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('server_health')
-    .setDescription('View overall server health and statistics'),
+    .setDescription('Zenith Apex: Macroscopic Sector Health Audit & Risk Modeling'),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
-    const guildId = interaction.guildId;
-    const oneDayAgo = new Date(Date.now() - 86400000);
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
 
-    const [guild, todayActivity, weekActivity, activeShifts] = await Promise.all([
-      Guild.findOne({ guildId }).lean(),
-      Activity.countDocuments({ guildId, createdAt: { $gte: oneDayAgo } }),
-      Activity.countDocuments({ guildId, createdAt: { $gte: sevenDaysAgo } }),
-      Shift.countDocuments({ guildId, endTime: null })
-    ]);
+      // Zenith License Guard
+      const license = await validatePremiumLicense(interaction);
+      if (!license.allowed) {
+        return interaction.editReply({ embeds: [license.embed], components: license.components });
+      }
 
-    const stats = guild?.stats || {};
-    const memberCount = interaction.guild.memberCount;
-    const tier = guild?.premium?.tier || 'free';
+      const guildId = interaction.guildId;
+      const oneDayAgo = new Date(Date.now() - 86400000);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
 
-    const score = Math.min(100, Math.round(
-      (Math.min(todayActivity, 50) / 50 * 40) +
-      (Math.min(memberCount, 100) / 100 * 30) +
-      (activeShifts > 0 ? 20 : 0) +
-      (tier !== 'free' ? 10 : 0)
-    ));
+      const [guild, todayActivity, weekActivity, activeShifts] = await Promise.all([
+        Guild.findOne({ guildId }).lean(),
+        Activity.countDocuments({ guildId, createdAt: { $gte: oneDayAgo } }),
+        Activity.countDocuments({ guildId, createdAt: { $gte: sevenDaysAgo } }),
+        Shift.countDocuments({ guildId, endTime: null })
+      ]);
 
-    const healthBar = '▓'.repeat(Math.round(score / 10)) + '░'.repeat(10 - Math.round(score / 10));
-    const healthEmoji = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
+      const stats = guild?.stats || {};
+      const memberCount = interaction.guild.memberCount;
+      const score = Math.min(100, Math.round(
+        (Math.min(todayActivity, 50) / 50 * 40) +
+        (Math.min(memberCount, 100) / 100 * 30) +
+        (activeShifts > 0 ? 20 : 10) +
+        (guild?.premium?.isActive ? 10 : 0)
+      ));
 
-    const uptime = process.uptime();
-    const hours = Math.floor(uptime / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
+      // 1. Generate Macroscopic Risk Curve (ASCII Pulse)
+      const riskIntensity = 100 - score;
+      const pulseSegments = 10;
+      const filled = '█'.repeat(Math.round((riskIntensity / 100) * pulseSegments));
+      const empty = '░'.repeat(pulseSegments - filled.length);
+      const riskCurve = `\`[${filled}${empty}]\` **${riskIntensity > 40 ? '⚠️ ELEVATED RISK' : '✅ STABLE'}**`;
 
-    const embed = createEnterpriseEmbed()
-      .setTitle(`${healthEmoji} Server Health Report`)
-      
-      .setThumbnail(interaction.guild.iconURL())
-      .addFields(
-        { name: '💊 Health Score', value: `\`${healthBar}\` ${score}/100`, inline: false },
-        { name: '👥 Members', value: memberCount.toString(), inline: true },
-        { name: '⚡ Activity Today', value: todayActivity.toString(), inline: true },
-        { name: '📅 Activity (7d)', value: weekActivity.toString(), inline: true },
-        { name: '🔄 Active Shifts', value: activeShifts.toString(), inline: true },
-        { name: '🎖️ Premium Tier', value: tier.toUpperCase(), inline: true },
-        { name: '🤖 Bot Uptime', value: `${hours}h ${minutes}m`, inline: true },
-        { name: '📊 Total Commands Used', value: (stats.commandsUsed || 0).toString(), inline: true },
-        { name: '⚠️ Total Warnings', value: (stats.warnings || 0).toString(), inline: true },
-        { name: '📨 Messages Processed', value: (stats.messagesProcessed || 0).toString(), inline: true }
-      )
-      
-      ;
+      // 2. Health Ribbon
+      const healthBar = '█'.repeat(Math.round(score / 10)) + '░'.repeat(10 - Math.round(score / 10));
 
-    await interaction.editReply({ embeds: [embed] });
+      const embed = await createCustomEmbed(interaction, {
+        title: '💊 Zenith Executive: Sector Metabolic Audit',
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        description: `### 🛡️ Sector Health Diagnostic\nAutomated macroscopic audit of behavioral density and system stability for the **${interaction.guild.name}** sector.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        fields: [
+          { name: '✨ Sector Health Ribbon', value: `\`[${healthBar}]\` **${score}% METABOLISM**`, inline: false },
+          { name: '📈 Macroscopic Risk Pulse', value: riskCurve, inline: false },
+          { name: '👥 Node Density', value: `\`${memberCount}\` Members`, inline: true },
+          { name: '⚡ 24h Signal Pulse', value: `\`${todayActivity}\` Signals`, inline: true },
+          { name: '📅 7d Cumulative', value: `\`${weekActivity}\``, inline: true },
+          { name: '🔄 Active Patrols', value: `\`${activeShifts}\``, inline: true },
+          { name: '🎖️ Intelligence Tier', value: `\`${(guild?.premium?.tier || 'free').toUpperCase()}\``, inline: true },
+          { name: '⚠️ Global Warnings', value: `\`${stats.warnings || 0}\``, inline: true }
+        ],
+        footer: 'Executive Metabolic Diagnostic • V6 Enterprise Apex Suite',
+        color: score >= 80 ? 'success' : 'premium'
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Zenith Server Health Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Sector Audit failure: Unable to synchronize metabolic risk curves.')] });
+    }
   }
 };
-
-
-

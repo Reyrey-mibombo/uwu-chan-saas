@@ -1,47 +1,62 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createEnterpriseEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { validatePremiumLicense } = require('../../utils/premium_guard');
 const { User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('elite_badges')
-    .setDescription('View elite badges earned by top staff members'),
+    .setDescription('Zenith Apex: Macroscopic Merit Badges & Elite Personnel Showcase'),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
-    const users = await User.find({ 'staff.points': { $gt: 499 } }).sort({ 'staff.points': -1 }).lean();
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
 
-    const BADGE_TIERS = [
-      { min: 2000, badge: '👑 Legend', color: 0xffd700 },
-      { min: 1000, badge: '💎 Diamond', color: 0x00bfff },
-      { min: 500, badge: '🥇 Gold', color: 0xf1c40f },
-    ];
+      // Zenith Apex: Absolute License Verification
+      const license = await validatePremiumLicense(interaction);
+      if (!license.allowed) {
+        return interaction.editReply({ embeds: [license.embed], components: license.components });
+      }
 
-    const badgeHolders = users.map(u => {
-      const pts = u.staff?.points || 0;
-      const tier = BADGE_TIERS.find(t => pts >= t.min) || { badge: '⭐ Silver', color: 0xc0c0c0 };
-      return { username: u.username || 'Unknown', pts, badge: tier.badge };
-    });
+      const users = await User.find({ 'staff.points': { $gt: 499 }, guildId: interaction.guildId }).sort({ 'staff.points': -1 }).limit(10).lean();
 
-    const list = badgeHolders.length
-      ? badgeHolders.map(h => `${h.badge} **${h.username}** — ${h.pts} pts`).join('\n')
-      : '🏅 No elite badge holders yet. Earn 500+ points to qualify!';
+      const BADGE_TIERS = [
+        { min: 2000, badge: '👑 LEGEND', icon: '💎' },
+        { min: 1000, badge: '💎 DIAMOND', icon: '✨' },
+        { min: 500, badge: '🥇 GOLD', icon: '🏅' },
+      ];
 
-    const embed = createEnterpriseEmbed()
-      .setTitle('🏅 Elite Badge Holders')
-      
-      .setDescription(list)
-      .addFields(
-        { name: '👑 Legend (2000+ pts)', value: badgeHolders.filter(h => h.pts >= 2000).length.toString(), inline: true },
-        { name: '💎 Diamond (1000+ pts)', value: badgeHolders.filter(h => h.pts >= 1000).length.toString(), inline: true },
-        { name: '🥇 Gold (500+ pts)', value: badgeHolders.filter(h => h.pts >= 500).length.toString(), inline: true }
-      )
-      
-      ;
+      const badgeHolders = users.map(u => {
+        const pts = u.staff?.points || 0;
+        const tier = BADGE_TIERS.find(t => pts >= t.min);
+        return { username: u.username || 'Unknown', pts, badge: tier?.badge || 'SILVER', icon: tier?.icon || '⭐' };
+      });
 
-    await interaction.editReply({ embeds: [embed] });
+      const list = badgeHolders.length
+        ? badgeHolders.map(h => `${h.icon} **${h.badge}** | ${h.username} ░ \`${h.pts.toLocaleString()}\` Merit`).join('\n')
+        : '> 🏅 *No elite merit badges authenticated in this sector registry yet.*';
+
+      const embed = await createCustomEmbed(interaction, {
+        title: '🏅 Zenith Apex: Elite Personnel Showcase',
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        description: `### 🎖️ Sector Merit Registry\nAuthenticated elite badges earned by top-tier responders in the **${interaction.guild.name}** sector.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        fields: [
+          { name: '👑 Legend Trophies', value: `\`${badgeHolders.filter(h => h.pts >= 2000).length}\``, inline: true },
+          { name: '💎 Diamond Metrics', value: `\`${badgeHolders.filter(h => h.pts >= 1000).length}\``, inline: true },
+          { name: '🥇 Gold Infractions', value: `\`${badgeHolders.filter(h => h.pts >= 500).length}\``, inline: true },
+          { name: '📜 Macroscopic Merit Ledger', value: list, inline: false },
+          { name: '⚖️ Intelligence Tier', value: '`PLATINUM (APEX)`', inline: true },
+          { name: '🔄 Visibility', value: '`GLOBAL`', inline: true }
+        ],
+        footer: 'Elite Personnel Showcase • V8 Identity Matrix Suite',
+        color: 'premium'
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Zenith Elite Badges Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Identity failure: Unable to decode elite merit badges.')] });
+    }
   }
 };
-
-
-

@@ -1,78 +1,75 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { validatePremiumLicense } = require('../../utils/premium_guard');
 const { Shift } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('attendance_summary')
-    .setDescription('Trailing algorithmic attendance analysis matrix.')
-    .addUserOption(option =>
-      option.setName('user')
-        .setDescription('Target specific user explicitly')
-        .setRequired(false)),
+    .setDescription('Zenith Apex: Macroscopic Attendance Heatmaps & Density Mapping'),
 
   async execute(interaction) {
     try {
       await interaction.deferReply();
+
+      // Zenith License Guard
+      const license = await validatePremiumLicense(interaction);
+      if (!license.allowed) {
+        return interaction.editReply({ embeds: [license.embed], components: license.components });
+      }
+
       const guildId = interaction.guildId;
       const targetUser = interaction.options.getUser('user');
-
-      // Dynamic search vector maps target constraints locally to prevent leaking
       const query = { guildId };
       if (targetUser) query.userId = targetUser.id;
 
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const shifts = await Shift.find({
         ...query,
-        startTime: { $gte: thirtyDaysAgo }
+        startTime: { $gte: sevenDaysAgo }
       }).lean();
 
-      if (shifts.length === 0) {
-        if (targetUser) return interaction.editReply({ embeds: [createErrorEmbed(`No attendance footprint mapped for <@${targetUser.id}> inside this server over the last 30 days.`)] });
-        return interaction.editReply({ embeds: [createErrorEmbed('No attendance vectors recorded globally in this server boundary over the last month.')] });
-      }
+      // 1. Generate Presence Heatmap (7 Days)
+      const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const heatmap = new Array(7).fill(0);
+
+      shifts.forEach(s => {
+        const day = new Date(s.startTime).getUTCDay();
+        heatmap[day]++;
+      });
+
+      const maxDensity = Math.max(...heatmap, 1);
+      const heatmapViz = heatmap.map((count, i) => {
+        const intensity = '░▒▓█'[Math.min(3, Math.floor((count / maxDensity) * 3))];
+        return `\`${dayLabels[i]}\` ${intensity.repeat(5)} \`[${count}]\``;
+      }).join('\n');
 
       const totalShifts = shifts.length;
       const completedShifts = shifts.filter(s => s.endTime).length;
       const attendanceRate = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
-      const totalHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
 
-      const embedPayload = {
-        title: targetUser ? `📅 Attendance Index: ${targetUser.username}` : '📅 Sector Retention Index',
+      const embed = await createCustomEmbed(interaction, {
+        title: targetUser ? `📅 Zenith Attendance Matrix: ${targetUser.username}` : '📅 Sector Workforce Density',
         thumbnail: targetUser ? targetUser.displayAvatarURL({ dynamic: true }) : interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🛡️ Network Stability Report: ${interaction.guild.name}\nAutomated 30-day tracking analysis aggregated securely from operational patrol telemetry.`,
-        fields: [],
-        footer: 'Predictive Attendance Modeling • V3 Strategic Suite',
-        color: attendanceRate >= 80 ? 'success' : 'premium'
-      };
-
-      if (targetUser) {
-        embedPayload.fields.push(
-          { name: '🔄 Operational Count', value: `\`${totalShifts}\` Patrols`, inline: true },
+        description: `### 🛡️ Macroscopic Presence Mapping\nAutomated 7-day density analysis aggregated from operational personnel footprints. Visualizing sector metabolism.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        fields: [
+          { name: '📊 7-Day Activity Heatmap', value: heatmapViz, inline: false },
+          { name: '🔄 Operational Yield', value: `\`${totalShifts}\` Pings`, inline: true },
           { name: '✅ Retention Success', value: `\`${completedShifts}\` Retained`, inline: true },
           { name: '📈 Trajectory', value: `\`${attendanceRate}%\``, inline: true },
-          { name: '⏱️ Man-Hours', value: `\`${totalHours.toFixed(1)}h\``, inline: true },
-          { name: '⚖️ Reliability', value: attendanceRate >= 90 ? '`Optimal`' : '`Standard`', inline: true }
-        );
-      } else {
-        const userIds = [...new Set(shifts.map(s => s.userId))];
-        embedPayload.fields.push(
-          { name: '👥 Network Density', value: `\`${userIds.length}\` Personnel`, inline: true },
-          { name: '🔄 Operational Output', value: `\`${totalShifts}\` Pings`, inline: true },
-          { name: '✅ Retention Yield', value: `\`${completedShifts}\` Patrols`, inline: true },
-          { name: '📈 Sector Health', value: `\`${attendanceRate}%\``, inline: true },
-          { name: '⏱️ Aggregate Hours', value: `\`${totalHours.toFixed(1)}h\``, inline: true }
-        );
-      }
+          { name: '⚖️ Sector Health', value: attendanceRate >= 80 ? '`STABLE`' : '`DEGRADED`', inline: true }
+        ],
+        footer: 'Presence Density Visualization • V3 Strategic Apex Suite',
+        color: attendanceRate >= 80 ? 'success' : 'premium'
+      });
 
-      const embed = await createCustomEmbed(interaction, embedPayload);
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
-      console.error('Attendance Summary Error:', error);
-      await interaction.editReply({ embeds: [createErrorEmbed('Retention Analytics failure: Unable to decode attendance telemetry.')] });
+      console.error('Zenith Attendance Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Presence Analytics failure: Unable to decode metabolic heatmaps.')] });
     }
   }
 };

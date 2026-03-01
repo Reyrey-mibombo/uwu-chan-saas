@@ -26,7 +26,11 @@ module.exports = {
                     { $set: { 'customBranding.color': null } }
                 );
                 return interaction.editReply({
-                    embeds: [createSuccessEmbed('Theme Reset', 'The server theme has been reset to the default bot colors.')]
+                    embeds: [await createCustomEmbed(interaction, {
+                        title: '🎨 Theme Reset',
+                        description: 'The server theme has been reset to the default bot colors.',
+                        color: 'success'
+                    })]
                 });
             }
 
@@ -34,7 +38,7 @@ module.exports = {
             const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
             if (!hexRegex.test(hexColor)) {
                 return interaction.editReply({
-                    embeds: [createErrorEmbed('Invalid HEX color. Please provide a valid code like `#FF5733` or `#ab2`.')]
+                    embeds: [createErrorEmbed('Invalid HEX color code. Please provide a valid HEX code (e.g., #FF5733).')]
                 });
             }
 
@@ -45,9 +49,7 @@ module.exports = {
                 { upsert: true }
             );
 
-            // We explicitly construct a custom embed here to preview the exact color since 
-            // the embeds.js utility would require a second round-trip to DB or cache.
-            const previewEmbed = createCoolEmbed({
+            const previewEmbed = await createCustomEmbed(interaction, {
                 title: '🎨 Theme Updated',
                 description: `Successfully updated the server theme color to **${hexColor}**! All future bot embeds will adopt this primary color.`,
                 branding: { color: hexColor }

@@ -27,14 +27,15 @@ module.exports = {
       const minutes = result.minutes || 0;
       const totalSeconds = Math.round(result.duration || 0);
 
-      const embed = createCoolEmbed()
-        .setTitle('✅ Shift Ended')
-        .setDescription('Your shift has successfully ended. Great work!')
-        .addFields(
-          { name: '⏱️ Duration', value: `\`${hours}h ${minutes}m\``, inline: true },
-          { name: '📊 Total Seconds', value: `\`${totalSeconds}s\``, inline: true }
-        )
-        .setColor('success');
+      const embed = await createCustomEmbed(interaction, {
+        title: '🏁 Shift Terminated',
+        description: 'Your operational cycle has successfully concluded. Performance telemetry recorded.',
+        fields: [
+          { name: '⏱️ Total Duration', value: `\`${hours}h ${minutes}m\``, inline: true },
+          { name: '📊 Precise Telemetry', value: `\`${totalSeconds.toLocaleString()}s\``, inline: true }
+        ],
+        color: 'success'
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
@@ -52,13 +53,6 @@ module.exports = {
     try {
       await interaction.deferUpdate();
 
-      const customId = interaction.customId;
-      const targetUserId = interaction.message.interaction?.user.id || interaction.user.id;
-
-      if (interaction.user.id !== targetUserId) {
-        return interaction.followUp({ content: '❌ You cannot end someone else\'s shift!', ephemeral: true });
-      }
-
       const staffSystem = client.systems.staff;
       if (!staffSystem) {
         return interaction.followUp({ content: '❌ Staff system is offline.', ephemeral: true });
@@ -70,13 +64,14 @@ module.exports = {
         return interaction.followUp({ content: '❌ You do not have an active shift to end.', ephemeral: true });
       }
 
-      const embed = createCoolEmbed()
-        .setTitle('✅ Shift Ended (Action)')
-        .setDescription('Your shift has successfully ended. Great work!')
-        .addFields(
-          { name: '⏱️ Duration', value: `\`${result.hours || 0}h ${result.minutes || 0}m\``, inline: true }
-        )
-        .setColor('success');
+      const embed = await createCustomEmbed(interaction, {
+        title: '🏁 Shift Terminated (Remote)',
+        description: 'Session ended via interactive interface. Analytics processed.',
+        fields: [
+          { name: '⏱️ Final Duration', value: `\`${result.hours || 0}h ${result.minutes || 0}m\``, inline: true }
+        ],
+        color: 'success'
+      });
 
       await interaction.editReply({ embeds: [embed], components: [] });
     } catch (error) {
@@ -88,11 +83,6 @@ module.exports = {
   async handleButtonPauseShift(interaction, client) {
     try {
       await interaction.deferUpdate();
-
-      const targetUserId = interaction.message.interaction?.user.id || interaction.user.id;
-      if (interaction.user.id !== targetUserId) {
-        return interaction.followUp({ content: '❌ You cannot pause someone else\'s shift!', ephemeral: true });
-      }
 
       const staffSystem = client.systems.staff;
       if (!staffSystem) {
@@ -124,15 +114,12 @@ module.exports = {
       );
 
       const embed = interaction.message.embeds[0];
-      const newEmbed = EmbedBuilder.from(embed);
-
-      if (isResume) {
-        newEmbed.setColor('#43b581'); // success
-        newEmbed.setTitle('✅ Shift Started (Active)');
-      } else {
-        newEmbed.setColor('#faa61a'); // warning
-        newEmbed.setTitle('⏸️ Shift Paused');
-      }
+      const newEmbed = await createCustomEmbed(interaction, {
+        title: isResume ? '✅ Shift Interface Active' : '⏸️ Shift Interface Suspended',
+        description: isResume ? 'Telemetry transmission resumed. Node active.' : 'Telemetry transmission paused. Node in standby.',
+        fields: embed.fields,
+        color: isResume ? 'success' : 'warning'
+      });
 
       await interaction.editReply({ embeds: [newEmbed], components: [row] });
 

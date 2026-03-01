@@ -35,21 +35,21 @@ module.exports = {
           return (b.staff.points || 0) - (a.staff.points || 0);
         });
 
-      const generateEmbed = (page) => {
+      const generateEmbed = async (page) => {
         const start = (page - 1) * perPage;
         const staffPage = sorted.slice(start, start + perPage);
 
         const list = staffPage.map((u, i) => {
           const rank = u.staff?.rank || 'trial';
           const points = u.staff?.points || 0;
-          return `\`${String(start + i + 1).padStart(2)}.\` **${u.username || 'Unknown'}** — \`${rank.toUpperCase()}\` • ${points} pts`;
+          return `\`${String(start + i + 1).padStart(2)}.\` **${u.username || 'Unknown'}** • \`${rank.toUpperCase()}\` • ${points} pts`;
         }).join('\n');
 
-        return createCoolEmbed()
-          .setTitle(`👥 Server Staff List (${users.length} Total)`)
-          .setDescription(list || 'No staff found on this page.')
-          .setFooter({ text: `Page ${page} of ${totalPages}` })
-          .setColor('enterprise');
+        return await createCustomEmbed(interaction, {
+          title: `👥 Server Staff Index (${users.length} Records)`,
+          description: list || 'No staff identified within this sector.',
+          footer: `Page ${page} / ${totalPages} • Real-time database dump`
+        });
       };
 
       const getButtons = (page) => {

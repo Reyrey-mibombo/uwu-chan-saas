@@ -28,11 +28,11 @@ module.exports = {
 
       const attachment = new AttachmentBuilder(qrBuffer, { name: 'invite-qr.png' });
 
-      const embed = createCoolEmbed()
-        .setTitle('🔗 Premium Server Invite')
-        .setDescription(`Here is your exclusive invite link: **${invite.url}**\n\n*Scan the QR code below from a mobile device to instantly join!*\n\n⚠️ This invite expires in 24 hours and is limited to 100 uses.`)
-        .setImage('attachment://invite-qr.png')
-        .setColor('primary');
+      const embed = await createCustomEmbed(interaction, {
+        title: '🔗 Premium Server Invite',
+        description: `Here is your exclusive invite link: **${invite.url}**\n\n*Scan the QR code below from a mobile device to instantly join!*\n\n> ⚠️ This invite expires in 24 hours and is limited to 100 uses.`,
+        image: 'attachment://invite-qr.png'
+      });
 
       await interaction.editReply({ embeds: [embed], files: [attachment] });
     } catch (error) {

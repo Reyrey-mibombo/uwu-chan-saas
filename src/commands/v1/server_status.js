@@ -44,10 +44,11 @@ module.exports = {
             });
 
             embed.addFields(
-                { name: '👥 Population', value: `Total: **${totalMembers}**\nHumans: **${humans}**\nBots: **${bots}**`, inline: true },
-                { name: '🟢 Presence', value: `Online: **${onlineMembers}**\nIdle: **${idleMembers}**\nDND: **${dndMembers}**\nOffline: **${offlineMembers}**`, inline: true },
-                { name: '💬 Engagement', value: `Text Channels: **${textChannels}**\nVoice Channels: **${voiceChannels}**\nIn Voice: 🔊 **${voiceActive}**`, inline: true },
-                { name: '💎 Extras', value: `Roles: **${rolesCount}**\nEmojis: **${emojisCount}**\nBoost Tier: **${boostTier}** (${boostCount} Boosts)`, inline: true }
+                { name: '👥 Population', value: `Total: **${totalMembers.toLocaleString()}**\nHumans: **${humans.toLocaleString()}**\nBots: **${bots.toLocaleString()}**`, inline: true },
+                { name: '🟢 Presence', value: `Online: **${onlineMembers.toLocaleString()}**\nIdle: **${idleMembers.toLocaleString()}**\nDND: **${dndMembers.toLocaleString()}**`, inline: true },
+                { name: '💬 Engagement', value: `Text: **${textChannels}**\nVoice: **${voiceChannels}**\nIn Voice: **${voiceActive}**`, inline: true },
+                { name: '💎 Boosting', value: `Tier: **${boostTier}**\nBoosts: **${boostCount}**`, inline: true },
+                { name: '🛠️ Metadata', value: `Roles: **${rolesCount}**\nEmojis: **${emojisCount}**`, inline: true }
             );
 
             await interaction.editReply({ embeds: [embed] });

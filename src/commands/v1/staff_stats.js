@@ -31,18 +31,18 @@ module.exports = {
       const hours = Math.floor(totalShiftTime / 3600);
       const minutes = Math.floor((totalShiftTime % 3600) / 60);
 
-      const embed = createCoolEmbed()
-        .setTitle(`📊 ${user.username}'s Statistics`)
-        .setThumbnail(user.displayAvatarURL())
-        .addFields(
-          { name: '⭐ Points', value: `\`${points}\``, inline: true },
+      const embed = await createCustomEmbed(interaction, {
+        title: `📊 Operational Analytics: ${user.username}`,
+        thumbnail: user.displayAvatarURL({ dynamic: true }),
+        fields: [
+          { name: '⭐ Points', value: `\`${points.toLocaleString()}\``, inline: true },
           { name: '🏆 Rank', value: `\`${rank.toUpperCase()}\``, inline: true },
           { name: '📈 Score', value: `\`${score || 0}/100\``, inline: true },
-          { name: '⏱️ Total Shift Time', value: `\`${hours}h ${minutes}m\``, inline: true },
-          { name: '⚠️ Warnings', value: `\`${warnings?.total || 0}\``, inline: true },
-          { name: '📅 Total Shifts', value: `\`${shifts.length}\``, inline: true }
-        )
-        .setColor('info');
+          { name: '⏱️ Total Active Time', value: `\`${hours}h ${minutes}m\``, inline: true },
+          { name: '⚠️ Incidents', value: `\`${warnings?.total || 0}\``, inline: true },
+          { name: '📅 Session Count', value: `\`${shifts.length}\``, inline: true }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

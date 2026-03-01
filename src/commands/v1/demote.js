@@ -18,18 +18,14 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      if (!interaction.member.permissions.has('ManageRoles')) {
-        return interaction.reply({ embeds: [createErrorEmbed('You need Manage Roles permission!')], ephemeral: true });
-      }
-
       await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const newRank = interaction.options.getString('rank');
       const guildId = interaction.guildId;
 
-      let user = await User.findOne({ userId: targetUser.id });
+      let user = await User.findOne({ userId: targetUser.id, 'guilds.guildId': guildId });
       if (!user) {
-        user = new User({ userId: targetUser.id, username: targetUser.tag });
+        return interaction.editReply({ embeds: [createErrorEmbed('This user is not registered in the staff database for this server.')] });
       }
 
       if (!user.staff) user.staff = {};
@@ -41,23 +37,30 @@ module.exports = {
       const newRankRole = guild?.rankRoles?.[newRank];
       const oldRankRole = guild?.rankRoles?.[oldRank];
 
-      let roleStatus = 'Role configuration unchanged.';
-      const member = interaction.guild.members.cache.get(targetUser.id);
+      let roleStatus = '⚠️ Role configuration unchanged (None found).';
+      const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
 
       if (member) {
         try {
-          if (oldRankRole) await member.roles.remove(oldRankRole);
-          if (newRankRole) await member.roles.add(newRankRole);
-          roleStatus = `Updated discord roles successfully.`;
+          if (oldRankRole) await member.roles.remove(oldRankRole, `Demoted by ${interaction.user.tag}`);
+          if (newRankRole) await member.roles.add(newRankRole, `Demoted by ${interaction.user.tag}`);
+          roleStatus = '✅ Discord roles synchronized properly.';
         } catch (e) {
-          roleStatus = `Failed to update discord roles (Bot might lack permissions or hierarchy is too low).`;
+          roleStatus = '❌ Role sync failed (Check bot permissions/hierarchy).';
         }
       }
 
-      const embed = createSuccessEmbed('User Demoted', `Successfully demoted ${targetUser} to **${newRank.toUpperCase()}**.\n\n` +
-        `**Previous Rank:** \`${oldRank.toUpperCase()}\`\n` +
-        `**New Rank:** \`${newRank.toUpperCase()}\`\n` +
-        `**Role Status:** ${roleStatus}`);
+      const embed = await createCustomEmbed(interaction, {
+        title: '📉 Staff Demotion Executed',
+        description: `Successfully adjusted the rank for ${targetUser} within the server hierarchy.`,
+        color: 'warning',
+        fields: [
+          { name: '👤 Target', value: `${targetUser.tag}`, inline: true },
+          { name: '🎖️ New Rank', value: `\`${newRank.toUpperCase()}\``, inline: true },
+          { name: '🔄 Progression', value: `\`${oldRank.toUpperCase()}\` ➔ \`${newRank.toUpperCase()}\``, inline: false },
+          { name: '📡 Discord Sync', value: roleStatus, inline: false }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

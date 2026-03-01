@@ -33,13 +33,14 @@ module.exports = {
         };
       });
 
-      const embed = createCoolEmbed()
-        .setTitle('📊 Rank Roles Configuration')
-        .setDescription('These roles will be automatically assigned when users are promoted.')
-        .addFields(...roleList)
-        .addFields(
-          { name: '💡 Tip', value: 'Use `/set_rank_roles` to change which role each rank gives.', inline: false }
-        );
+      const embed = await createCustomEmbed(interaction, {
+        title: '📊 Rank Roles Index',
+        description: 'Automated role assignments configured for server promotion tiers.',
+        fields: [
+          ...roleList,
+          { name: '💡 Configuration', value: 'Modify these bindings using `/set_rank_roles`.', inline: false }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

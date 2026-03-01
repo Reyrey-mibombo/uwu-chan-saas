@@ -58,16 +58,18 @@ module.exports = {
       // Generate Pie Chart
       const labels = Object.keys(typeCounts);
       const data = Object.values(typeCounts);
-      const chartUrl = createPieChart(labels, data, 'Activity Distribution');
+      const chartUrl = createPieChart(labels, data, 'Activity Partitioning');
 
-      const embed = createCoolEmbed()
-        .setTitle(targetUser ? `📋 Activity Log: ${targetUser.username}` : '📋 Recent Activity Log')
-        .setDescription(activityList.join('\n'))
-        .setImage(chartUrl)
-        .setAuthor({
-          name: `${interaction.guild.name} Logs`,
+      const embed = await createCustomEmbed(interaction, {
+        title: targetUser ? `📋 User Dossier: ${targetUser.username}` : '📋 Operational Activity Log',
+        description: activityList.join('\n'),
+        image: chartUrl,
+        author: {
+          name: `${interaction.guild.name} Operations`,
           iconURL: interaction.guild.iconURL({ dynamic: true }) || undefined
-        });
+        },
+        footer: `Displaying last ${activities.length} internal events`
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

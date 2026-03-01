@@ -37,33 +37,34 @@ module.exports = {
 
       const result = await staffSystem.addWarning(user.id, interaction.guildId, reason, interaction.user.id, severity);
 
-      const embed = createCoolEmbed()
-        .setTitle('⚠️ User Warned')
-        .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-        .addFields(
-          { name: '👤 User', value: `${user.tag} (<@${user.id}>)`, inline: true },
-          { name: '🛡️ Moderator', value: interaction.user.tag, inline: true },
-          { name: '⚠️ Severity', value: severity.toUpperCase(), inline: true },
-          { name: '📉 Points Deducted', value: `\`${result.points}\``, inline: true },
-          { name: '📝 Reason', value: reason, inline: false }
-        )
-        .setColor('warning');
+      const embed = await createCustomEmbed(interaction, {
+        title: '⚠️ Disciplinary Action: Warning Issued',
+        thumbnail: user.displayAvatarURL({ dynamic: true }),
+        fields: [
+          { name: '👤 Target Subject', value: `**${user.username}** (\`${user.id}\`)`, inline: true },
+          { name: '🛡️ Presiding Moderator', value: `**${interaction.user.username}**`, inline: true },
+          { name: '⚠️ Severity Tier', value: `\`${severity.toUpperCase()}\``, inline: true },
+          { name: '📉 Point Adjustment', value: `\`-${result.points}\``, inline: true },
+          { name: '📝 Recorded Violation', value: reason, inline: false }
+        ],
+        color: 'warning'
+      });
 
-      let dmStatus = '✅ DM sent to user.';
+      let dmStatus = '✅ DM Alert: Delivered';
       try {
         await user.send({
           embeds: [new EmbedBuilder()
             .setColor('#faa61a')
             .setTimestamp()
-            .setTitle('⚠️ You have received a warning')
-            .setDescription(`**Server:** ${interaction.guild.name}\n**Reason:** ${reason}\n**Severity:** ${severity.toUpperCase()}`)
+            .setTitle(`⚠️ Disciplinary Alert: ${interaction.guild.name}`)
+            .setDescription(`**Notification:** You have received a formal warning.\n**Violation:** ${reason}\n**Severity:** ${severity.toUpperCase()}\n\nPlease adhere strictly to server protocols moving forward.`)
           ]
         });
       } catch (e) {
-        dmStatus = '❌ Could not send DM to user.';
+        dmStatus = '❌ DM Alert: Delivery Blocked';
       }
 
-      embed.setFooter({ text: dmStatus });
+      embed.setFooter({ text: `${dmStatus} • Operational Telemetry Logged` });
 
       const row = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()

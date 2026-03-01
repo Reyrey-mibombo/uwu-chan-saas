@@ -26,7 +26,7 @@ module.exports = {
       const { User } = require('../../database/mongo');
       const { createRadarChart } = require('../../utils/charts');
 
-      const dbUser = await User.findOne({ userId: user.id }) || {};
+      const dbUser = await User.findOne({ userId: user.id, 'guilds.guildId': interaction.guildId }) || {};
       const xp = dbUser.stats?.xp || 0;
       const level = dbUser.stats?.level || 1;
 
@@ -38,31 +38,29 @@ module.exports = {
       const xpScore = Math.min(100, (level / 10) * 100);
 
       const chartUrl = createRadarChart(
-        ['Overall Score', 'Shift Activity', 'Behavior', 'Bot Engagement'],
+        ['Overall Score', 'Shift Activity', 'Behavior', 'Engagement'],
         [score || 0, activityScore, warningPenalty, xpScore],
         'Staff Skills'
       );
 
-      const embed = createCoolEmbed()
-        .setTitle(`👤 ${user.username}'s Staff Profile`)
-        .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-        .setImage(chartUrl)
-        .addFields(
-          { name: '📛 Username', value: user.username, inline: true },
-          { name: '🏷️ Nickname', value: member?.nickname || 'None', inline: true },
-          { name: '📅 Joined Server', value: member?.joinedTimestamp ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown', inline: true },
-          { name: '⭐ Points', value: `\`${points}\``, inline: true },
-          { name: '🏆 Rank', value: `\`${rank.toUpperCase()}\``, inline: true },
-          { name: '📈 Score', value: `\`${score || 0}/100\``, inline: true },
-          { name: '⚠️ Warnings', value: `\`${warnings?.total || 0}\``, inline: true },
-          { name: '🎮 Global Level', value: `Level ${level}\n*(${xp} XP)*`, inline: true },
-          { name: '🎖️ Achievements', value: trophyDisplay, inline: false }
-        );
+      const embed = await createCustomEmbed(interaction, {
+        title: `👤 Staff Dossier: ${user.username}`,
+        thumbnail: user.displayAvatarURL({ dynamic: true }),
+        image: chartUrl,
+        fields: [
+          { name: '📛 Identity', value: `**Tag:** ${user.tag}\n**Nick:** ${member?.nickname || 'None'}`, inline: true },
+          { name: '📅 Membership', value: member?.joinedTimestamp ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown', inline: true },
+          { name: '🏆 Authority', value: `Rank: \`${rank.toUpperCase()}\` (${points} pts)`, inline: true },
+          { name: '📊 Metrics', value: `Score: \`${score || 0}/100\`\nWarns: \`${warnings?.total || 0}\``, inline: true },
+          { name: '🎮 Level', value: `Level ${level}\n(${xp} XP)`, inline: true },
+          { name: '🎖️ Achievements', value: trophyDisplay || 'None', inline: false }
+        ]
+      });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`export_stats_${user.id}`)
-          .setLabel('📥 Export CSV Record')
+          .setLabel('📥 Export System Record')
           .setStyle(ButtonStyle.Secondary)
       );
 

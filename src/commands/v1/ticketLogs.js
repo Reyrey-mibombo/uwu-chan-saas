@@ -60,49 +60,53 @@ module.exports = {
 
       const embeds = [];
 
-      const buildTicketEmbed = (ticket, title, color) => {
-        const e = createCoolEmbed()
-          .setTitle(title)
-          .addFields(
+      const buildTicketEmbed = async (ticket, title, color) => {
+        return await createCustomEmbed(interaction, {
+          title: title,
+          fields: [
             { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true }
-          )
-          .setColor(color);
-
-        if (ticket.status === 'open') e.addFields({ name: '📊 Status', value: '⏳ **Pending**', inline: true });
-        else if (ticket.status === 'claimed') e.addFields({ name: '📊 Status', value: `👋 Claimed by ${ticket.claimedByName || 'Staff'}`, inline: true });
-        else if (ticket.status === 'closed') e.addFields({ name: '📊 Status', value: `🔒 Closed by ${ticket.closedByName || 'Staff'}`, inline: true });
-
-        if (ticket.category === 'report_staff') {
-          e.addFields(
-            { name: '👥 Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '📝 Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: false },
-            { name: '📎 Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 500) : 'None', inline: false }
-          );
-        } else {
-          e.addFields(
-            { name: '💡 Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 500) : 'N/A', inline: false }
-          );
-          if (ticket.imageUrl) {
-            e.setImage(ticket.imageUrl);
-          }
-        }
-        return e;
+            { name: '👤 Originator', value: `**${ticket.username || 'Unknown'}**`, inline: true }
+          ],
+          color: color
+        });
       };
 
-      for (const t of pendingTickets.slice(0, 3)) embeds.push(buildTicketEmbed(t, t.category === 'report_staff' ? '🚨 Pending Staff Report' : '💡 Pending Feedback', 'warning'));
-      for (const t of claimedTickets.slice(0, 3)) embeds.push(buildTicketEmbed(t, t.category === 'report_staff' ? '👋 Claimed Staff Report' : '👋 Claimed Feedback', 'primary'));
-      for (const t of closedTickets.slice(0, 3)) embeds.push(buildTicketEmbed(t, t.category === 'report_staff' ? '🔒 Closed Staff Report' : '🔒 Closed Feedback', 'dark'));
+      for (const t of pendingTickets.slice(0, 3)) {
+        const e = await buildTicketEmbed(t, t.category === 'report_staff' ? '🚨 Pending Staff Report' : '💡 Pending Feedback', 'warning');
+        e.addFields({ name: '📊 Status', value: '⏳ **QUEUEING**', inline: true });
+        if (t.category === 'report_staff') {
+          e.addFields(
+            { name: '👥 Target Personnel', value: `\`${t.staffName || 'N/A'}\``, inline: true },
+            { name: '📝 violation Reason', value: t.reason ? t.reason.substring(0, 100) : 'N/A', inline: false }
+          );
+        } else {
+          e.addFields({ name: '💡 Feedback Content', value: t.feedback ? t.feedback.substring(0, 500) : 'N/A', inline: false });
+        }
+        embeds.push(e);
+      }
 
-      const summaryEmbed = createCoolEmbed()
-        .setTitle('🎫 Ticket System Logs Summary')
-        .setDescription(`Showing the most recent \`${tickets.length}\` results matching your filters.`)
-        .addFields(
-          { name: '⏳ Pending', value: `\`${pendingTickets.length}\``, inline: true },
-          { name: '👋 Claimed', value: `\`${claimedTickets.length}\``, inline: true },
-          { name: '🔒 Closed', value: `\`${closedTickets.length}\``, inline: true }
-        )
-        .setColor('info');
+      for (const t of claimedTickets.slice(0, 3)) {
+        const e = await buildTicketEmbed(t, t.category === 'report_staff' ? '👋 Intercepted Staff Report' : '👋 Intercepted Feedback', 'info');
+        e.addFields({ name: '📊 Status', value: `👋 **Intercepted** by ${t.claimedByName || 'Executive'}`, inline: true });
+        embeds.push(e);
+      }
+
+      for (const t of closedTickets.slice(0, 3)) {
+        const e = await buildTicketEmbed(t, t.category === 'report_staff' ? '🔒 Archived Staff Report' : '🔒 Archived Feedback', 'dark');
+        e.addFields({ name: '📊 Status', value: `🔒 **Archived** by ${t.closedByName || 'Executive'}`, inline: true });
+        embeds.push(e);
+      }
+
+      const summaryEmbed = await createCustomEmbed(interaction, {
+        title: '🎫 Ticket Operational Logs Index',
+        description: `Retrieved last \`${tickets.length}\` relational records matching current query parameters.`,
+        fields: [
+          { name: '⏳ Queueing', value: `\`${pendingTickets.length}\` items`, inline: true },
+          { name: '👋 Active', value: `\`${claimedTickets.length}\` items`, inline: true },
+          { name: '🔒 Archived', value: `\`${closedTickets.length}\` items`, inline: true }
+        ],
+        color: 'info'
+      });
 
       await interaction.editReply({ embeds: [summaryEmbed, ...embeds].slice(0, 10) });
     } catch (error) {

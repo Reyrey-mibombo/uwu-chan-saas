@@ -65,7 +65,7 @@ module.exports = {
             return getPriority(a) - getPriority(b);
         });
 
-        const embed = buildEmbed(interaction, targetUser, presence, activities);
+        const embed = await buildEmbed(interaction, targetUser, presence, activities);
         const message = await interaction.editReply({ embeds: [embed] });
 
         // Live updates (if enabled)
@@ -86,13 +86,13 @@ module.exports = {
 
                 // If user went offline, show offline embed and stop
                 if (!freshPresence || freshPresence.status === 'offline') {
-                    const offlineEmbed = new EmbedBuilder()
-                        .setColor('#747f8d')
-                        .setAuthor({ name: `${targetUser.tag} is Offline`, iconURL: targetUser.displayAvatarURL({ dynamic: true }) })
-                        .setDescription('🔒 User went offline during live tracking.')
-                        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
-                        .setFooter({ text: `Tracking stopped at ${new Date().toLocaleTimeString()}` })
-                        .setTimestamp();
+                    const offlineEmbed = await createCustomEmbed(interaction, {
+                        title: `${targetUser.username} is now Offline`,
+                        description: '🔒 Telemetry lost. User has transitioned to an offline or invisible state.',
+                        color: 'error',
+                        thumbnail: targetUser.displayAvatarURL({ dynamic: true, size: 512 }),
+                        footer: `Real-time tracking terminated at ${new Date().toLocaleTimeString()}`
+                    });
                     await message.edit({ embeds: [offlineEmbed] });
                     clearInterval(interval);
                     return;
@@ -100,15 +100,15 @@ module.exports = {
 
                 let freshActivities = freshPresence.activities || [];
 
-                // If no activities, show "no activity" embed and stop (or you could continue polling)
+                // If no activities, show "no activity" embed and stop
                 if (!freshActivities.length) {
-                    const noActivityEmbed = new EmbedBuilder()
-                        .setColor('#43b581')
-                        .setAuthor({ name: `${targetUser.tag}'s Status`, iconURL: targetUser.displayAvatarURL({ dynamic: true }) })
-                        .setDescription(`🟢 This user is currently online but has no active activities.`)
-                        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
-                        .setFooter({ text: `Checked by ${interaction.user.tag}` })
-                        .setTimestamp();
+                    const noActivityEmbed = await createCustomEmbed(interaction, {
+                        title: `${targetUser.username}'s Status`,
+                        description: '🟢 Node is currently **Online** but broadcasting no active telemetry (no activities).',
+                        color: 'success',
+                        thumbnail: targetUser.displayAvatarURL({ dynamic: true, size: 512 }),
+                        footer: `Active monitoring suspended`
+                    });
                     await message.edit({ embeds: [noActivityEmbed] });
                     clearInterval(interval);
                     return;
@@ -123,7 +123,7 @@ module.exports = {
                     return getPriority(a) - getPriority(b);
                 });
 
-                const updatedEmbed = buildEmbed(interaction, targetUser, freshPresence, freshActivities);
+                const updatedEmbed = await buildEmbed(interaction, targetUser, freshPresence, freshActivities);
                 await message.edit({ embeds: [updatedEmbed] });
 
             } catch {
@@ -141,22 +141,16 @@ function createProgressBar(percent, length = 10) {
 }
 
 // Main embed builder
-function buildEmbed(interaction, targetUser, presence, activities) {
+async function buildEmbed(interaction, targetUser, presence, activities) {
+    const { createCustomEmbed } = require('../../utils/embeds');
+
     const statusColors = {
-        online: '#43b581',
-        idle: '#faa61a',
-        dnd: '#f04747',
+        online: 'success',
+        idle: 'warning',
+        dnd: 'error',
     };
 
-    const embed = new EmbedBuilder()
-        .setColor(statusColors[presence.status] || '#2b2d31')
-        .setAuthor({
-            name: `${targetUser.tag} • ${presence.status.toUpperCase()}`,
-            iconURL: targetUser.displayAvatarURL({ dynamic: true })
-        })
-        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
-        .setFooter({ text: `Checked by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
-        .setTimestamp();
+    let description = '';
 
     // Device info
     if (presence.clientStatus) {
@@ -165,10 +159,12 @@ function buildEmbed(interaction, targetUser, presence, activities) {
         if (presence.clientStatus.mobile) devices.push('📱 Mobile');
         if (presence.clientStatus.web) devices.push('🌐 Web');
         if (devices.length) {
-            embed.setDescription(`**Connected from:** ${devices.join(' • ')}`);
+            description = `**Telemetry Source:** ${devices.join(' • ')}`;
         }
     }
 
+    const fields = [];
+    let image = null;
     let hasImageSet = false;
 
     for (const activity of activities) {
@@ -177,30 +173,25 @@ function buildEmbed(interaction, targetUser, presence, activities) {
 
         switch (activity.type) {
             case ActivityType.Playing:
-                activityString = `🎮 **Playing:** ${activity.name}`;
+                activityString = `🎮 **Executing:** ${activity.name}`;
                 break;
 
             case ActivityType.Streaming:
-                if (activity.url) {
-                    activityString = `📺 **Streaming:** [${activity.name}](${activity.url})`;
-                } else {
-                    activityString = `📺 **Streaming:** ${activity.name}`;
-                }
+                activityString = `📺 **Streaming:** ${activity.url ? `[${activity.name}](${activity.url})` : activity.name}`;
                 break;
 
             case ActivityType.Listening:
                 if (activity.name === 'Spotify') {
-                    fieldName = '🎵 Spotify';
+                    fieldName = '🎵 Spotify Performance';
                     const track = activity.details || 'Unknown Track';
                     const artist = activity.state || 'Unknown Artist';
                     const album = activity.assets?.largeText || 'Unknown Album';
-                    activityString = `🎧 **Listening to:** ${track}\n👤 **Artist:** ${artist}\n💿 **Album:** ${album}`;
+                    activityString = `🎧 **Track:** ${track}\n👤 **Artist:** ${artist}\n💿 **Album:** ${album}`;
 
-                    // Spotify album art
                     if (activity.assets?.largeImage && !hasImageSet) {
                         const imageId = activity.assets.largeImage.split(':').pop();
                         if (imageId) {
-                            embed.setImage(`https://i.scdn.co/image/${imageId}`);
+                            image = `https://i.scdn.co/image/${imageId}`;
                             hasImageSet = true;
                         }
                     }
@@ -210,7 +201,7 @@ function buildEmbed(interaction, targetUser, presence, activities) {
                 break;
 
             case ActivityType.Watching:
-                activityString = `👀 **Watching:** ${activity.name}`;
+                activityString = `👀 **Observing:** ${activity.name}`;
                 break;
 
             case ActivityType.Competing:
@@ -218,81 +209,65 @@ function buildEmbed(interaction, targetUser, presence, activities) {
                 break;
 
             case ActivityType.Custom:
-                fieldName = '💬 Custom Status';
+                fieldName = '💬 Bio Status';
                 const emoji = activity.emoji
                     ? (activity.emoji.id
                         ? `<${activity.emoji.animated ? 'a' : ''}:${activity.emoji.name}:${activity.emoji.id}>`
                         : activity.emoji.name)
                     : '';
                 const state = activity.state || '';
-                // Combine emoji and state without extra spaces
                 const parts = [];
                 if (emoji) parts.push(emoji);
                 if (state) parts.push(state);
-                activityString = parts.join(' ') || '💬 No custom status set.';
+                activityString = parts.join(' ') || '💬 No data broadcast.';
                 break;
 
             default:
-                activityString = `🎯 **Activity:** ${activity.name}`;
+                activityString = `🎯 **Operation:** ${activity.name}`;
         }
 
-        // Append rich presence details/state (if not already handled)
         if (activity.type !== ActivityType.Custom && activity.name !== 'Spotify') {
-            if (activity.details) {
-                activityString += `\n📝 **Details:** ${activity.details}`;
-            }
-            if (activity.state) {
-                activityString += `\n🔹 **State:** ${activity.state}`;
-            }
+            if (activity.details) activityString += `\n📝 **Details:** ${activity.details}`;
+            if (activity.state) activityString += `\n🔹 **State:** ${activity.state}`;
         }
 
-        // Timestamps and progress bar
         if (activity.timestamps) {
             const start = activity.timestamps.start ? activity.timestamps.start.getTime() : null;
             const end = activity.timestamps.end ? activity.timestamps.end.getTime() : null;
             const now = Date.now();
 
             if (start && end && end > now) {
-                // Activity with duration (e.g., song, game match)
-                const total = end - start;
-                const elapsed = now - start;
-                if (elapsed > 0 && elapsed < total) {
-                    const percent = (elapsed / total) * 100;
-                    const bar = createProgressBar(percent, 10);
-                    activityString += `\n⏳ **Progress:** ${bar} ${Math.round(percent)}%`;
-                }
-                activityString += `\n⏱️ **Started:** <t:${Math.floor(start / 1000)}:R>`;
-                activityString += `\n⌛ **Ends:** <t:${Math.floor(end / 1000)}:R>`;
+                const percent = ((now - start) / (end - start)) * 100;
+                activityString += `\n⏳ **Dynamic:** ${createProgressBar(percent)} ${Math.round(percent)}%`;
+                activityString += `\n⏱️ **Duration:** <t:${Math.floor(start / 1000)}:R> → <t:${Math.floor(end / 1000)}:R>`;
             } else if (start) {
-                // Only start time (elapsed)
-                activityString += `\n⏱️ **Started:** <t:${Math.floor(start / 1000)}:R>`;
+                activityString += `\n⏱️ **Elapsed:** <t:${Math.floor(start / 1000)}:R>`;
             }
         }
 
-        // Party info (e.g., game party size)
         if (activity.party?.size) {
-            activityString += `\n👥 **Party:** ${activity.party.size[0]}/${activity.party.size[1]}`;
+            activityString += `\n👥 **Party Flux:** ${activity.party.size[0]}/${activity.party.size[1]}`;
         }
 
-        // Game/activity image (if not set yet)
         if (activity.applicationId && activity.assets?.largeImage && !hasImageSet && activity.name !== 'Spotify') {
-            const imageUrl = `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.largeImage}.png`;
-            embed.setImage(imageUrl);
+            image = `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.largeImage}.png`;
             hasImageSet = true;
         }
 
-        // Add field (truncate if needed)
-        embed.addFields({
+        fields.push({
             name: fieldName.length > 256 ? fieldName.slice(0, 253) + '...' : fieldName,
-            value: activityString.slice(0, 1024) || 'No data available.',
+            value: activityString.slice(0, 1024) || 'No specific telemetry.',
             inline: false
         });
     }
 
-    // If no image was set, ensure it's cleared
-    if (!hasImageSet) {
-        embed.setImage(null);
-    }
-
-    return embed;
+    return await createCustomEmbed(interaction, {
+        title: `🛰️ Telemetry: ${targetUser.username} (${presence.status.toUpperCase()})`,
+        description: description,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true, size: 512 }),
+        image: image,
+        fields: fields,
+        color: statusColors[presence.status] || 'info',
+        footer: `Live data synchronization active`
+    });
 }

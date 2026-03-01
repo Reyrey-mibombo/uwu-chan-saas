@@ -20,17 +20,18 @@ module.exports = {
       }
 
       // Categorized broad help menu
-      const embed = createCoolEmbed()
-        .setTitle('📚 Uwu-chan Bot Commands')
-        .setDescription('Welcome to Uwu-chan SaaS! Here is an overview of the commands available in your current tier. Use `/buy` or `/premium` to upgrade and unlock more powerful features!')
-        .addFields(
-          { name: '📋 General Utilities', value: '> `/ping` • `/server_info`\n> `/roles_list` • `/help`\n> `/invite_link` • `/report_issue`', inline: false },
+      const embed = await createCustomEmbed(interaction, {
+        title: '📚 Uwu-chan Command Index',
+        description: 'Welcome to the core service manual. Select a category below to explore available features for your current licensing tier.',
+        thumbnail: interaction.client.user?.displayAvatarURL(),
+        fields: [
+          { name: '📋 General Utilities', value: '> `/ping` • `/server_status`\n> `/roles_list` • `/help`\n> `/invite_link` • `/report_issue`', inline: false },
           { name: '👥 Staff & Shifts', value: '> `/staff_profile` • `/leaderboard`\n> `/shift_start` • `/shift_end`', inline: false },
           { name: '📊 Analytics', value: '> `/staff_stats` • `/daily_summary`\n> `/activity_chart`', inline: false },
           { name: '🛡️ Moderation', value: '> `/warn` • `/mod_notes`\n> `/promote` • `/demote`', inline: false },
           { name: '💎 Premium Tiers', value: 'Use `/premium` to unlock v3 (Advanced Auto-Moderation), v4 (Economy), v5 (AI Features), and beyond!', inline: false }
-        )
-        .setThumbnail(interaction.client.user?.displayAvatarURL());
+        ]
+      });
 
       const row = new ActionRowBuilder()
         .addComponents(

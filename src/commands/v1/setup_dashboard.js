@@ -18,17 +18,18 @@ module.exports = {
                 await guildData.save();
             }
 
-            const embed = createCoolEmbed()
-                .setTitle('⚙️ Server Configuration Dashboard')
-                .setDescription('Welcome to the interactive setup panel. Use the dropdown menus below to instantly map your server channels and roles.')
-                .addFields(
-                    { name: 'Logging Channel', value: guildData.settings.logChannel ? `<#${guildData.settings.logChannel}>` : 'Not Set', inline: true },
-                    { name: 'Welcome Channel', value: guildData.settings.welcomeChannel ? `<#${guildData.settings.welcomeChannel}>` : 'Not Set', inline: true },
-                    { name: 'Moderation Channel', value: guildData.settings.modChannel ? `<#${guildData.settings.modChannel}>` : 'Not Set', inline: true },
-                    { name: 'On Duty Role', value: guildData.settings.onDutyRole ? `<@&${guildData.settings.onDutyRole}>` : 'Not Set', inline: true }
-                )
-                .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-                .setColor('enterprise');
+            const embed = await createCustomEmbed(interaction, {
+                title: '⚙️ Systems Configuration Dashboard',
+                description: 'Interactive node management interface. Map operational vectors and authorization roles via the matrices below.',
+                fields: [
+                    { name: '📊 Logging Vector', value: guildData.settings.logChannel ? `<#${guildData.settings.logChannel}>` : '`UNMAPPED`', inline: true },
+                    { name: '👋 Entrance Vector', value: guildData.settings.welcomeChannel ? `<#${guildData.settings.welcomeChannel}>` : '`UNMAPPED`', inline: true },
+                    { name: '⚖️ Oversight Vector', value: guildData.settings.modChannel ? `<#${guildData.settings.modChannel}>` : '`UNMAPPED`', inline: true },
+                    { name: '🛡️ Active Duty Role', value: guildData.settings.onDutyRole ? `<@&${guildData.settings.onDutyRole}>` : '`UNMAPPED`', inline: true }
+                ],
+                thumbnail: interaction.guild.iconURL({ dynamic: true }),
+                color: 'enterprise'
+            });
 
             const logSelect = new ActionRowBuilder().addComponents(
                 new ChannelSelectMenuBuilder()

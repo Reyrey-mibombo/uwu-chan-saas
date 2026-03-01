@@ -15,10 +15,10 @@ module.exports = {
     try {
       await interaction.deferReply();
       const target = interaction.options.getUser('user') || interaction.user;
-      const user = await User.findOne({ userId: target.id }).lean();
+      const user = await User.findOne({ userId: target.id, 'guilds.guildId': interaction.guildId }).lean();
 
       if (!user) {
-        return interaction.editReply({ embeds: [createErrorEmbed(`No data found for **${target.username}**. They need to use bot commands first.`)] });
+        return interaction.editReply({ embeds: [createErrorEmbed(`No local data found for **${target.username}**. Database entry missing for this sector.`)] });
       }
 
       const points = user.staff?.points || 0;
@@ -28,14 +28,16 @@ module.exports = {
       const nextRank = RANK_ORDER[rankIdx + 1];
 
       if (!nextRank) {
-        const embed = createCoolEmbed()
-          .setTitle(`👑 ${target.username} — Rank Progress`)
-          .setThumbnail(target.displayAvatarURL())
-          .setDescription('🏆 **Maximum rank achieved!** You\'ve reached the top.')
-          .addFields(
-            { name: '🎖️ Current Rank', value: rank.toUpperCase(), inline: true },
-            { name: '⭐ Points', value: points.toString(), inline: true }
-          );
+        const embed = await createCustomEmbed(interaction, {
+          title: `👑 Progression Limit Reached — ${target.username}`,
+          thumbnail: target.displayAvatarURL({ dynamic: true }),
+          description: '🏆 **Apex Status Achieved.** You have reached the maximum rank within the current hierarchical structure.',
+          fields: [
+            { name: '🎖️ Current Tier', value: `\`${rank.toUpperCase()}\``, inline: true },
+            { name: '⭐ Lifetime Points', value: `\`${points.toLocaleString()}\``, inline: true }
+          ],
+          color: 'enterprise'
+        });
         return interaction.editReply({ embeds: [embed] });
       }
 
@@ -44,19 +46,20 @@ module.exports = {
       const progress = Math.min(100, Math.round(((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100));
       const needed = Math.max(0, nextThreshold - points);
       const barFilled = Math.min(10, Math.round(progress / 10));
-      const bar = '▓'.repeat(barFilled) + '░'.repeat(10 - barFilled);
+      const bar = '█'.repeat(barFilled) + '░'.repeat(10 - barFilled);
 
-      const embed = createCoolEmbed()
-        .setTitle(`📈 Rank Progress — ${target.username}`)
-        .setThumbnail(target.displayAvatarURL())
-        .addFields(
-          { name: '🎖️ Current Rank', value: rank.toUpperCase(), inline: true },
-          { name: '⬆️ Next Rank', value: nextRank.toUpperCase(), inline: true },
-          { name: '⭐ Points', value: `${points} / ${nextThreshold}`, inline: true },
-          { name: '📊 Progress', value: `\`${bar}\` **${progress}%**\nNeed **${needed}** more points to rank up!`, inline: false },
-          { name: '📈 Consistency', value: `${consistency}%`, inline: true },
-          { name: '🏅 Achievements', value: (user.staff?.achievements?.length || 0).toString(), inline: true }
-        );
+      const embed = await createCustomEmbed(interaction, {
+        title: `📈 Progression Telemetry — ${target.username}`,
+        thumbnail: target.displayAvatarURL({ dynamic: true }),
+        fields: [
+          { name: '🎖️ Current Tier', value: `\`${rank.toUpperCase()}\``, inline: true },
+          { name: '⬆️ Next Objective', value: `\`${nextRank.toUpperCase()}\``, inline: true },
+          { name: '⭐ Points Delta', value: `\`${points.toLocaleString()}\` / \`${nextThreshold.toLocaleString()}\``, inline: true },
+          { name: '📊 Efficiency Bar', value: `\`${bar}\` **${progress}%**\nNeed **${needed.toLocaleString()}** additional points to finalize rank-up.`, inline: false },
+          { name: '📈 Reliability', value: `\`${consistency}%\``, inline: true },
+          { name: '🏅 Merits', value: `\`${user.staff?.achievements?.length || 0}\``, inline: true }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

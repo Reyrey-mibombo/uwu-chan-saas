@@ -62,13 +62,16 @@ module.exports = {
         adminRole ? `👑 Admin: <@&${adminRole.id}>` : null
       ].filter(Boolean).join('\n');
 
-      const embed = createSuccessEmbed('Promotion System Setup Complete', 'Your promotion system is now configured!')
-        .addFields(
-          { name: '📢 Announcement Channel', value: `<#${channel.id}>`, inline: true },
-          { name: '🎭 Rank Roles', value: rolesList, inline: false },
-          { name: '⚙️ Default Requirements', value: 'Auto-promotion enabled with default point thresholds.', inline: false },
-          { name: '📊 Thresholds', value: '```Staff: 100pts\nSenior: 300pts\nManager: 600pts\nAdmin: 1000pts```', inline: false }
-        );
+      const embed = await createCustomEmbed(interaction, {
+        title: '✅ Promotion Architecture Deployed',
+        description: 'Your server\'s promotion system and rank hierarchy have been successfully initialized.',
+        fields: [
+          { name: '📢 Notification Vector', value: `<#${channel.id}>`, inline: true },
+          { name: '🎭 Rank Assignment Matrix', value: rolesList, inline: false },
+          { name: '📊 Threshold Configuration', value: '```Staff: 100pts\nSenior: 300pts\nManager: 600pts\nAdmin: 1000pts```', inline: false }
+        ],
+        color: 'success'
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

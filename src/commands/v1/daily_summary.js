@@ -32,15 +32,16 @@ module.exports = {
 
       warningsToday = todayWarnings.length;
 
-      const embed = createCoolEmbed()
-        .setTitle('📊 Daily Summary')
-        .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-        .addFields(
-          { name: '👥 Active Staff', value: `\`${activeStaff}\` members`, inline: true },
-          { name: '⏱️ Total Shift Time', value: `\`${Math.round(totalMinutes / 60)}h ${Math.round(totalMinutes % 60)}m\``, inline: true },
-          { name: '⚠️ Warnings Issued', value: `\`${warningsToday}\``, inline: true }
-        )
-        .setColor('info');
+      const embed = await createCustomEmbed(interaction, {
+        title: '📊 Terminal Operational Summary (Daily)',
+        description: `High-fidelity activity report for **${interaction.guild.name}** over the last 24-hour cycle.`,
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        fields: [
+          { name: '👥 Active Personnel', value: `\`${activeStaff}\` members`, inline: true },
+          { name: '⏱️ Total Active Time', value: `\`${Math.round(totalMinutes / 60)}h ${Math.round(totalMinutes % 60)}m\``, inline: true },
+          { name: '⚠️ Recorded Incidents', value: `\`${warningsToday}\``, inline: true }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

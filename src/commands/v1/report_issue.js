@@ -23,7 +23,11 @@ module.exports = {
       });
       await guildData.save();
 
-      const embed = createSuccessEmbed('Issue Reported', `✅ Your issue has been successfully logged:\n\n*"${issue}"*\n\nThank you for your feedback!`);
+      const embed = await createCustomEmbed(interaction, {
+        title: '✅ Issue Reported',
+        description: `Your feedback has been successfully logged. Our development team will review this shortly.\n\n**Log Entry:**\n*"${issue}"*`,
+        color: 'success'
+      });
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
       console.error(error);

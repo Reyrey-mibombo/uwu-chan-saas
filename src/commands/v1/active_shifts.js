@@ -36,10 +36,10 @@ module.exports = {
             }));
 
             const embed = await createCustomEmbed(interaction, {
-                title: '📡 Live Active Shifts',
-                description: shiftLines.join('\n\n'),
+                title: '📡 Live Operational Status',
+                description: `Current broadcasting personnel on active duty within **${interaction.guild.name}**.\n\n${shiftLines.join('\n\n')}`,
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                footer: `${activeShifts.length} Staff Member(s) On Duty`
+                footer: `Status: ${activeShifts.length} node(s) currently transmitting`
             });
 
             await interaction.editReply({ embeds: [embed] });

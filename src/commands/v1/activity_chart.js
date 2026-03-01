@@ -82,20 +82,20 @@ module.exports = {
 
             const chartUrl = await chart.getShortUrl();
 
-            const chartEmbed = createCoolEmbed()
-                .setTitle('📈 7-Day Server Engagement Dashboard')
-                .setDescription('Here is the real-time textual engagement over the last 7 days based on actual logged gateway events.')
-                .setImage(chartUrl)
-                .setAuthor({
-                    name: `${interaction.guild.name} Analytics`,
+            const chartEmbed = await createCustomEmbed(interaction, {
+                title: '📈 Engagement Analytics Dashboard',
+                description: 'Real-time telemetry showing server activity trends over the previous 7-day cycle.',
+                image: chartUrl,
+                author: {
+                    name: `${interaction.guild.name} Intelligence`,
                     iconURL: interaction.guild.iconURL({ dynamic: true }) || undefined
-                })
-                .addFields(
-                    { name: '📊 Total Activity (7d)', value: `**${totalMessages.toLocaleString()}**`, inline: true },
-                    { name: '⏱️ Daily Average', value: `**${avgMessages.toLocaleString()}**`, inline: true },
-                    { name: '🔥 Peak Activity Day', value: `**${peakDay.date}** (${peakDay.count} events)`, inline: true }
-                )
-                .setColor('#5865F2');
+                },
+                fields: [
+                    { name: '📊 Total Velocity', value: `**${totalMessages.toLocaleString()}** events`, inline: true },
+                    { name: '⏱️ Daily Throughput', value: `**${avgMessages.toLocaleString()}** events`, inline: true },
+                    { name: '🔥 Peak Intensity', value: `**${peakDay.count}** events\n(${peakDay.date})`, inline: true }
+                ]
+            });
 
             await interaction.editReply({ embeds: [chartEmbed] });
         } catch (error) {

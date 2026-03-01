@@ -28,18 +28,19 @@ module.exports = {
       const cpuUsage = os.loadavg()[0].toFixed(2);
       const platform = os.platform() === 'win32' ? 'Windows' : os.platform() === 'linux' ? 'Linux' : os.platform();
 
-      const embed = createCoolEmbed()
-        .setTitle('🏓 Pong! System Diagnostics')
-        .setDescription('Advanced latency and host machine metrics:')
-        .addFields(
-          { name: '🌐 WebSockets Latency', value: `\`${wsPing}ms\``, inline: true },
+      const embed = await createCustomEmbed(interaction, {
+        title: '🏓 Pong! System Diagnostics',
+        description: 'Advanced latency and host machine metrics fetched in real-time.',
+        thumbnail: client.user.displayAvatarURL(),
+        fields: [
+          { name: '🌐 WebSockets', value: `\`${wsPing}ms\``, inline: true },
           { name: '📡 API Roundtrip', value: `\`${apiPing}ms\``, inline: true },
+          { name: '💻 Host OS', value: `\`${platform}\``, inline: true },
           { name: '⏱️ Process Uptime', value: `\`${uptimeString}\``, inline: false },
           { name: '🧠 Host Memory', value: `\`${(usedMemory / 1024 / 1024 / 1024).toFixed(2)} GB / ${(totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB (${memoryUsage}%)\``, inline: true },
-          { name: '⚙️ Host CPU Load (1m)', value: `\`${cpuUsage}%\``, inline: true },
-          { name: '💻 Host OS', value: `\`${platform} ${os.release()}\``, inline: true }
-        )
-        .setThumbnail(client.user.displayAvatarURL());
+          { name: '⚙️ CPU Load (1m)', value: `\`${cpuUsage}%\``, inline: true }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

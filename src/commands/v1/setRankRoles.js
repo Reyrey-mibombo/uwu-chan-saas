@@ -47,7 +47,15 @@ module.exports = {
         admin: 'Admin'
       };
 
-      const embed = createSuccessEmbed('Rank Role Updated', `When users promote to **${rankNames[rank]}**, they will automatically get the role: **${role.name}**\n\n📌 **Rank:** ${rankNames[rank]}\n🎭 **Role:** <@&${role.id}>`);
+      const embed = await createCustomEmbed(interaction, {
+        title: '⚙️ Rank-Role Binding Updated',
+        description: `Successfully configured auto-role assignment for the **${rankNames[rank]}** tier.`,
+        color: 'success',
+        fields: [
+          { name: '📌 Target Rank', value: `\`${rankNames[rank]}\``, inline: true },
+          { name: '🎭 Assigned Role', value: `<@&${role.id}>`, inline: true }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

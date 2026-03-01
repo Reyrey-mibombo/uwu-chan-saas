@@ -70,10 +70,14 @@ module.exports = {
             const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&bkg=transparent&w=600&h=300`;
 
             const embed = await createCustomEmbed(interaction, {
-                title: '📈 Server Activity Growth Tracker',
-                description: `Verified tracking of message activity over the trailing 7 days.\n**Total Trailing 7D Activity:** \`${sumMessages}\` Messages`,
+                title: '📈 Server Activity Growth Telemetry',
+                description: `Verified tracking of gateway message velocity over the trailing 7-day cycle.\n**Cumulative 7D Volume:** \`${sumMessages.toLocaleString()}\` Events`,
                 image: chartUrl,
-                branding: { footer: 'Source: uwu-chan-saas MongoDB Tracking Engine' }
+                author: {
+                    name: `${interaction.guild.name} Operations`,
+                    iconURL: interaction.guild.iconURL({ dynamic: true }) || undefined
+                },
+                footer: 'Real-time MongoDB Analytics Engine'
             });
 
             await interaction.editReply({ embeds: [embed] });

@@ -13,26 +13,27 @@ module.exports = {
   async execute(interaction, client) {
     try {
       const channel = interaction.options.getChannel('channel');
-      const title = interaction.options.getString('title') || '🎫 Support Tickets';
+      const titleText = interaction.options.getString('title') || '🎫 Operational Support Interface';
 
-      const embed = createCoolEmbed()
-        .setTitle(title)
-        .setDescription('Choose the type of ticket you want to create below:')
-        .addFields(
-          { name: '🚨 Report Staff', value: 'Report a staff member with evidence/images', inline: false },
-          { name: '💡 Feedback', value: 'Submit feedback or suggestions for the server', inline: false }
-        )
-        .setThumbnail(interaction.guild.iconURL({ dynamic: true }));
+      const embed = await createCustomEmbed(interaction, {
+        title: titleText,
+        description: 'Initialize a priority communication channel by selecting a category below:',
+        fields: [
+          { name: '🚨 Report Personnel', value: 'Formal report regarding staff conduct with evidence.', inline: false },
+          { name: '💡 Feedback Hub', value: 'Submit operational feedback or systemic suggestions.', inline: false }
+        ],
+        thumbnail: interaction.guild.iconURL({ dynamic: true })
+      });
 
       const row = new ActionRowBuilder()
         .addComponents(
           new ButtonBuilder()
             .setCustomId('ticket_report_staff')
-            .setLabel('🚨 Report Staff')
+            .setLabel('🚨 Report Personnel')
             .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId('ticket_feedback')
-            .setLabel('💡 Feedback')
+            .setLabel('💡 Feedback Hub')
             .setStyle(ButtonStyle.Primary)
         );
 
@@ -44,10 +45,16 @@ module.exports = {
         { upsert: true }
       );
 
-      await interaction.reply({ embeds: [createSuccessEmbed('Ticket Panel Deployed', `✅ Ticket panel successfully sent to <#${channel.id}>`)], ephemeral: true });
+      const successEmbed = await createCustomEmbed(interaction, {
+        title: '✅ Interface Deployment Successful',
+        description: `Operational ticket panel has been successfully transmitted to <#${channel.id}>.`,
+        color: 'success'
+      });
+
+      await interaction.reply({ embeds: [successEmbed], ephemeral: true });
     } catch (error) {
       console.error(error);
-      const errEmbed = createErrorEmbed('An error occurred while creating the ticket panel. Make sure the bot has permissions to send messages there.');
+      const errEmbed = createErrorEmbed('An error occurred during deployment. Verify bot permissions.');
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ embeds: [errEmbed] });
       } else {
@@ -60,27 +67,27 @@ module.exports = {
 module.exports.handleReportStaff = async (interaction, client) => {
   const modal = new ModalBuilder()
     .setCustomId('modal_report_staff')
-    .setTitle('🚨 Report Staff Member');
+    .setTitle('🚨 Personnel Report Filing');
 
   const staffInput = new TextInputBuilder()
     .setCustomId('report_staff_name')
-    .setLabel('1. Staff Member Username')
+    .setLabel('Target Personnel Username')
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder('Enter the staff member username')
+    .setPlaceholder('Username of the personnel involved')
     .setRequired(true);
 
   const reasonInput = new TextInputBuilder()
     .setCustomId('report_reason')
-    .setLabel('2. Reason for Report')
+    .setLabel('Violation Description')
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder('Describe what happened...')
+    .setPlaceholder('Describe the incident in detail...')
     .setRequired(true);
 
   const evidenceInput = new TextInputBuilder()
     .setCustomId('report_evidence')
-    .setLabel('3. Evidence/Details')
+    .setLabel('Evidence Telemetry')
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder('Any evidence or additional details...')
+    .setPlaceholder('URLs to images or detailed evidence...')
     .setRequired(false);
 
   modal.addComponents(
@@ -95,20 +102,20 @@ module.exports.handleReportStaff = async (interaction, client) => {
 module.exports.handleFeedback = async (interaction, client) => {
   const modal = new ModalBuilder()
     .setCustomId('modal_feedback')
-    .setTitle('💡 Server Feedback');
+    .setTitle('💡 Operational Feedback');
 
   const feedbackInput = new TextInputBuilder()
     .setCustomId('feedback_content')
-    .setLabel('Your Feedback/Suggestion')
+    .setLabel('Feedback / Suggestion')
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder('Share your thoughts, suggestions, or feedback...')
+    .setPlaceholder('Describe your thoughts or proposed changes...')
     .setRequired(true);
 
   const imageInput = new TextInputBuilder()
     .setCustomId('feedback_image')
-    .setLabel('Image URL (optional)')
+    .setLabel('Visual Aid (Optional URL)')
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder('https://example.com/image.png')
+    .setPlaceholder('https://example.com/telemetry.png')
     .setRequired(false);
 
   modal.addComponents(
@@ -123,44 +130,45 @@ module.exports.handleReportSubmit = async (interaction, client) => {
   try {
     const staffName = interaction.fields.getTextInputValue('report_staff_name');
     const reason = interaction.fields.getTextInputValue('report_reason');
-    const evidence = interaction.fields.getTextInputValue('report_evidence') || 'No evidence provided';
+    const evidence = interaction.fields.getTextInputValue('report_evidence') || 'No additional telemetry.';
 
     const guild = await Guild.findOne({ guildId: interaction.guildId });
     const ticketChannelId = guild?.settings?.ticketChannel;
 
     if (!ticketChannelId) {
-      return interaction.reply({ embeds: [createErrorEmbed('Ticket admin channel not configured! Use /ticketsetup.')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Administrative channel not found. Deployment required.')], ephemeral: true });
     }
 
     const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
     if (!ticketChannel) {
-      return interaction.reply({ embeds: [createErrorEmbed('Configured ticket admin channel no longer exists!')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Target operational channel lost. Re-deployment required.')], ephemeral: true });
     }
 
     const ticketNum = Date.now().toString(36).toUpperCase();
 
-    const embed = createCoolEmbed()
-      .setTitle(`🚨 Staff Report #${ticketNum}`)
-      .addFields(
-        { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
-        { name: '👤 Reported By', value: `${interaction.user.tag}`, inline: true },
-        { name: '📊 Status', value: '⏳ **Pending** - Waiting for staff', inline: true },
-        { name: '👥 Staff Member', value: staffName, inline: false },
-        { name: '📝 Reason', value: reason, inline: false },
-        { name: '📎 Evidence/Details', value: evidence, inline: false }
-      )
-      .setThumbnail(interaction.user.displayAvatarURL())
-      .setColor('warning');
+    const embed = await createCustomEmbed(interaction, {
+      title: `🚨 Personnel Report #${ticketNum}`,
+      fields: [
+        { name: '🎫 Dossier ID', value: `\`${ticketNum}\``, inline: true },
+        { name: '👤 Originator', value: `**${interaction.user.username}**`, inline: true },
+        { name: '📊 Status', value: '⏳ **QUEUEING** - Awaiting Review', inline: true },
+        { name: '👥 Target Personnel', value: `\`${staffName}\``, inline: false },
+        { name: '📝 Violation Reason', value: reason, inline: false },
+        { name: '📎 Telemetry Data', value: evidence, inline: false }
+      ],
+      thumbnail: interaction.user.displayAvatarURL({ dynamic: true }),
+      color: 'warning'
+    });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId(`ticket_claim_${ticketNum}`)
-          .setLabel('👋 Claim Ticket')
+          .setLabel('👋 Intercept Ticket')
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
           .setCustomId(`ticket_close_${ticketNum}`)
-          .setLabel('🔒 Close Ticket')
+          .setLabel('🔒 Finalize Ticket')
           .setStyle(ButtonStyle.Danger)
       );
 
@@ -180,16 +188,22 @@ module.exports.handleReportSubmit = async (interaction, client) => {
       claimedBy: null,
       messages: [{
         userId: interaction.user.id,
-        content: `**Staff:** ${staffName}\n**Reason:** ${reason}\n**Evidence:** ${evidence}`,
+        content: `**Subject:** ${staffName}\n**Log:** ${reason}\n**Evidence:** ${evidence}`,
         createdAt: new Date()
       }]
     });
     await ticket.save();
 
-    await interaction.reply({ embeds: [createSuccessEmbed('Report Submitted', `Your report has been submitted successfully.\n**Ticket ID:** \`${ticketNum}\``)], ephemeral: true });
+    const confirmEmbed = await createCustomEmbed(interaction, {
+      title: '✅ Report Logged',
+      description: `Your report has been successfully transmitted to the administration.\n**Dossier ID:** \`${ticketNum}\``,
+      color: 'success'
+    });
+
+    await interaction.reply({ embeds: [confirmEmbed], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('An error occurred submitting the report.')], ephemeral: true });
+    await interaction.reply({ embeds: [createErrorEmbed('An error occurred during transmission.')], ephemeral: true });
   }
 };
 
@@ -202,34 +216,32 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
     const ticketChannelId = guild?.settings?.ticketChannel;
 
     if (!ticketChannelId) {
-      return interaction.reply({ embeds: [createErrorEmbed('Ticket admin channel not configured! Use /ticketsetup.')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Administrative channel not found. Deployment required.')], ephemeral: true });
     }
 
     const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
     if (!ticketChannel) {
-      return interaction.reply({ embeds: [createErrorEmbed('Configured ticket channel no longer exists!')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Target operational channel lost. Re-deployment required.')], ephemeral: true });
     }
 
     const ticketNum = Date.now().toString(36).toUpperCase();
 
-    const embed = createCoolEmbed()
-      .setTitle(`💡 Feedback #${ticketNum}`)
-      .addFields(
-        { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
-        { name: '👤 Submitted By', value: `${interaction.user.tag}`, inline: true },
-        { name: '📝 Feedback', value: feedback, inline: false }
-      )
-      .setThumbnail(interaction.user.displayAvatarURL());
-
-    if (imageUrl) {
-      embed.setImage(imageUrl);
-    }
+    const embed = await createCustomEmbed(interaction, {
+      title: `💡 Operational Feedback #${ticketNum}`,
+      fields: [
+        { name: '🎫 Feedback ID', value: `\`${ticketNum}\``, inline: true },
+        { name: '👤 Submitter', value: `**${interaction.user.username}**`, inline: true },
+        { name: '📝 Content', value: feedback, inline: false }
+      ],
+      thumbnail: interaction.user.displayAvatarURL({ dynamic: true }),
+      image: imageUrl || null
+    });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId(`ticket_close_${ticketNum}`)
-          .setLabel('🔒 Close Ticket')
+          .setLabel('🔒 Finalize Feedback')
           .setStyle(ButtonStyle.Danger)
       );
 
@@ -254,17 +266,23 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
     });
     await ticket.save();
 
-    await interaction.reply({ embeds: [createSuccessEmbed('Feedback Submitted', `Your feedback has been received!\n**Ticket ID:** \`${ticketNum}\``)], ephemeral: true });
+    const confirmEmbed = await createCustomEmbed(interaction, {
+      title: '✅ Feedback Transmission Successful',
+      description: `Your thoughts have been recorded and sent to the logistics department.\n**Reference ID:** \`${ticketNum}\``,
+      color: 'success'
+    });
+
+    await interaction.reply({ embeds: [confirmEmbed], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('An error occurred submitting feedback.')], ephemeral: true });
+    await interaction.reply({ embeds: [createErrorEmbed('An error occurred during transmission.')], ephemeral: true });
   }
 };
 
 module.exports.handleClaimTicket = async (interaction, client) => {
   try {
     if (!client.isOwner(interaction.user)) {
-      return interaction.reply({ embeds: [createErrorEmbed('Only the **Bot Owner** can claim tickets!')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Strictly restricted to **Bot Executive** personnel.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -273,7 +291,7 @@ module.exports.handleClaimTicket = async (interaction, client) => {
     const ticket = await Ticket.findOne({ guildId: interaction.guildId, status: 'open', messageId: interaction.message.id });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Ticket not found or already claimed.')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Dossier unavailable or already intercepted.')], ephemeral: true });
     }
 
     const reporter = await client.users.fetch(ticket.userId).catch(() => null);
@@ -291,27 +309,28 @@ module.exports.handleClaimTicket = async (interaction, client) => {
     const ticketChannelId = guild?.settings?.ticketChannel;
     const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
 
-    const embed = createCoolEmbed()
-      .setTitle(`🚨 Staff Report #${ticketNum}`)
-      .addFields(
-        { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
-        { name: '👤 Reported By', value: ticket.username, inline: true },
-        { name: '📊 Status', value: `👋 **Claimed** by ${claimer.tag}`, inline: true },
-        { name: '👥 Staff Member', value: ticket.staffName, inline: false },
-        { name: '📝 Reason', value: ticket.reason, inline: false },
-        { name: '📎 Evidence/Details', value: ticket.evidence, inline: false }
-      )
-      .setColor('info');
+    const embed = await createCustomEmbed(interaction, {
+      title: `🚨 Personnel Report #${ticketNum}`,
+      fields: [
+        { name: '🎫 Dossier ID', value: `\`${ticketNum}\``, inline: true },
+        { name: '👤 Originator', value: ticket.username, inline: true },
+        { name: '📊 Status', value: `👋 **INTERCEPTED** by ${claimer.username}`, inline: true },
+        { name: '👥 Target Personnel', value: `\`${ticket.staffName}\``, inline: false },
+        { name: '📝 Violation Reason', value: ticket.reason, inline: false },
+        { name: '📎 Telemetry Data', value: ticket.evidence, inline: false }
+      ],
+      color: 'info'
+    });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId(`ticket_dm_${ticketNum}`)
-          .setLabel('💬 DM Reporter')
+          .setLabel('💬 Communicate')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId(`ticket_close_${ticketNum}`)
-          .setLabel('🔒 Close Ticket')
+          .setLabel('🔒 Finalize')
           .setStyle(ButtonStyle.Danger)
       );
 
@@ -321,28 +340,35 @@ module.exports.handleClaimTicket = async (interaction, client) => {
 
     if (reporter) {
       try {
-        const dmEmbed = createCoolEmbed()
-          .setTitle('👋 Your Report Has Been Claimed!')
-          .setDescription(`Your report **#${ticketNum}** has been picked up by ${claimer.tag}. They will review it shortly.`)
-          .addFields(
-            { name: 'Staff Member', value: ticket.staffName, inline: true },
-            { name: 'Reason', value: ticket.reason, inline: false }
-          );
+        const dmEmbed = await createCustomEmbed(interaction, {
+          title: '👋 Communication Link Established',
+          description: `Your report **#${ticketNum}** has been intercepted by **${claimer.username}**. Expect contact shortly.`,
+          fields: [
+            { name: 'Target Subject', value: `\`${ticket.staffName}\``, inline: true },
+            { name: 'Status', value: '⏳ Under Review', inline: true }
+          ]
+        });
         await reporter.send({ embeds: [dmEmbed] });
       } catch (e) { }
     }
 
-    await interaction.reply({ embeds: [createSuccessEmbed('Ticket Claimed', `You have claimed Ticket **#${ticketNum}**. You can now DM the reporter.`)], ephemeral: true });
+    const claimConfirm = await createCustomEmbed(interaction, {
+      title: '✅ Dossier Intercepted',
+      description: `You have taken command of Ticket **#${ticketNum}**. Communication channel is open.`,
+      color: 'success'
+    });
+
+    await interaction.reply({ embeds: [claimConfirm], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to claim ticket.')], ephemeral: true });
+    await interaction.reply({ embeds: [createErrorEmbed('Failed to intercept dossier.')], ephemeral: true });
   }
 };
 
 module.exports.handleTicketDM = async (interaction, client) => {
   try {
     if (!client.isOwner(interaction.user)) {
-      return interaction.reply({ embeds: [createErrorEmbed('Only the **Bot Owner** can message the reporter!')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Access denied. Executive clearance required.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -355,18 +381,18 @@ module.exports.handleTicketDM = async (interaction, client) => {
     });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Ticket not found.')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Dossier sync error.')], ephemeral: true });
     }
 
     const modal = new ModalBuilder()
       .setCustomId(`modal_dm_reply_${ticketNum}`)
-      .setTitle('💬 Send Message to Reporter');
+      .setTitle('💬 Secure Communication Channel');
 
     const messageInput = new TextInputBuilder()
       .setCustomId('dm_message')
-      .setLabel('Your Message')
+      .setLabel('Encrypted Message Content')
       .setStyle(TextInputStyle.Paragraph)
-      .setPlaceholder('Type your message to the reporter...')
+      .setPlaceholder('Type your message for the originator...')
       .setRequired(true);
 
     modal.addComponents(new ActionRowBuilder().addComponents(messageInput));
@@ -374,7 +400,7 @@ module.exports.handleTicketDM = async (interaction, client) => {
     await interaction.showModal(modal);
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to open DM modal.')], ephemeral: true });
+    await interaction.reply({ embeds: [createErrorEmbed('Failed to initialize communication modal.')], ephemeral: true });
   }
 };
 
@@ -391,34 +417,41 @@ module.exports.handleDMReply = async (interaction, client) => {
     });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Ticket not found or you are not the claimer.')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Communication link lost or unauthorized access.')], ephemeral: true });
     }
 
     const reporter = await client.users.fetch(ticket.userId).catch(() => null);
 
     if (reporter) {
       try {
-        const dmEmbed = createCoolEmbed()
-          .setTitle('💬 New Message About Your Report')
-          .setDescription(`**Message:** ${message}\n\n👤 **From:** ${interaction.user.tag}\n🎫 **Ticket:** #${ticketNum}`);
+        const dmEmbed = await createCustomEmbed(interaction, {
+          title: '💬 Incoming Operational Message',
+          description: `**Log:** ${message}\n\n👤 **Personnel:** ${interaction.user.username}\n🎫 **Session ID:** #${ticketNum}`
+        });
         await reporter.send({ embeds: [dmEmbed] });
-        await interaction.reply({ embeds: [createSuccessEmbed('Message Sent', `Message successfully sent to ${ticket.username}!`)], ephemeral: true });
+
+        const okEmbed = await createCustomEmbed(interaction, {
+          title: '✅ Message Transmitted',
+          description: `Telemetry successfully delivered to **${ticket.username}**.`,
+          color: 'success'
+        });
+        await interaction.reply({ embeds: [okEmbed], ephemeral: true });
       } catch (e) {
-        await interaction.reply({ embeds: [createErrorEmbed('Could not send DM. User may have DMs disabled.')], ephemeral: true });
+        await interaction.reply({ embeds: [createErrorEmbed('Target node incommunicado (DMs disabled).')], ephemeral: true });
       }
     } else {
-      await interaction.reply({ embeds: [createErrorEmbed('Could not find reporter (user may have left).')], ephemeral: true });
+      await interaction.reply({ embeds: [createErrorEmbed('Target personnel node lost (left server).')], ephemeral: true });
     }
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to process message.')], ephemeral: true });
+    await interaction.reply({ embeds: [createErrorEmbed('Operational transmission failure.')], ephemeral: true });
   }
 };
 
 module.exports.handleCloseTicket = async (interaction, client) => {
   try {
     if (!client.isOwner(interaction.user)) {
-      return interaction.reply({ embeds: [createErrorEmbed('Only the **Bot Owner** can close tickets!')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Access denied. Executive override required.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -431,7 +464,7 @@ module.exports.handleCloseTicket = async (interaction, client) => {
     });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Ticket not found.')], ephemeral: true });
+      return interaction.reply({ embeds: [createErrorEmbed('Dossier synchronization failure.')], ephemeral: true });
     }
 
     ticket.status = 'closed';
@@ -444,10 +477,11 @@ module.exports.handleCloseTicket = async (interaction, client) => {
 
     if (reporter) {
       try {
-        const dmEmbed = createCoolEmbed()
-          .setTitle('🔒 Your Ticket Has Been Closed')
-          .setDescription(`Your report/feedback **#${ticketNum}** has been closed by ${interaction.user.tag}. Thank you.`)
-          .setColor('error');
+        const dmEmbed = await createCustomEmbed(interaction, {
+          title: '🔒 Operational Session Finalized',
+          description: `Your ticket **#${ticketNum}** has been closed by **${interaction.user.username}**. All logs archived.`,
+          color: 'error'
+        });
         await reporter.send({ embeds: [dmEmbed] });
       } catch (e) { }
     }
@@ -458,17 +492,17 @@ module.exports.handleCloseTicket = async (interaction, client) => {
     const ticketChannelId = guild?.settings?.ticketChannel;
     const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
 
-    const closedEmbed = createCoolEmbed()
-      .setTitle(ticket.category === 'report_staff' ? `🚨 Staff Report #${ticketNum} (Closed)` : `💡 Feedback #${ticketNum} (Closed)`)
-      .addFields(
-        { name: '🎫 Ticket ID', value: `\`${ticketNum}\``, inline: true },
-        { name: '👤 Submitted By', value: ticket.username, inline: true },
-        { name: '🔒 Closed By', value: interaction.user.tag, inline: true },
-        { name: '📊 Status', value: '❌ **Closed**', inline: true }
-      )
-      .setColor('dark');
+    const closedEmbed = await createCustomEmbed(interaction, {
+      title: ticket.category === 'report_staff' ? `🚨 Personnel Report #${ticketNum} (Finalized)` : `💡 Feedback #${ticketNum} (Finalized)`,
+      fields: [
+        { name: '🎫 Dossier ID', value: `\`${ticketNum}\``, inline: true },
+        { name: '👤 Originator', value: ticket.username, inline: true },
+        { name: '🔒 Finalized By', value: interaction.user.username, inline: true },
+        { name: '📊 Status', value: '❌ **ARCHIVED**', inline: true }
+      ],
+      color: 'dark'
+    });
 
-    // Generate Transcript
     const { AttachmentBuilder } = require('discord.js');
     let transcriptContent = `Transcript for Ticket #${ticketNum}\nReported by: ${ticket.username}\nClosed by: ${interaction.user.tag}\n-----------------------------------\n\n`;
 
@@ -485,13 +519,19 @@ module.exports.handleCloseTicket = async (interaction, client) => {
 
     if (reporter) {
       try {
-        await reporter.send({ content: 'Here is a copy of your ticket transcript:', files: [attachment] });
+        await reporter.send({ content: 'Operational Transcript Archived:', files: [attachment] });
       } catch (e) { }
     }
 
-    await interaction.reply({ embeds: [createSuccessEmbed('Ticket Closed', `Ticket **#${ticketNum}** has been permanently closed. Transcript generated.`)], ephemeral: true });
+    const closeOk = await createCustomEmbed(interaction, {
+      title: '✅ Session Finalized',
+      description: `Ticket **#${ticketNum}** permanent record saved and archived.`,
+      color: 'success'
+    });
+
+    await interaction.reply({ embeds: [closeOk], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to close ticket.')], ephemeral: true });
+    await interaction.reply({ embeds: [createErrorEmbed('Failed to finalize session.')], ephemeral: true });
   }
 };

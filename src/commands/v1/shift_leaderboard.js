@@ -78,12 +78,13 @@ module.exports = {
 
                 const timeframeDisplay = timeframe.charAt(0).toUpperCase() + timeframe.slice(1).replace('_', '-');
 
-                return createCoolEmbed()
-                    .setTitle(`⏱️ ${timeframeDisplay} Shift Leaderboard`)
-                    .setDescription(leaderboardText.join('\n\n'))
-                    .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-                    .setFooter({ text: `Page ${page} of ${totalPages}` })
-                    .setColor('info');
+                return await createCustomEmbed(interaction, {
+                    title: `⏱️ ${timeframeDisplay} Shift Performance Leaderboard`,
+                    description: leaderboardText.join('\n\n') || 'No telemetry recorded for this cycle.',
+                    thumbnail: interaction.guild.iconURL({ dynamic: true }),
+                    footer: `Page ${page} / ${totalPages} • Verified Duty Hours`,
+                    color: 'info'
+                });
             };
 
             const getButtons = (page) => {

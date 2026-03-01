@@ -39,22 +39,23 @@ module.exports = {
       }
 
       const listText = eligible.map((e, i) =>
-        `\`${String(i + 1).padStart(2)}\` **${e.username}** — \`${e.currentRank.toUpperCase()}\` → **\`${e.nextRank.toUpperCase()}\`** (${e.points}/${e.threshold} pts ✅)`
+        `\`${String(i + 1).padStart(2)}\` **${e.username}** — \`${e.currentRank.toUpperCase()}\` ➔ **\`${e.nextRank.toUpperCase()}\`** (${e.points}/${e.threshold} pts ✅)`
       ).join('\n');
 
-      const embed = createCoolEmbed()
-        .setTitle('⬆️ Automatic Rank-Up Eligible Staff')
-        .setDescription(listText)
-        .addFields(
-          { name: '✅ Eligible Count', value: eligible.length.toString(), inline: true },
-          { name: '📌 Next Step', value: 'Click the button below to **approve** all promotions instantly!', inline: true }
-        )
-        .setColor('success');
+      const embed = await createCustomEmbed(interaction, {
+        title: '⬆️ Automatic Rank-Up Eligibility',
+        description: `The following staff members have exceeded their point thresholds and are eligible for instant promotion.\n\n${listText}`,
+        fields: [
+          { name: '✅ Total Eligible', value: `**${eligible.length}** Staff members`, inline: true },
+          { name: '📌 Management', value: 'Approve all via button below', inline: true }
+        ],
+        color: 'success'
+      });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('approve_all_promotions')
-          .setLabel(`Approve All ${eligible.length} Promotions`)
+          .setLabel(`Mass Approve ${eligible.length} Promotions`)
           .setStyle(ButtonStyle.Success)
           .setEmoji('🎉')
       );
@@ -62,7 +63,7 @@ module.exports = {
       await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
-      const errEmbed = createErrorEmbed('An error occurred while checking eligible staff.');
+      const errEmbed = createErrorEmbed('An error occurred while evaluating rank eligibility.');
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ embeds: [errEmbed] });
       } else {

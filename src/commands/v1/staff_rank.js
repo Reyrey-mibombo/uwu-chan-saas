@@ -24,15 +24,17 @@ module.exports = {
       const rankNames = { member: 'Newcomer', trial: 'Trial', staff: 'Staff', moderator: 'Moderator', admin: 'Admin', owner: 'Owner' };
       let displayRank = rankNames[rank] || rank;
 
-      const embed = createCoolEmbed()
-        .setTitle(`🏆 ${user.username}'s Rank`)
-        .addFields(
+      const embed = await createCustomEmbed(interaction, {
+        title: `🏆 ${user.username}'s Rank Progression`,
+        description: `Current standing within the administrative hierarchy of **${interaction.guild.name}**.`,
+        thumbnail: user.displayAvatarURL({ dynamic: true }),
+        fields: [
           { name: '🎖️ Current Rank', value: `\`${displayRank.toUpperCase()}\``, inline: true },
-          { name: '⭐ Points', value: `\`${points}\``, inline: true },
-          { name: '⬆️ Next Rank Req.', value: requirements?.next ? `\`${requirements.next}\` pts` : 'Max Rank', inline: true }
-        )
-        .setThumbnail(user.displayAvatarURL())
-        .setColor('info');
+          { name: '⭐ Lifetime Points', value: `\`${points.toLocaleString()}\``, inline: true },
+          { name: '⬆️ Next Tier', value: requirements?.next ? `\`${requirements.next}\` pts` : 'Max Rank Reached', inline: true }
+        ],
+        footer: 'Automated ranking engine active'
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

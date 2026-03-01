@@ -19,45 +19,49 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      if (!interaction.member.permissions.has('ManageRoles')) {
-        return interaction.reply({ embeds: [createErrorEmbed('You need Manage Roles permission!')], ephemeral: true });
-      }
-
       await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const newRank = interaction.options.getString('rank');
       const guildId = interaction.guildId;
 
-      let user = await User.findOne({ userId: targetUser.id });
-      if (!user) {
-        user = new User({ userId: targetUser.id, username: targetUser.tag });
-      }
+      const staffSystem = interaction.client.systems.staff;
+      await staffSystem.getOrCreateUser(targetUser.id, guildId, targetUser.username);
+
+      let user = await User.findOne({ userId: targetUser.id, 'guilds.guildId': guildId });
 
       if (!user.staff) user.staff = {};
       const oldRank = user.staff.rank || 'trial';
       user.staff.rank = newRank;
+      user.staff.lastPromotionDate = new Date();
       await user.save();
 
       const guild = await Guild.findOne({ guildId });
       const rankRole = guild?.rankRoles?.[newRank];
 
-      let roleStatus = 'No rank role configured.';
+      let roleStatus = '⚠️ No rank role configured in settings.';
       if (rankRole) {
-        const member = interaction.guild.members.cache.get(targetUser.id);
+        const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
         if (member) {
           try {
-            await member.roles.add(rankRole);
-            roleStatus = `<@&${rankRole}> added successfully.`;
+            await member.roles.add(rankRole, `Promoted by ${interaction.user.tag}`);
+            roleStatus = '✅ Rank role assigned successfully.';
           } catch (e) {
-            roleStatus = 'Failed to add role (Bot might lack permissions or hierarchy is too low).';
+            roleStatus = '❌ Failed to assign role (Permission/Hierarchy issue).';
           }
         }
       }
 
-      const embed = createSuccessEmbed('User Promoted', `Successfully promoted ${targetUser} to **${newRank.toUpperCase()}**.\n\n` +
-        `**Previous Rank:** \`${oldRank.toUpperCase()}\`\n` +
-        `**New Rank:** \`${newRank.toUpperCase()}\`\n` +
-        `**Role Status:** ${roleStatus}`);
+      const embed = await createCustomEmbed(interaction, {
+        title: '📈 Staff Promotion Executed',
+        description: `Successfully promoted ${targetUser} within the hierarchical structure.`,
+        color: 'success',
+        fields: [
+          { name: '👤 Target', value: `${targetUser.tag}`, inline: true },
+          { name: '🎖️ New Rank', value: `\`${newRank.toUpperCase()}\``, inline: true },
+          { name: '🔄 Progression', value: `\`${oldRank.toUpperCase()}\` ➔ \`${newRank.toUpperCase()}\``, inline: false },
+          { name: '📡 Discord Sync', value: roleStatus, inline: false }
+        ]
+      });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {

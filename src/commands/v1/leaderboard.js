@@ -59,12 +59,13 @@ module.exports = {
           return `${medal} **${user?.username || 'Unknown'}** • \`${entry.points} pts\``;
         }));
 
-        return createCoolEmbed()
-          .setTitle('🏆 Top Staff Leaderboard')
-          .setDescription(leaderboardText.join('\n\n'))
-          .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-          .setFooter({ text: `Page ${page} of ${totalPages}` })
-          .setColor('enterprise');
+        return await createCustomEmbed(interaction, {
+          title: '🏆 Elite Staff Leaderboard',
+          description: leaderboardText.join('\n\n') || 'No activity detected within this sector.',
+          thumbnail: interaction.guild.iconURL({ dynamic: true }),
+          footer: `Page ${page} / ${totalPages} • Real-time performance ranking`,
+          color: 'enterprise'
+        });
       };
 
       const getButtons = (page) => {

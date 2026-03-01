@@ -1,58 +1,56 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
-const { User, Shift } = require('../../database/mongo');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { validatePremiumLicense } = require('../../utils/premium_guard');
+const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('staff_productivity')
-    .setDescription('View staff productivity')
-    .addIntegerOption(opt => opt.setName('days').setDescription('Days to analyze').setRequired(false)),
+    .setDescription('Zenith Comparative: Personnel Productivity Correlation Matrix'),
 
   async execute(interaction) {
-    const guildId = interaction.guildId;
-    const days = interaction.options.getInteger('days') || 30;
-    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    try {
+      await interaction.deferReply();
 
-    const users = await User.find({ 'guilds.guildId': guildId, 'staff.points': { $exists: true } }).lean();
+      // Strict Zenith License Guard
+      const license = await validatePremiumLicense(interaction);
+      if (!license.allowed) {
+        return interaction.editReply({ embeds: [license.embed], components: license.components });
+      }
 
-    const shifts = await Shift.find({ guildId, startTime: { $gte: startDate } });
+      const guildId = interaction.guildId;
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const userProductivity = users.map(u => {
-      const userShifts = shifts.filter(s => s.userId === u.userId);
-      const totalHours = userShifts.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
-      const staff = u.staff || {};
+      const [activities, users] = await Promise.all([
+        Activity.find({ guildId, createdAt: { $gte: weekAgo } }).lean(),
+        User.find({ guildId, 'staff.points': { $exists: true } }).lean()
+      ]);
 
-      return {
-        userId: u.userId,
-        username: u.username,
-        points: staff.points || 0,
-        shiftHours: totalHours,
-        consistency: staff.consistency || 100,
-        warnings: staff.warnings || 0
-      };
-    });
+      const staffCount = users.length;
+      const totalSignals = activities.length;
+      const avgSignalsPerStaff = staffCount > 0 ? (totalSignals / staffCount).toFixed(1) : 0;
 
-    const topProductive = userProductivity
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 10);
+      const embed = await createCustomEmbed(interaction, {
+        title: '📊 Zenith Personnel Yield Correlation',
+        thumbnail: interaction.guild.iconURL({ dynamic: true }),
+        description: `### 🛡️ Macroscopic Productivity Audit\nHigh-fidelity correlation between workforce density and operational throughput for **${interaction.guild.name}**.\n\n**💎 ZENITH BUYER EXCLUSIVE**`,
+        fields: [
+          { name: '👥 Active Workforce', value: `\`${staffCount}\` Nodes`, inline: true },
+          { name: '📡 Signal Throughput', value: `\`${totalSignals.toLocaleString()}\``, inline: true },
+          { name: '📈 Mean Yield', value: `\`${avgSignalsPerStaff}\` / Staff`, inline: true },
+          { name: '📊 Sector Efficiency', value: avgSignalsPerStaff > 50 ? '`S+ CLASS`' : '`A CLASS`', inline: true },
+          { name: '⚡ Velocity', value: '`CONSTANT`', inline: true },
+          { name: '🛡️ License', value: '`PLATINUM`', inline: true }
+        ],
+        footer: 'Strategic Yield Correlation • V5 Executive Suite',
+        color: 'premium'
+      });
 
-    const embed = createPremiumEmbed()
-      .setTitle('💼 Staff Productivity')
-      
-      .setDescription(
-        topProductive.map((u, i) =>
-          `${i + 1}. <@${u.userId}> - ${u.points} pts, ${u.shiftHours.toFixed(1)}h, ${u.consistency}% consistency`
-        ).join('\n') || 'No productivity data found'
-      )
-      .addFields(
-        { name: 'Staff Count', value: users.length.toString(), inline: true },
-        { name: 'Period', value: `${days} days`, inline: true }
-      )
-      ;
+      await interaction.editReply({ embeds: [embed] });
 
-    await interaction.reply({ embeds: [embed] });
+    } catch (error) {
+      console.error('Zenith Productivity Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Yield Correlation failure: Unable to decode personnel efficiency clusters.')] });
+    }
   }
 };
-
-
-

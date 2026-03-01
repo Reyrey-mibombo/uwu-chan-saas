@@ -1,6 +1,6 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
-const { Guild } = require('../../database/mongo');
+const { Guild, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,8 +18,10 @@ module.exports = {
       let totalMinutes = 0;
       let warningsToday = 0;
 
-      if (guildData?.shifts) {
-        const todayShifts = guildData.shifts.filter(s => new Date(s.startTime) >= today);
+      const todayShifts = await Shift.find({ guildId: interaction.guild.id, startTime: { $gte: today } }).lean();
+      const todayWarnings = await Warning.find({ guildId: interaction.guild.id, createdAt: { $gte: today } }).lean();
+
+      if (todayShifts.length > 0) {
         const activeUserIds = new Set(todayShifts.map(s => s.userId));
         activeStaff = activeUserIds.size;
         totalMinutes = todayShifts.reduce((acc, s) => {
@@ -28,9 +30,7 @@ module.exports = {
         }, 0);
       }
 
-      if (guildData?.warnings) {
-        warningsToday = guildData.warnings.filter(w => new Date(w.timestamp) >= today).length;
-      }
+      warningsToday = todayWarnings.length;
 
       const embed = createCoolEmbed()
         .setTitle('📊 Daily Summary')

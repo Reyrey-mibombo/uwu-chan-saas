@@ -12,6 +12,7 @@ module.exports = {
       await interaction.deferReply();
 
       const users = await User.find({
+        'guilds.guildId': interaction.guildId,
         'staff.rank': { $ne: null, $exists: true }
       }).lean();
 
@@ -45,7 +46,7 @@ module.exports = {
         }).join('\n');
 
         return createCoolEmbed()
-          .setTitle(`👥 Global Staff List (${users.length} Total)`)
+          .setTitle(`👥 Server Staff List (${users.length} Total)`)
           .setDescription(list || 'No staff found on this page.')
           .setFooter({ text: `Page ${page} of ${totalPages}` })
           .setColor('enterprise');

@@ -25,9 +25,12 @@ module.exports = {
             const { User } = require('../../database/mongo');
             const { createRadarChart } = require('../../utils/charts');
 
-            const dbUser = await User.findOne({ userId: user.id });
-            const xp = dbUser?.stats?.xp || 0;
-            const level = dbUser?.stats?.level || 1;
+            const dbUser = await User.findOne({ userId: user.id }) || {};
+            const xp = dbUser.stats?.xp || 0;
+            const level = dbUser.stats?.level || 1;
+
+            const trophies = dbUser.staff?.trophies || [];
+            const trophyDisplay = trophies.length > 0 ? trophies.map(t => `🏆 ${t}`).join('\n') : 'No Trophies Yet';
 
             const warningPenalty = Math.max(0, 100 - ((warnings?.total || 0) * 20));
             const activityScore = Math.min(100, points > 0 ? (points / 50) * 100 : 0);
@@ -51,7 +54,8 @@ module.exports = {
                     { name: '🏆 Rank', value: `\`${rank.toUpperCase()}\``, inline: true },
                     { name: '📈 Score', value: `\`${score || 0}/100\``, inline: true },
                     { name: '⚠️ Warnings', value: `\`${warnings?.total || 0}\``, inline: true },
-                    { name: '🎮 Global Level', value: `Level ${level}\n*(${xp} XP)*`, inline: true }
+                    { name: '🎮 Global Level', value: `Level ${level}\n*(${xp} XP)*`, inline: true },
+                    { name: '🎖️ Achievements', value: trophyDisplay, inline: false }
                 );
 
             await interaction.editReply({ embeds: [embed] });

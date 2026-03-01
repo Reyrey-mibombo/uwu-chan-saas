@@ -25,9 +25,16 @@ module.exports = {
 
                 labels.push(dateStr);
 
-                // Fetch the real message count from MongoDB for this specific day
-                const record = await Activity.findOne({ guildId: interaction.guild.id, date: dateStr });
-                const count = record ? record.messageCount || 1 : 0; // fallback to 1 if document exists but count is missing/0 in some schema variants
+                // Fetch the real activity count from MongoDB for this specific day
+                const startOfDay = new Date(d);
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date(d);
+                endOfDay.setHours(23, 59, 59, 999);
+
+                const count = await Activity.countDocuments({
+                    guildId: interaction.guild.id,
+                    createdAt: { $gte: startOfDay, $lte: endOfDay }
+                });
 
                 dataPoints.push(count);
                 totalMessages += count;

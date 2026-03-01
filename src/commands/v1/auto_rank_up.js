@@ -14,7 +14,7 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      const users = await User.find({ 'staff.points': { $gt: 0 } }).lean();
+      const users = await User.find({ 'guilds.guildId': interaction.guildId, 'staff.points': { $gt: 0 } }).lean();
 
       if (!users || !users.length) {
         return interaction.editReply({ embeds: [createErrorEmbed('No staff data available yet.')] });
@@ -78,7 +78,7 @@ module.exports = {
         return interaction.followUp({ embeds: [createErrorEmbed('You do not have permission to approve promotions.')], ephemeral: true });
       }
 
-      const users = await User.find({ 'staff.points': { $gt: 0 } }).lean();
+      const users = await User.find({ 'guilds.guildId': interaction.guildId, 'staff.points': { $gt: 0 } }).lean();
       let promotedCount = 0;
 
       for (const u of users) {

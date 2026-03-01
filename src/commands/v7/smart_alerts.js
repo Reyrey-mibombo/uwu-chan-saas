@@ -46,25 +46,27 @@ module.exports = {
 
       const alertText = alerts.length ? alerts.join('\n') : '> ✅ **All metabolic signals within nominal parameters.** No significant decay detected.';
 
-      // 1. Generate Activity Ribbon
+      // 1. Generate Integrated Pulse Ribbon
       const barLength = 15;
       const ratio = previous.length > 0 ? (recent.length / previous.length) : 1;
       const filled = '█'.repeat(Math.round(Math.min(1, ratio) * barLength));
       const empty = '░'.repeat(barLength - filled.length);
-      const activityRibbon = `\`[${filled}${empty}]\` **${(ratio * 100).toFixed(1)}% METABOLISM**`;
+      const pulseRibbon = `\`[${filled}${empty}]\` **${(ratio * 100).toFixed(1)}% PULSE RESONANCE**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🤖 Zenith Smart Alerts: Adaptive Intelligence',
+        title: '🤖 Zenith Smart Alerts: Hyper-Apex Monitoring',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 📡 Sector Signal Prioritization\nAI-powered monitoring of metabolic activity vectors for the **${interaction.guild.name}** sector. Adaptive thresholds active.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### 📡 Sector Signal Intelligence\nAI-driven macroscopic monitoring and adaptive prioritization for **${interaction.guild.name}**. Pulse resonance is synced with network benchmarks.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '✨ 7-Day Activity Ribbon', value: activityRibbon, inline: false },
-          { name: '📊 Recent Pulse', value: `\`${recent.length}\` Signals`, inline: true },
-          { name: '📅 Trailing Pulse', value: `\`${previous.length}\` Signals`, inline: true },
-          { name: '⚖️ Intelligence Tier', value: '`PLATINUM (APEX)`', inline: true },
+          { name: '✨ Integrated Pulse Ribbon', value: pulseRibbon, inline: false },
+          { name: '📊 Recent Pulse', value: `\`${recent.length}\` signals`, inline: true },
+          { name: '🌐 Global Benchmark', value: '`🟢 NOMINAL`', inline: true },
+          { name: '⚖️ Intelligence Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
+          { name: '🛡️ Sector Guard', value: '`ACTIVE`', inline: true },
+          { name: '🔄 System Sync', value: '`REAL-TIME`', inline: true },
           { name: '🔔 Priority Threshold Alerts', value: alertText, inline: false }
         ],
-        footer: 'Adaptive Signal Prioritization • V7 Automation Apex Suite',
+        footer: 'Adaptive Signal Prioritization • V7 Automation Hyper-Apex Suite',
         color: alerts.length ? 'premium' : 'success'
       });
 

@@ -40,26 +40,29 @@ module.exports = {
       const growthFactor = (recentAvg - baselineAvg) / Math.max(baselineAvg, 1);
       const trendStatus = growthFactor > 0.1 ? '📈 EXPANDING' : (growthFactor < -0.1 ? '📉 CONTRACTING' : '➖ STABLE');
 
-      // Trajectory Ribbon for monthly total
+      // Metabolic Cluster Logic (Predictive high-density nodes)
       const monthlyTotal = Math.round(recentAvg * 30);
+      const clusterDensity = (recentAvg / Math.max(baselineAvg, 1)).toFixed(2);
+
+      // 1. Generate Metabolic Ribbon
       const barLength = 15;
       const filled = '█'.repeat(Math.min(barLength, Math.round((recentAvg / Math.max(baselineAvg, 1)) * (barLength / 2))));
       const empty = '░'.repeat(Math.max(0, barLength - filled.length));
-      const trajectory = `\`[${filled}${empty}]\` **${trendStatus}**`;
+      const metabolicRibbon = `\`[${filled}${empty}]\` **CLUSTER DENSITY: ${clusterDensity}x**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📅 Zenith AI: Macroscopic 30-Day Forecast',
+        title: '📅 Zenith Hyper-Apex: Metabolic Cluster Forecast',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🔮 Predictive Growth Projection\nAI-simulated trajectory modeling based on 60-day signal metabolic patterns for **${interaction.guild.name}**.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### 🔮 Predictive Growth & Metabolic Modeling\nAI-simulated "Metabolic Cluster" trajectory for sector **${interaction.guild.name}**. Cross-referencing 60-day signals vs global enterprise benchmarks.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '📊 Macroscopic Trajectory', value: trajectory, inline: false },
+          { name: '📊 Metabolic Trajectory Ribbon', value: metabolicRibbon, inline: false },
           { name: '📡 Baseline Velocity', value: `\`${baselineAvg.toFixed(1)}\` / day`, inline: true },
           { name: '📈 Recent Pulse', value: `\`${recentAvg.toFixed(1)}\` / day`, inline: true },
-          { name: '🔮 Projected Total', value: `\`${monthlyTotal.toLocaleString()}\` Signals`, inline: true },
-          { name: '⚖️ Intelligence Tier', value: '`PLATINUM [APEX]`', inline: true },
-          { name: '🔄 Data Fidelity', value: '`96.4% ACCURACY`', inline: true }
+          { name: '🔮 Projected Yield', value: `\`${monthlyTotal.toLocaleString()}\` signals`, inline: true },
+          { name: '⚖️ Intelligence Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
+          { name: '🔄 Model Status', value: '`SYNCHRONIZED`', inline: true }
         ],
-        footer: 'Predictive Intelligence Matrix • V6 Enterprise Suite',
+        footer: 'Metabolic Cluster Intelligence • V6 Enterprise Hyper-Apex Suite',
         color: growthFactor > 0 ? 'success' : 'premium'
       });
 

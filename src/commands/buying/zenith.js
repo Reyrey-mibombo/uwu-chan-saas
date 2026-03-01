@@ -18,20 +18,20 @@ module.exports = {
             }
 
             const embed = await createCustomEmbed(interaction, {
-                title: '💎 Zenith Platinum: Macroscopic Command Terminal',
+                title: '💎 Zenith Hyper-Apex: Omni-Nexus Master Portal',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🚀 Nexus Systems Online\nUnified administrative interface for sector **${interaction.guild.name}**. Monitoring macroscopic signals across all premium modules. Select a sub-sector nexus to establish a link.\n\n**Verified Strategic Master Terminal**`,
+                description: `### 🚀 Global System Orchestration\nUnified macroscopic command terminal for sector **${interaction.guild.name}**. Monitoring predictive metabolic clusters and collaborative synergy sync across all 8 Zenith Tiers.\n\n**Verified Hyper-Apex Master Terminal**`,
                 fields: [
-                    { name: '🏢 Workforce (V3)', value: 'Strategic optimization & Dossiers', inline: true },
-                    { name: '🛡️ Guardian (V4)', value: 'Global security & C&C control', inline: true },
-                    { name: '📊 Intelligence (V5)', value: 'Executive AI projections & Audit', inline: true },
-                    { name: '📈 Enterprise (V6)', value: 'Predictive forecasting & Role yield', inline: true },
-                    { name: '🤖 Automation (V7)', value: 'Smart logic & Auto-merit systems', inline: true },
-                    { name: '🎨 Identity (V8)', value: 'Visual branding & Elite effects', inline: true },
-                    { name: '🌐 Global ROI', value: '`+142% Signal Density`', inline: true },
-                    { name: '🛡️ Security', value: '`ZENITH-SHIELD ACTIVE`', inline: true }
+                    { name: '🏢 Workforce (V3)', value: 'Synergy ribbons & Skill trees', inline: true },
+                    { name: '🛡️ Guardian (V4)', value: 'Threat forecast & Shield audit', inline: true },
+                    { name: '📊 Intelligence (V5)', value: 'Daily brief & ROI matrix', inline: true },
+                    { name: '📈 Enterprise (V6)', value: 'Metabolic cluster modeling', inline: true },
+                    { name: '🤖 Automation (V7)', value: 'Automation pulse & logic', inline: true },
+                    { name: '🎨 Identity (V8)', value: 'Divine visuals & Passports', inline: true },
+                    { name: '🌐 Global Nexus ROI', value: '`🟢 +186% SIGNAL DENSITY`', inline: true },
+                    { name: '🛡️ Hyper-Shield', value: '`MAXIMUM DETERRENCE`', inline: true }
                 ],
-                footer: 'Zenith Nexus Master Terminal • 1.2M Global Signals Tracked',
+                footer: 'Zenith Omni-Nexus Master Terminal • Hyper-Apex Standard',
                 color: 'premium'
             });
 

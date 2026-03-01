@@ -44,17 +44,18 @@ module.exports = {
             await Guild.updateOne({ guildId }, { $set: { customBranding: guild.customBranding } });
 
             const embed = await createCustomEmbed(interaction, {
-                title: '🎨 Zenith Apex: Visual Identity Synchronized',
+                title: '🎨 Zenith Divine Identity: Brand Orchestration',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🛡️ Sector Brand Orchestration\nMacroscopic visual parameters for the **${interaction.guild.name}** sector have been updated across the entire Zenith suite.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+                description: `### 🛡️ Divine Sector Branding\nUnified visual identity parameters for **${interaction.guild.name}** have been synchronized across the entire Omni-Nexus ecosystem.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
                     { name: '✨ Spectral Color', value: `\`${color || 'UNCHANGED'}\``, inline: true },
-                    { name: '📜 Branded Footer', value: `\`${footer || 'UNCHANGED'}\``, inline: true },
-                    { name: '🖼️ Icon Vector', value: iconURL ? '`SYNCHRONIZED`' : '`UNCHANGED`', inline: true },
-                    { name: '⚖️ Intelligence Tier', value: '`PLATINUM (APEX)`', inline: true },
+                    { name: '📜 Divine Footer', value: `\`${footer || 'UNCHANGED'}\``, inline: true },
+                    { name: '🖼️ Divine Iconography', value: iconURL ? '`SYNCHRONIZED`' : '`UNCHANGED`', inline: true },
+                    { name: '⚖️ Visual Tier', value: '`DIVINE [HYPER-APEX]`', inline: true },
+                    { name: '🔄 Omni-Bridge', value: '`V1-V8 ACTIVE`', inline: true },
                     { name: '🔄 System Sync', value: '`GLOBAL`', inline: true }
                 ],
-                footer: 'Visual Identity Orchestration • V8 Identity Matrix Suite',
+                footer: 'Divine Visual Identity Orchestration • V8 Identity Matrix Suite',
                 color: 'premium'
             });
 

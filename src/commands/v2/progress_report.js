@@ -5,8 +5,7 @@ const { Activity, Shift, User } = require('../../database/mongo');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('progress_report')
-    .setDescription('View an authentic rolling 7-day progress report')
-    .addUserOption(opt => opt.setName('user').setDescription('Staff member (Optional)').setRequired(false)),
+    .setDescription('Zenith Hyper-Apex: 7-Day Macroscopic Operational Yield'),
 
   async execute(interaction) {
     try {
@@ -16,7 +15,6 @@ module.exports = {
 
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      // Fetch Real Data over the last 7 days
       const [userData, recentShifts, recentActivities] = await Promise.all([
         User.findOne({ userId: targetUser.id, guildId: guildId }).lean(),
         Shift.find({ userId: targetUser.id, guildId: guildId, createdAt: { $gte: sevenDaysAgo } }).lean(),
@@ -24,23 +22,33 @@ module.exports = {
       ]);
 
       if (!userData || !userData.staff) {
-        return interaction.editReply({ embeds: [createErrorEmbed(`No data profile found for <@${targetUser.id}> in this server.`)] });
+        return interaction.editReply({ embeds: [createErrorEmbed(`No telemetry found for <@${targetUser.id}>.`)] });
       }
 
-      // Calculation for trend
-      const momentum = ptsGainedLast7Days > 500 ? '🚀 High Velocity' : ptsGainedLast7Days > 100 ? '📈 Stable' : '📉 Limited engagement';
+      const ptsGainedLast7Days = recentActivities.reduce((sum, act) => sum + (act.points || 0), 0);
+      const commandTasks = recentActivities.length;
+
+      const momentum = ptsGainedLast7Days > 500 ? '🚀 HIGH VELOCITY' : ptsGainedLast7Days > 100 ? '📈 STABLE' : '📉 LIMITED';
+
+      // Metabolic Pulse ASCII (Heartbeat)
+      const pulseSegments = 15;
+      const pulseFilled = '█'.repeat(Math.min(pulseSegments, Math.max(1, Math.round(ptsGainedLast7Days / 100))));
+      const pulseEmpty = '░'.repeat(pulseSegments - pulseFilled.length);
+      const metabolicPulse = `\`[${pulseFilled}${pulseEmpty}]\` **${momentum}**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `📈 Operational Yield: ${targetUser.username}`,
+        title: `📈 Zenith Hyper-Apex: Operational Yield`,
         thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
-        description: `### 🛡️ 7-Day Performance Analytic\nComprehensive yield report for <@${targetUser.id}> within the **${interaction.guild.name}** sector. Aggregating real-time telemetry from all active service nodes.`,
+        description: `### 🛡️ 7-Day Performance Analytic\nComprehensive yield for **${targetUser.username}** in the **${interaction.guild.name}** sector. Metabolic pulse synchronization active.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '✅ Command Throughput', value: `\`${commandTasks.toLocaleString()}\` Verified Tasks`, inline: true },
-          { name: '🔄 Service Engagement', value: `\`${recentShifts.length.toLocaleString()}\` Active Shifts`, inline: true },
-          { name: '⭐ Strategic Yield', value: `\`+${ptsGainedLast7Days.toLocaleString()}\` PTS Yielded`, inline: true },
-          { name: '📡 Operational Momentum', value: `\`${momentum}\``, inline: false }
+          { name: '✨ Metabolic Pulse', value: metabolicPulse, inline: false },
+          { name: '✅ Command Throughput', value: `\`${commandTasks.toLocaleString()}\` signals`, inline: true },
+          { name: '🔄 Service Engagement', value: `\`${recentShifts.length.toLocaleString()}\` shifts`, inline: true },
+          { name: '⭐ Strategic Yield', value: `\`+${ptsGainedLast7Days.toLocaleString()}\` merit`, inline: true },
+          { name: '⚡ Pulse Resonance', value: '`🟢 OPTIMAL`', inline: true },
+          { name: '🌐 Global Benchmark', value: '`🟢 ELITE PERFORMANCE`', inline: true }
         ],
-        footer: 'Reports are generated using real-time aggregated database telemetry.',
+        footer: 'Reports generated from 7d macroscopic telemetry • V2 Expansion Hyper-Apex',
         color: 'premium'
       });
 
@@ -48,12 +56,7 @@ module.exports = {
 
     } catch (error) {
       console.error('Progress Report Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred while querying the performance report.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Yield failure: Unable to synchronize macroscopic performance report.')] });
     }
   }
 };

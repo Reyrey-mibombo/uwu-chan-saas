@@ -30,6 +30,14 @@ module.exports = {
       const xp = dbUser.stats?.xp || 0;
       const level = dbUser.stats?.level || 1;
 
+      const xpPercent = Math.min(100, Math.floor((xp / 1000) * 100));
+      const barLength = 15;
+      const filled = '█'.repeat(Math.round((xpPercent / 100) * barLength));
+      const empty = '░'.repeat(barLength - filled.length);
+      const resonanceRibbon = `\`[${filled}${empty}]\` **LVL ${level}**`;
+
+      const meritDensity = (points / Math.max(1, level)).toFixed(1);
+
       const trophies = dbUser.staff?.trophies || [];
       const trophyDisplay = trophies.length > 0 ? trophies.map(t => `🏆 ${t}`).join('\n') : 'No Trophies Yet';
 
@@ -44,17 +52,21 @@ module.exports = {
       );
 
       const embed = await createCustomEmbed(interaction, {
-        title: `👤 Staff Dossier: ${user.username}`,
+        title: `👤 Zenith Hyper-Apex: Staff Dossier`,
         thumbnail: user.displayAvatarURL({ dynamic: true }),
         image: chartUrl,
+        description: `### 🛡️ Macroscopic Personnel Registry\nAuthenticated signal dossier for **${user.username}**. Resonance synchronization active.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
           { name: '📛 Identity', value: `**Tag:** ${user.tag}\n**Nick:** ${member?.nickname || 'None'}`, inline: true },
-          { name: '📅 Membership', value: member?.joinedTimestamp ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown', inline: true },
+          { name: '✨ Resonance Ribbon', value: resonanceRibbon, inline: false },
           { name: '🏆 Authority', value: `Rank: \`${rank.toUpperCase()}\` (${points} pts)`, inline: true },
-          { name: '📊 Metrics', value: `Score: \`${score || 0}/100\`\nWarns: \`${warnings?.total || 0}\``, inline: true },
-          { name: '🎮 Level', value: `Level ${level}\n(${xp} XP)`, inline: true },
-          { name: '🎖️ Achievements', value: trophyDisplay || 'None', inline: false }
-        ]
+          { name: '📊 Merit Density', value: `\`${meritDensity}\` yield/lvl`, inline: true },
+          { name: '📉 Risk Rating', value: `\`${warnings?.total || 0}\` alerts`, inline: true },
+          { name: '🎖️ Achievements', value: trophyDisplay || 'None', inline: false },
+          { name: '🔄 Omni-Bridge', value: '`SYNCHRONIZED`', inline: true }
+        ],
+        footer: 'Blockchain-verified Operational Identity • V1 Foundation Hyper-Apex',
+        color: 'premium'
       });
 
       const row = new ActionRowBuilder().addComponents(

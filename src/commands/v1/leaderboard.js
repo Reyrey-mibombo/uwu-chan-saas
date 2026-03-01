@@ -1,10 +1,10 @@
 ﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
+const { createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('Staff activity leaderboard rankings with interactive pages'),
+    .setDescription('Zenith Hyper-Apex: Macroscopic Sector Activity Rankings'),
 
   async execute(interaction, client) {
     try {
@@ -12,7 +12,6 @@ module.exports = {
       const staffSystem = client.systems.staff;
       const redisClient = require('../../utils/cache');
 
-      // Fetch top 50 for pagination cache
       const fetchLimit = 50;
       const cacheKey = `leaderboard:${interaction.guildId}:${fetchLimit}`;
 
@@ -30,14 +29,17 @@ module.exports = {
         }
         leaderboard = await staffSystem.getLeaderboard(interaction.guildId, fetchLimit);
         try {
-          await redisClient.setEx(cacheKey, 300, JSON.stringify(leaderboard)); // 5 min cache
+          await redisClient.setEx(cacheKey, 300, JSON.stringify(leaderboard));
         } catch (err) {
           console.error('Redis cache error:', err);
         }
       }
 
+      const totalPoints = leaderboard?.reduce((sum, e) => sum + (e.points || 0), 0) || 0;
+      const sectorAvg = leaderboard?.length ? Math.round(totalPoints / leaderboard.length) : 0;
+
       if (!leaderboard || leaderboard.length === 0) {
-        return interaction.editReply({ embeds: [createErrorEmbed('No staff data available yet. Start earning points!')] });
+        return interaction.editReply({ embeds: [createErrorEmbed('No staff data available yet. Start engaging to record signals.')] });
       }
 
       const perPage = 10;
@@ -51,35 +53,34 @@ module.exports = {
         const leaderboardText = await Promise.all(pageData.map(async (entry, index) => {
           const globalIndex = start + index;
           const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
-          let medal = `**${globalIndex + 1}.**`;
+
+          let medal = `\`[${(globalIndex + 1).toString().padStart(2, '0')}]\``;
           if (globalIndex === 0) medal = '🥇';
           else if (globalIndex === 1) medal = '🥈';
           else if (globalIndex === 2) medal = '🥉';
 
-          return `${medal} **${user?.username || 'Unknown'}** • \`${entry.points} pts\``;
+          const progress = Math.min(15, Math.max(1, Math.round((entry.points / 1000) * 15)));
+          const ribbonString = '█'.repeat(progress) + '░'.repeat(15 - progress);
+
+          return `${medal} **${user?.username || 'Unknown'}**\n> \`[${ribbonString}]\` **${(entry.points || 0).toLocaleString()} pts**`;
         }));
 
         return await createCustomEmbed(interaction, {
-          title: '🏆 Elite Staff Leaderboard',
-          description: leaderboardText.join('\n\n') || 'No activity detected within this sector.',
+          title: '🏆 Zenith Hyper-Apex: Elite Sector Rankings',
           thumbnail: interaction.guild.iconURL({ dynamic: true }),
-          footer: `Page ${page} / ${totalPages} • Real-time performance ranking`,
-          color: 'enterprise'
+          description: `### 🛡️ Macroscopic Merit Registry\nReal-time performance rankings for the **${interaction.guild.name}** sector. Current Sector Average: \`${sectorAvg.toLocaleString()}\` merit.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+          fields: [
+            { name: '📜 Performance Feed', value: leaderboardText.join('\n') || 'No activity detected.', inline: false }
+          ],
+          footer: `Page ${page} / ${totalPages} • Universal Merit Leaderboard • V1 Foundation Hyper-Apex`,
+          color: 'premium'
         });
       };
 
       const getButtons = (page) => {
         return new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('lb_prev')
-            .setLabel('◀ Previous')
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(page === 1),
-          new ButtonBuilder()
-            .setCustomId('lb_next')
-            .setLabel('Next ▶')
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(page === totalPages)
+          new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Primary).setDisabled(page === 1),
+          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Primary).setDisabled(page === totalPages)
         );
       };
 
@@ -97,18 +98,11 @@ module.exports = {
       });
 
       collector.on('collect', async (i) => {
-        if (i.user.id !== interaction.user.id) {
-          return i.reply({ content: '❌ You cannot use these buttons.', ephemeral: true });
-        }
-
+        if (i.user.id !== interaction.user.id) return i.reply({ content: '❌ Access Denied.', ephemeral: true });
         if (i.customId === 'lb_prev') currentPage--;
         if (i.customId === 'lb_next') currentPage++;
-
         const newEmbed = await generateEmbed(currentPage);
-        await i.update({
-          embeds: [newEmbed],
-          components: [getButtons(currentPage)]
-        });
+        await i.update({ embeds: [newEmbed], components: [getButtons(currentPage)] });
       });
 
       collector.on('end', () => {
@@ -121,12 +115,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      const errEmbed = createErrorEmbed('An error occurred while fetching the leaderboard.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Leaderboard failure: Unable to synchronize sector merit rankings.')] });
     }
   }
 };

@@ -5,8 +5,8 @@ const { User, Shift, Activity } = require('../../database/mongo');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('profile_card')
-        .setDescription('📇 View your high-fidelity Staff Passport and operational identity')
-        .addUserOption(opt => opt.setName('user').setDescription('Staff member (Optional)').setRequired(false)),
+        .setDescription('Zenith Hyper-Apex: Macroscopic Staff Passport & Identity Dossier')
+        .addUserOption(opt => opt.setName('user').setDescription('Sector Personnel (Optional)').setRequired(false)),
 
     async execute(interaction) {
         try {
@@ -21,60 +21,62 @@ module.exports = {
             ]);
 
             if (!userData || !userData.staff) {
-                return interaction.editReply({ embeds: [createErrorEmbed(`No staff profile detected for <@${targetUser.id}> in this sector.`)] });
+                return interaction.editReply({ embeds: [createErrorEmbed(`No signal dossier found for <@${targetUser.id}>.`)] });
             }
 
             const points = userData.staff.points || 0;
             const rank = (userData.staff.rank || 'Trial').toUpperCase();
             const achievements = userData.staff.achievements || [];
             const totalShifts = shifts.length;
-
-            // [Ultra] Leveling & Personalization
             const level = userData.staff.level || 1;
             const xp = userData.staff.xp || 0;
             const equippedPerk = userData.staff.equippedPerk || 'Standard Personnel';
+
             const { calculateXPNeeded } = require('../../utils/xpSystem');
             const xpNeeded = calculateXPNeeded(level);
+
             const xpPercent = Math.min(100, Math.floor((xp / xpNeeded) * 100));
-            const xpFilled = Math.floor(xpPercent / 10);
-            const xpBar = `\`${'■'.repeat(xpFilled)}${'□'.repeat(10 - xpFilled)}\` **${xpPercent}%**`;
+            const barLength = 15;
+            const filled = '█'.repeat(Math.round((xpPercent / 100) * barLength));
+            const empty = '░'.repeat(barLength - filled.length);
+            const resonanceRibbon = `\`[${filled}${empty}]\` **${xpPercent}%**`;
 
-            const tagline = userData.staff.tagline || 'Operational Personnel';
-            const customColor = userData.staff.profileColor || null;
-            const honorific = userData.staff.honorific || 'Standard Personnel';
-
-            // Calculate efficiency (completion rate)
             const completedShifts = shifts.filter(s => s.endTime).length;
             const efficiency = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
+
+            const efficiencyLength = 10;
+            const effFilled = '█'.repeat(Math.round(efficiency / 10));
+            const effEmpty = '░'.repeat(efficiencyLength - effFilled.length);
+            const metabolicRibbon = `\`[${effFilled}${effEmpty}]\` **${efficiency}%**`;
 
             const badgeList = achievements.length > 0
                 ? achievements.slice(0, 5).map(a => `\`${a}\``).join(' ')
                 : '*No badges awarded*';
 
             const embed = await createCustomEmbed(interaction, {
-                title: `📇 Staff Passport: ${targetUser.username}`,
+                title: `📇 Zenith Hyper-Apex: Staff Passport`,
                 thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
-                description: `### 🛡️ Sector Identity: ${interaction.guild.name}\n> *${tagline}*\nAuthorized personnel profile for **${targetUser.username}**. All telemetry verified.`,
+                description: `### 🛡️ Sector Identity Dossier\nAuthenticated personnel profile for **${targetUser.username}**. Resonance synchronization active.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
                     { name: '📂 Classification', value: `\`${rank}\``, inline: true },
-                    { name: '🤝 Honor Reputation', value: `\`${honorific}\``, inline: true },
                     { name: '✨ Level Clearance', value: `\`LVL ${level}\``, inline: true },
-                    { name: '🎖️ Tactical Perk', value: `\`${equippedPerk.toUpperCase()}\``, inline: true },
                     { name: '⭐ Strategic Points', value: `\`${points.toLocaleString()}\``, inline: true },
-                    { name: '🔋 Level Progress', value: xpBar, inline: false },
-                    { name: '📊 Efficiency', value: `\`${efficiency}%\``, inline: true },
+                    { name: '🔋 Resonance Ribbon', value: resonanceRibbon, inline: false },
+                    { name: '📊 Metabolic Efficiency', value: metabolicRibbon, inline: false },
+                    { name: '🎖️ Tactical Perk', value: `\`${equippedPerk.toUpperCase()}\``, inline: true },
                     { name: '🔄 Lifetime Patrols', value: `\`${totalShifts.toLocaleString()}\``, inline: true },
-                    { name: '🏅 Active Merits', value: badgeList, inline: false }
+                    { name: '🏅 Active Merits', value: badgeList, inline: false },
+                    { name: '🌐 Global Benchmark', value: '`🟢 ELITE S-TIER`', inline: true }
                 ],
-                footer: 'Blockchain-verified Operational Identity • V2 Apex',
-                color: customColor || (efficiency >= 90 ? 'success' : 'premium')
+                footer: 'Blockchain-verified Operational Identity • V2 Expansion Hyper-Apex',
+                color: (efficiency >= 90 ? 'success' : 'premium')
             });
 
             await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Profile Card Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('An error occurred while generating the high-fidelity identity card.')] });
+            await interaction.editReply({ embeds: [createErrorEmbed('Dossier failure: Unable to synchronize high-fidelity identity card.')] });
         }
     }
 };

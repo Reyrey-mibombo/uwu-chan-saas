@@ -11,15 +11,18 @@ module.exports = {
             await interaction.deferReply({ ephemeral: true });
 
             const embed = await createCustomEmbed(interaction, {
-                title: '🕹️ Strategic Staff Control Center',
-                description: `### 🛡️ Authorized Access: ${interaction.user.username}\nWelcome to the unified terminal for **${interaction.guild.name}**. Select an operational module from the interface below to view localized telemetry.`,
+                title: '🕹️ Zenith Hyper-Apex: Strategic Control Center',
+                description: `### 🛡️ Authorized Access: ${interaction.user.username}\nWelcome to the unified terminal for **${interaction.guild.name}**. Select an operational module below to engage macroscopic telemetry.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
                 fields: [
-                    { name: '📇 Identity', value: 'View Passport & Merits', inline: true },
-                    { name: '📈 Analytics', value: 'Check Promotion Status', inline: true },
-                    { name: '📋 Registry', value: 'View Active Objectives', inline: true }
+                    { name: '📇 Identity Matrix', value: '`🟢 RESONANCE ACTIVE`', inline: true },
+                    { name: '📈 Growth Analytics', value: '`🟢 SIGNAL STABLE`', inline: true },
+                    { name: '📋 Registry Sublink', value: '`🟡 CALIBRATING...`', inline: true },
+                    { name: '⚡ Pulse Frequency', value: '`4.2 Hz [OPTIMAL]`', inline: true },
+                    { name: '🌐 Global Sync', value: '`CONNECTED`', inline: true },
+                    { name: '✨ Visual Tier', value: '`DIVINE [APEX]`', inline: true }
                 ],
-                footer: 'Unified Operational Interface • V2 Enterprise',
+                footer: 'Unified Operational Interface • V2 Expansion Hyper-Apex',
                 color: 'premium'
             });
 

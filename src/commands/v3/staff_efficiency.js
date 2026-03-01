@@ -44,29 +44,39 @@ module.exports = {
 
         const staff = user.staff || {};
         const efficiency = calculateEfficiency(commands, warnings, completedShifts, staff.consistency || 100);
+        const bars = Math.round(efficiency / 10);
+        const barChar = '█';
+        const emptyChar = '░';
+        const visual = `\`${barChar.repeat(bars)}${emptyChar.repeat(10 - bars)}\` **${efficiency}%**`;
 
-        const filledScore = Math.min(10, Math.floor(efficiency / 10));
-        const progressBar = `\`${'█'.repeat(filledScore)}${'░'.repeat(10 - filledScore)}\``;
+        // Elite Grading System
+        let grade = 'C';
+        if (efficiency >= 95) grade = 'S (Elite)';
+        else if (efficiency >= 85) grade = 'A (Superior)';
+        else if (efficiency >= 70) grade = 'B (Reliable)';
 
         const embed = await createCustomEmbed(interaction, {
           title: `📊 Tactical Efficiency: ${targetUser.username}`,
-          description: `Reviewing 30-day authenticated activity tracked inside **${interaction.guild.name}**.`,
-          thumbnail: targetUser.displayAvatarURL(),
+          thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+          description: `### 🛡️ Personnel Yield Audit\nReviewing 30-day authenticated activity tracked inside sector **${interaction.guild.name}**. Cross-referencing behavioral consistency with output yields.`,
           fields: [
-            { name: '💯 Global Trajectory', value: `${progressBar} **${efficiency}%**`, inline: false },
-            { name: '📈 Internal Consistency', value: `\`${staff.consistency || 100}%\``, inline: true },
-            { name: '✅ Network Commands', value: `\`${commands}\``, inline: true },
-            { name: '⚠️ Moderation Disputes', value: `\`${warnings}\``, inline: true },
-            { name: '🔄 Retention Target', value: `\`${completedShifts}\` Pings`, inline: true }
-          ]
+            { name: '🔋 Efficiency Gradient', value: `${visual}\n> **Performance Grade:** \`Rank [${grade}]\``, inline: false },
+            { name: '📊 Operational Integrity', value: `\`${staff.consistency || 100}%\``, inline: true },
+            { name: '✅ Network Commands', value: `\`${commands}\` Pings`, inline: true },
+            { name: '⚠️ Moderation Disputes', value: `\`${warnings}\` Incidents`, inline: true },
+            { name: '🔄 Retention Yield', value: `\`${completedShifts}\` Patrols`, inline: true },
+            { name: '✨ Level Clearance', value: `\`LVL ${staff.level || 1}\``, inline: true }
+          ],
+          footer: 'Predictive Efficiency Modeling • V3 Strategic',
+          color: efficiency >= 80 ? 'success' : 'premium'
         });
 
         await interaction.editReply({ embeds: [embed] });
 
       } else {
-        // Calculate Global Tier List limited by Guild bounds inherently filtering Cross-Server queries
+        // Calculate Global Tier List limited by Guild bounds
         const users = await User.find({
-          guildId,              // MUST ISOLATE OR GLOBAL RANKING LEAKS ACROSS GUILDS
+          guildId,
           staff: { $exists: true }
         }).lean();
 
@@ -75,21 +85,21 @@ module.exports = {
         }
 
         const userEfficiencies = await Promise.all(users.map(async user => {
-          const activities = await Activity.find({
+          const activitiesBuffer = await Activity.find({
             guildId,
             userId: user.userId,
             createdAt: { $gte: thirtyDaysAgo }
           }).lean();
 
-          const shifts = await Shift.find({
+          const shiftsBuffer = await Shift.find({
             guildId,
             userId: user.userId,
             startTime: { $gte: thirtyDaysAgo }
           }).lean();
 
-          const commands = activities.filter(a => a.type === 'command').length;
-          const warnings = activities.filter(a => a.type === 'warning').length;
-          const completedShifts = shifts.filter(s => s.endTime).length;
+          const commands = activitiesBuffer.filter(a => a.type === 'command').length;
+          const warnings = activitiesBuffer.filter(a => a.type === 'warning').length;
+          const completedShifts = shiftsBuffer.filter(s => s.endTime).length;
 
           const efficiency = calculateEfficiency(commands, warnings, completedShifts, user.staff?.consistency || 100);
 
@@ -97,7 +107,6 @@ module.exports = {
             userId: user.userId,
             username: user.username,
             efficiency,
-            consistency: user.staff?.consistency || 100,
             commands,
             completedShifts
           };
@@ -106,8 +115,8 @@ module.exports = {
         const sortedByEfficiency = userEfficiencies.sort((a, b) => b.efficiency - a.efficiency).slice(0, 10);
 
         let rankStrings = sortedByEfficiency.map((u, i) => {
-          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-          return `${medal} <@${u.userId}> ➔ **${u.efficiency}%** \`(${u.commands} cmd, ${u.completedShifts} Pld)\``;
+          const medal = i === 0 ? '👑' : i === 1 ? '🥇' : i === 2 ? '🥈' : `\`${i + 1}\``;
+          return `${medal} <@${u.userId}> : **${u.efficiency}%** | \`${u.commands} Cmd | ${u.completedShifts} Pld\``;
         });
 
         const avgEfficiency = userEfficiencies.length > 0
@@ -115,13 +124,15 @@ module.exports = {
           : 0;
 
         const embed = await createCustomEmbed(interaction, {
-          title: `📊 Operational Server Toplist`,
-          description: 'Filtering the top 10 most technically efficient tracked responders in this instance.',
+          title: '📊 Operational Server Efficiency Toplist',
           thumbnail: interaction.guild.iconURL({ dynamic: true }),
+          description: `### 🛡️ Authorized Personnel Ranking\nFiltering the top 10 most technically efficient tracked responders in the **${interaction.guild.name}** sector.`,
           fields: [
-            { name: '🏆 Top Executioners', value: rankStrings.join('\n') || '*No entries resolved.*', inline: false },
-            { name: '🌐 Server Core Baseline', value: `**${avgEfficiency}%** Relative Threshold`, inline: false }
-          ]
+            { name: '🏆 Model Operatives', value: rankStrings.join('\n') || '*No authenticated entries resolved.*', inline: false },
+            { name: '🌐 Sector Baseline', value: `\`Relative Efficient Threshold: ${avgEfficiency}%\``, inline: false }
+          ],
+          footer: 'Rankings authenticated against 30-day tracking vector • V3 Strategic',
+          color: 'enterprise'
         });
 
         await interaction.editReply({ embeds: [embed] });
@@ -129,12 +140,7 @@ module.exports = {
 
     } catch (error) {
       console.error('Staff Efficiency Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred plotting performance comparisons chart matrices.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Efficiency Matrix failure: Unable to decode server-wide performance comparisons.')] });
     }
   }
 };

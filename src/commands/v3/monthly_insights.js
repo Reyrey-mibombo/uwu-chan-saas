@@ -54,34 +54,34 @@ module.exports = {
         : 0;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `📊 30-Day Trailing Network Insights`,
+        title: `📊 30-Day Strategic Network Insights`,
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `A snapshot of authenticated ledger events and growth tracking during **${now.toLocaleString('default', { month: 'long', year: 'numeric' })}**.`,
+        description: `### 🛡️ Operational Analytics Snapshot\nMacroscopic Snapshot of authenticated ledger events and growth tracking during **${now.toLocaleString('default', { month: 'long', year: 'numeric' })}**. Cross-referencing current sector telemetry.`,
         fields: [
-          { name: '✅ Command Output', value: `\`${commandCount}\` Logs`, inline: true },
-          { name: '💬 Total Processed', value: `\`${messageCount}\` Msgs`, inline: true },
-          { name: '⚠️ Disciplinary Action', value: `\`${warningCount}\` Issued`, inline: true },
+          { name: '✅ Command Output', value: `\`${commandCount}\` Pings`, inline: true },
+          { name: '💬 Chat Intelligence', value: `\`${messageCount.toLocaleString()}\` Msgs`, inline: true },
+          { name: '⚠️ Security Incidents', value: `\`${warningCount}\` Issued`, inline: true },
           { name: '🎖️ Hierarchy Promos', value: `\`${promotionCount}\` Ops`, inline: true },
-          { name: '⏱️ Total Shift Volume', value: `\`${totalShiftHours.toFixed(1)}h\``, inline: true },
-          { name: '👥 Network Retention', value: `\`${activeThisMonth.length} / ${totalStaff}\` Deployed`, inline: true }
+          { name: '⏱️ Man-Hours Logged', value: `\`${totalShiftHours.toFixed(1)}h\``, inline: true },
+          { name: '👥 Network Density', value: `\`${activeThisMonth.length} / ${totalStaff}\` Deployed`, inline: true }
         ],
-        footer: 'Data strictly mapped to current server operational footprint'
+        footer: 'Strategic Intelligence Mode • V3 Strategic Suite',
+        color: 'premium'
       });
 
-      // Mapping trajectory icons contextually instead of hardcoded ternary blocks 
       const trajectorySign = commandChange > 0 ? '📈 Growth Trajectory' : (commandChange < 0 ? '📉 Decay Trajectory' : '➖ Stagnant Baseline');
-      embed.addFields({ name: trajectorySign, value: `Command infrastructure output adjusted by \`${commandChange}%\` compared against last month.` });
+      const statusColor = commandChange > 0 ? '🟢' : (commandChange < 0 ? '🔴' : '🟡');
+
+      embed.addFields({
+        name: trajectorySign,
+        value: `> ${statusColor} Command infrastructure output has adjusted by **${commandChange}%** compared against the previous monthly baseline. Performance vectors remain within authorized bounds.`
+      });
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Monthly Insights Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred tracking trailing 30-day footprints.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Monthly Intelligence failure: Unable to decode trailing 30-day footprints.')] });
     }
   }
 };

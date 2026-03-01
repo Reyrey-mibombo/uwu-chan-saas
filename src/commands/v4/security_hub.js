@@ -18,28 +18,33 @@ module.exports = {
             }
 
             const embed = await createCustomEmbed(interaction, {
-                title: '🛡️ Zenith Guardian Apex: C&C Nexus',
+                title: '🛡️ Zenith Guardian Hyper-Apex: C&C Nexus',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🌐 Macroscopic Security Orchestration\nUnified command interface for sector **${interaction.guild.name}**. Access global threat intelligence and real-time neutralization protocols.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+                description: `### 🌐 Macroscopic Security Orchestration\nUnified command interface for sector **${interaction.guild.name}**. Access AI-simulated threat forecasting and visual deterrence dashboards.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '🛰️ Anti-Spam', value: 'Global threat intelligence & Mitigation', inline: true },
-                    { name: '📈 Analytics', value: 'Macroscopic threat curves & Incident logs', inline: true },
-                    { name: '📜 Audit Ledger', value: 'High-fidelity event forensic tracing', inline: true },
-                    { name: '🔥 Threat Level', value: '`MINIMAL`', inline: true },
-                    { name: '🛡️ Shield Status', value: '`OPTIMIZED`', inline: true },
-                    { name: '⚖️ Dispatch', value: '`READY`', inline: true }
+                    { name: '🛰️ Threat Forecast', value: '48h predictive risk modeling', inline: true },
+                    { name: '🛡️ Shield Status', value: 'Visual layer deterrence audit', inline: true },
+                    { name: '📜 Audit Ledger', value: 'High-fidelity forensic tracing', inline: true },
+                    { name: '🌐 Global Deterrence', value: '`🟢 ELITE SECTOR GUARD`', inline: true },
+                    { name: '✨ Visual Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
+                    { name: '⚖️ Intelligence', value: '`SYNCHRONIZED`', inline: true }
                 ],
-                footer: 'Zenith Apex Security Orchestration • V4 Guardian Suite',
+                footer: 'Zenith Hyper-Apex Security Orchestration • V4 Guardian Suite',
                 color: 'premium'
             });
 
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('v4_antispam').setLabel('Anti-Spam').setStyle(ButtonStyle.Primary).setEmoji('🛡️'),
+            const row1 = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('v4_threat').setLabel('Threat Forecast').setStyle(ButtonStyle.Primary).setEmoji('🔮'),
+                new ButtonBuilder().setCustomId('v4_shields').setLabel('Shield Status').setStyle(ButtonStyle.Primary).setEmoji('🛡️'),
+                new ButtonBuilder().setCustomId('v4_antispam').setLabel('Anti-Spam').setStyle(ButtonStyle.Secondary).setEmoji('🗂️')
+            );
+
+            const row2 = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('v4_analytics').setLabel('Security Analytics').setStyle(ButtonStyle.Secondary).setEmoji('📈'),
                 new ButtonBuilder().setCustomId('v4_audit').setLabel('Audit Ledger').setStyle(ButtonStyle.Secondary).setEmoji('📜')
             );
 
-            await interaction.editReply({ embeds: [embed], components: [row] });
+            await interaction.editReply({ embeds: [embed], components: [row1, row2] });
 
         } catch (error) {
             console.error('Security Hub Error:', error);

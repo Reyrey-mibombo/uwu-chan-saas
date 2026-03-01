@@ -29,7 +29,14 @@ const guildSchema = new mongoose.Schema({
     logChannel: String,
     welcomeChannel: String,
     modChannel: String,
-    promotionChannel: String  // channel to announce promotions
+    promotionChannel: String,
+    // New: activity alert settings
+    alerts: {
+      enabled: { type: Boolean, default: false },
+      channelId: { type: String, default: null },
+      roleId: { type: String, default: null },
+      threshold: { type: Number, default: 50 }
+    }
   },
   // rank → Discord role ID mapping (set via /setup_promo)
   rankRoles: {
@@ -55,22 +62,18 @@ const guildSchema = new mongoose.Schema({
   // Dynamic application system config
   applicationConfig: { type: mongoose.Schema.Types.Mixed, default: {} },
   // Full 10-field promotion requirements (customizable by tier)
-  // v1 (free): points, shifts, consistency
-  // v2 (free): + maxWarnings, shiftHours
-  // v3 (premium): + achievements, reputation
-  // v6 (enterprise): + daysInServer, cleanRecordDays, customNote
   promotionRequirements: {
     staff: {
-      points: { type: Number, default: 100 },   // req 1 (v1)
-      shifts: { type: Number, default: 5 },   // req 2 (v1)
-      consistency: { type: Number, default: 70 },   // req 3 (v1)
-      maxWarnings: { type: Number, default: 3 },   // req 4 (v2)
-      shiftHours: { type: Number, default: 0 },   // req 5 (v2) — 0 = disabled
-      achievements: { type: Number, default: 0 },   // req 6 (v3)
-      reputation: { type: Number, default: 0 },   // req 7 (v3)
-      daysInServer: { type: Number, default: 0 },   // req 8 (enterprise)
-      cleanRecordDays: { type: Number, default: 0 },   // req 9 (enterprise)
-      customNote: { type: String, default: '' }    // req 10 (enterprise) — text shown in DM
+      points: { type: Number, default: 100 },
+      shifts: { type: Number, default: 5 },
+      consistency: { type: Number, default: 70 },
+      maxWarnings: { type: Number, default: 3 },
+      shiftHours: { type: Number, default: 0 },
+      achievements: { type: Number, default: 0 },
+      reputation: { type: Number, default: 0 },
+      daysInServer: { type: Number, default: 0 },
+      cleanRecordDays: { type: Number, default: 0 },
+      customNote: { type: String, default: '' }
     },
     senior: {
       points: { type: Number, default: 300 },
@@ -147,9 +150,9 @@ const userSchema = new mongoose.Schema({
     consistency: { type: Number, default: 100 },
     reputation: { type: Number, default: 0 },
     achievements: [String],
-    promotionPending: { type: Boolean, default: false }, // true = owner DM already sent, awaiting decision
-    lastPromotionCheck: Date, // last time this user was checked for promotion
-    lastPromotionDate: Date // Added: tracks when the user was last promoted
+    promotionPending: { type: Boolean, default: false },
+    lastPromotionCheck: Date,
+    lastPromotionDate: Date
   },
   stats: {
     commandsUsed: { type: Number, default: 0 },
@@ -257,10 +260,10 @@ const applicationRequestSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   username: String,
   globalName: String,
-  answers: mongoose.Schema.Types.Mixed, // Stores answers to dynamic questions
+  answers: mongoose.Schema.Types.Mixed,
   status: { type: String, enum: ['pending', 'accepted', 'denied'], default: 'pending' },
-  messageId: String, // Message ID of the application in the log channel
-  channelId: String, // Channel ID where the application was submitted
+  messageId: String,
+  channelId: String,
   reviewedBy: String,
   reviewedAt: Date,
   createdAt: { type: Date, default: Date.now }
@@ -276,4 +279,14 @@ const Ticket = mongoose.model('Ticket', ticketSchema);
 const ApplicationConfig = mongoose.model('ApplicationConfig', applicationConfigSchema);
 const ApplicationRequest = mongoose.model('ApplicationRequest', applicationRequestSchema);
 
-module.exports = { Guild, User, License, Warning, Shift, Activity, Ticket, ApplicationConfig, ApplicationRequest };
+module.exports = {
+  Guild,
+  User,
+  License,
+  Warning,
+  Shift,
+  Activity,
+  Ticket,
+  ApplicationConfig,
+  ApplicationRequest
+};

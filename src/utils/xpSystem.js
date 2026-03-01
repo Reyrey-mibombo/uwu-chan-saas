@@ -57,7 +57,8 @@ async function handleCommandXP(interaction) {
                 title: '🎉 PERSONNEL LEVEL UP!',
                 description: `Congratulations <@${userId}>! Your operational clearance has increased!\n\nYou have transitioned to **Staff Level ${user.staff.level}**!`,
                 thumbnail: interaction.user.displayAvatarURL({ dynamic: true })
-            }).setColor('#ffaa00');
+            }).setColor('#ffaa00')
+                .setImage('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZtMTMwaXZuOTVybWJ2ODRqaGdyNnZyZW94eTVxYTh4ODdrbDBycyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/BPJmthQ3YRwD6QqcVD/giphy.gif');
 
             await interaction.followUp({ embeds: [embed], ephemeral: true });
         }

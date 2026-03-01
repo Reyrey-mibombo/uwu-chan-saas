@@ -158,6 +158,8 @@ const userSchema = new mongoose.Schema({
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
     commandUsage: { type: mongoose.Schema.Types.Mixed, default: {} },
+    perks: { type: [String], default: [] },
+    equippedPerk: { type: String, default: null },
     trophies: { type: [String], default: [] },
     streak: { type: Number, default: 0 },
     promotionPending: { type: Boolean, default: false },

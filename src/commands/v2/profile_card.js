@@ -32,6 +32,7 @@ module.exports = {
             // [Ultra] Leveling & Personalization
             const level = userData.staff.level || 1;
             const xp = userData.staff.xp || 0;
+            const equippedPerk = userData.staff.equippedPerk || 'Standard Personnel';
             const { calculateXPNeeded } = require('../../utils/xpSystem');
             const xpNeeded = calculateXPNeeded(level);
             const xpPercent = Math.min(100, Math.floor((xp / xpNeeded) * 100));
@@ -56,13 +57,14 @@ module.exports = {
                 fields: [
                     { name: '📂 Classification', value: `\`${rank}\``, inline: true },
                     { name: '✨ Level Clearance', value: `\`LVL ${level}\``, inline: true },
+                    { name: '🎖️ Tactical Perk', value: `\`${equippedPerk.toUpperCase()}\``, inline: true },
                     { name: '⭐ Strategic Points', value: `\`${points.toLocaleString()}\``, inline: true },
                     { name: '🔋 Level Progress', value: xpBar, inline: false },
                     { name: '📊 Efficiency', value: `\`${efficiency}%\``, inline: true },
                     { name: '🔄 Lifetime Patrols', value: `\`${totalShifts.toLocaleString()}\``, inline: true },
                     { name: '🏅 Active Merits', value: badgeList, inline: false }
                 ],
-                footer: 'Blockchain-verified Operational Identity • V2 Ultra',
+                footer: 'Blockchain-verified Operational Identity • V2 Titan',
                 color: customColor || (efficiency >= 90 ? 'success' : 'premium')
             });
 

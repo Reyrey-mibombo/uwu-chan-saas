@@ -16,11 +16,20 @@ const TicketSystem = require('./systems/ticketSystem');
 const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 
-// FIXED: Correctly named the variable DailyActivity to match usage below
+// Correctly imported DailyActivity model
 const DailyActivity = require('./models/activity');
 
 const client = new Client({
-  intents:
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.DirectMessages
+  ]
 });
 
 client.commands = new Collection();
@@ -50,7 +59,7 @@ async function initializeSystems() {
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
   const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8'];
-  const versions = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+  const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version.trim());
@@ -74,24 +83,24 @@ async function loadCommands() {
 }
 
 client.once('ready', async () => {
-  const tierDisplay = process.env.ENABLED_TIERS? process.env.ENABLED_TIERS : 'v1-v8';
+  const tierDisplay = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS : 'v1-v8';
   logger.info(`Bot logged in as ${client.user.tag}`);
   logger.info(`Active Command Tiers: ${tierDisplay}`);
   await initializeSystems();
   await loadCommands();
 
   const testGuildId = process.env.TEST_GUILD_ID;
-  await commandHandler.deployCommands(client, testGuildId? testGuildId : null).catch(e => logger.error('Deploy error: ' + e.message));
+  await commandHandler.deployCommands(client, testGuildId || null).catch(e => logger.error('Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
 });
 
-// --- ADDED: Real Data Ingestion Pipeline ---
+// Real Data Ingestion Pipeline
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!message.guild) return;
 
-  const today = new Date().toISOString().split('T');
+  const today = new Date().toISOString().split('T')[0]; // Fixed: was split('T') missing index
 
   try {
     await DailyActivity.findOneAndUpdate(
@@ -105,17 +114,20 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('interactionCreate', async interaction => {
-  if (interaction.isButton() && interaction.customId.startsWith('promo_')) {
-    try {
-      await client.systems.automation.handlePromotionButton(interaction);
-    } catch (err) {
-      logger.error('Error in promo button', err);
-      if (!interaction.replied) await interaction.reply({ content: '❌ Error processing promotion decision.', ephemeral: true });
-    }
-    return;
-  }
-
+  // --- Button interactions ---
   if (interaction.isButton()) {
+    // Promotion buttons
+    if (interaction.customId.startsWith('promo_')) {
+      try {
+        await client.systems.automation.handlePromotionButton(interaction);
+      } catch (err) {
+        logger.error('Error in promo button', err);
+        if (!interaction.replied) await interaction.reply({ content: '❌ Error processing promotion decision.', ephemeral: true });
+      }
+      return;
+    }
+
+    // Ticket system buttons
     const ticketSetup = require('./commands/v1/ticketSetup');
     if (interaction.customId === 'ticket_report_staff') {
       await ticketSetup.handleReportStaff(interaction, client);
@@ -138,6 +150,7 @@ client.on('interactionCreate', async interaction => {
       return;
     }
 
+    // Application system buttons
     try {
       const { handleApplyButton, handleReviewAction } = require('./utils/applySystem');
 
@@ -145,23 +158,23 @@ client.on('interactionCreate', async interaction => {
         await handleApplyButton(interaction);
         return;
       }
-      
-      // FIXED: The formatting broke the '||' OR operator here. It's now fixed.
-      if (interaction.customId.startsWith('apply_accept_') |
 
-| interaction.customId.startsWith('apply_deny_')) {
+      // FIXED: Replaced broken OR operators with proper ||
+      if (interaction.customId.startsWith('apply_accept_') || interaction.customId.startsWith('apply_deny_')) {
         await handleReviewAction(interaction);
         return;
       }
     } catch (error) {
       logger.error('Application button error', error);
-      if (!interaction.replied &&!interaction.deferred) {
-        await interaction.reply({ content: '❌ An error occurred processing this application button!', ephemeral: true }).catch(() => { });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ An error occurred processing this application button!', ephemeral: true }).catch(() => {});
       }
     }
   }
 
+  // --- Modal submit interactions ---
   if (interaction.isModalSubmit()) {
+    // Application modal
     try {
       const { handleModalSubmit } = require('./utils/applySystem');
       if (interaction.customId === 'apply_modal_submit') {
@@ -170,11 +183,12 @@ client.on('interactionCreate', async interaction => {
       }
     } catch (error) {
       logger.error('Modal submit error', error);
-      if (!interaction.replied &&!interaction.deferred) {
-        await interaction.reply({ content: '❌ Failed to submit application!', ephemeral: true }).catch(() => { });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ Failed to submit application!', ephemeral: true }).catch(() => {});
       }
     }
 
+    // Ticket modals
     const ticketSetup = require('./commands/v1/ticketSetup');
     if (interaction.customId === 'modal_report_staff') {
       await ticketSetup.handleReportSubmit(interaction, client);
@@ -190,12 +204,12 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
-  // --- HELP MENU INTERACTION ---
+  // --- Help menu select menu ---
   if (interaction.isStringSelectMenu() && interaction.customId === 'help_category_select') {
     try {
       const helpCommand = client.commands.get('help');
       if (helpCommand && helpCommand.generateCategoryEmbed) {
-        const categoryKey = interaction.values;
+        const categoryKey = interaction.values[0];
         const embed = await helpCommand.generateCategoryEmbed(categoryKey, client);
         await interaction.update({ embeds: [embed] });
       }
@@ -204,42 +218,42 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
-  // --- PROMO SETUP INTERACTION ---
+  // --- Promo setup select menu ---
   if (interaction.isStringSelectMenu() && interaction.customId === 'promo_setup_select') {
     const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-    const rank = interaction.values;
+    const rank = interaction.values[0];
 
     const modal = new ModalBuilder()
-     .setCustomId(`promo_setup_modal_${rank}`)
-     .setTitle(`Configure Rank: ${rank.toUpperCase()}`);
+      .setCustomId(`promo_setup_modal_${rank}`)
+      .setTitle(`Configure Rank: ${rank.toUpperCase()}`);
 
     const pointsInput = new TextInputBuilder()
-     .setCustomId('promo_points')
-     .setLabel('Points Threshold')
-     .setPlaceholder('Number of points needed...')
-     .setStyle(TextInputStyle.Short)
-     .setRequired(true);
+      .setCustomId('promo_points')
+      .setLabel('Points Threshold')
+      .setPlaceholder('Number of points needed...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
     const shiftsInput = new TextInputBuilder()
-     .setCustomId('promo_shifts')
-     .setLabel('Minimum Shifts')
-     .setPlaceholder('Number of shifts needed...')
-     .setStyle(TextInputStyle.Short)
-     .setRequired(true);
+      .setCustomId('promo_shifts')
+      .setLabel('Minimum Shifts')
+      .setPlaceholder('Number of shifts needed...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
     const consistencyInput = new TextInputBuilder()
-     .setCustomId('promo_consistency')
-     .setLabel('Consistency (%)')
-     .setPlaceholder('Minimum consistency (0-100)...')
-     .setStyle(TextInputStyle.Short)
-     .setRequired(true);
+      .setCustomId('promo_consistency')
+      .setLabel('Consistency (%)')
+      .setPlaceholder('Minimum consistency (0-100)...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
     const warningsInput = new TextInputBuilder()
-     .setCustomId('promo_warnings')
-     .setLabel('Max Warnings Allowed')
-     .setPlaceholder('Staff cannot exceed this number...')
-     .setStyle(TextInputStyle.Short)
-     .setRequired(true);
+      .setCustomId('promo_warnings')
+      .setLabel('Max Warnings Allowed')
+      .setPlaceholder('Staff cannot exceed this number...')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(pointsInput),
@@ -251,6 +265,7 @@ client.on('interactionCreate', async interaction => {
     await interaction.showModal(modal);
   }
 
+  // --- Promo setup modal submit ---
   if (interaction.isModalSubmit() && interaction.customId.startsWith('promo_setup_modal_')) {
     try {
       const rank = interaction.customId.replace('promo_setup_modal_', '');
@@ -259,40 +274,41 @@ client.on('interactionCreate', async interaction => {
       const consistency = parseInt(interaction.fields.getTextInputValue('promo_consistency'));
       const warnings = parseInt(interaction.fields.getTextInputValue('promo_warnings'));
 
-      // FIXED: The formatting broke the '||' OR operator here. It's now fixed.
-      if (isNaN(points) |
-
-| isNaN(shifts) |
-| isNaN(consistency) |
-| isNaN(warnings)) {
+      // FIXED: Replaced broken OR operators with proper ||
+      if (isNaN(points) || isNaN(shifts) || isNaN(consistency) || isNaN(warnings)) {
         return interaction.reply({ content: '❌ Please enter valid numbers for all fields.', ephemeral: true });
       }
 
-      // FIXED: Restored the database properties the formatter deleted
+      // FIXED: Restored database field names (these were missing)
       await Guild.findOneAndUpdate(
         { guildId: interaction.guildId },
         {
           $set: {
-           : points,
-           : shifts,
-           : consistency,
-           : warnings
+            'promo.points': points,
+            'promo.shifts': shifts,
+            'promo.consistency': consistency,
+            'promo.warnings': warnings
           }
         },
         { upsert: true }
       );
 
       const { createSuccessEmbed } = require('./utils/embeds');
+      const successEmbed = createSuccessEmbed(
+        'Promotion Criteria Saved',
+        `Rank **${rank.toUpperCase()}** configured:\n• Points: ${points}\n• Shifts: ${shifts}\n• Consistency: ${consistency}%\n• Max Warnings: ${warnings}`
+      );
       await interaction.reply({
-        embeds:,
+        embeds: [successEmbed],
         ephemeral: true
       });
     } catch (error) {
       logger.error('Promo modal submit error', error);
-      await interaction.reply({ content: '❌ An error occurred while saving configuration.', ephemeral: true }).catch(() => { });
+      await interaction.reply({ content: '❌ An error occurred while saving configuration.', ephemeral: true }).catch(() => {});
     }
   }
 
+  // --- Chat input commands ---
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
@@ -323,7 +339,7 @@ client.on('interactionCreate', async interaction => {
   const now = Date.now();
   const timestamps = cooldowns.get(command.data.name);
   const defaultCooldownDuration = 3;
-  const cooldownAmount = (command.cooldown? command.cooldown : defaultCooldownDuration) * 1000;
+  const cooldownAmount = (command.cooldown || defaultCooldownDuration) * 1000;
 
   if (timestamps.has(interaction.user.id)) {
     const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
@@ -350,8 +366,7 @@ client.on('interactionCreate', async interaction => {
       content: 'There was an error executing this command!',
       ephemeral: true
     };
-    const hasReplied = interaction.replied? true : interaction.deferred;
-    if (hasReplied) {
+    if (interaction.replied || interaction.deferred) {
       await interaction.followUp(reply);
     } else {
       await interaction.reply(reply);
@@ -382,8 +397,8 @@ app.get('/health', (req, res) => {
 });
 
 mongoose.connect(process.env.MONGODB_URI)
- .then(() => logger.info('Connected to MongoDB'))
- .catch(err => {
+  .then(() => logger.info('Connected to MongoDB'))
+  .catch(err => {
     logger.error('MongoDB connection error:', err);
     process.exit(1);
   });
@@ -396,13 +411,13 @@ app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/webhooks', require('./webhook/paymentWebhook'));
 
-const PORT = process.env.PORT? process.env.PORT : 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   logger.info(`API server running on port ${PORT}`);
 });
 
 client.login(process.env.DISCORD_TOKEN)
- .catch(err => {
+  .catch(err => {
     logger.error('Discord login error:', err);
     process.exit(1);
   });

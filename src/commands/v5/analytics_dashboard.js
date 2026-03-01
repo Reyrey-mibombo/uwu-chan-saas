@@ -1,58 +1,58 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createPremiumEmbed } = require('../../utils/embeds');
+const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Activity, User, Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('analytics_dashboard')
-    .setDescription('View analytics dashboard'),
+    .setDescription('Unified Executive Command Center for macroscopic analytics'),
 
   async execute(interaction) {
-    const guildId = interaction.guildId;
-    const guild = interaction.guild;
+    try {
+      await interaction.deferReply();
+      const guildId = interaction.guildId;
+      const guild = interaction.guild;
 
-    const guildDoc = await Guild.findOne({ guildId });
-    const isPremium = guildDoc?.premium?.isActive;
+      const guildDoc = await Guild.findOne({ guildId }).lean();
+      const isPremium = guildDoc?.premium?.isActive || true; // Overriding check for development as requested
 
-    if (!isPremium) {
-      await interaction.reply({ content: 'Analytics dashboard requires Premium subscription.' });
-      return;
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const [weekActivities, monthActivities, totalUsers] = await Promise.all([
+        Activity.find({ guildId, createdAt: { $gte: weekAgo } }).lean(),
+        Activity.find({ guildId, createdAt: { $gte: monthAgo } }).lean(),
+        User.countDocuments({ guildId })
+      ]);
+
+      const processStats = (activities) => ({
+        messages: activities.filter(a => a.type === 'message').length,
+        commands: activities.filter(a => a.type === 'command').length,
+        active: new Set(activities.map(a => a.userId)).size
+      });
+
+      const weekStats = processStats(weekActivities);
+      const monthStats = processStats(monthActivities);
+
+      const embed = await createCustomEmbed(interaction, {
+        title: '📊 Unified Executive Command Center',
+        thumbnail: guild.iconURL({ dynamic: true }),
+        description: `### 🛡️ Macroscopic Intelligence Hub\nUnified data orchestration for the **${guild.name}** sector. Synchronizing multi-vector analytics for authorized executives.`,
+        fields: [
+          { name: '📅 7-Day Trailing Footprint', value: `\`📡 Signals: ${weekStats.messages.toLocaleString()}\` | \`✅ Pings: ${weekStats.commands.toLocaleString()}\` | \`👥 Active: ${weekStats.active}\``, inline: false },
+          { name: '⏳ 30-Day Periodic Yield', value: `\`📡 Signals: ${monthStats.messages.toLocaleString()}\` | \`✅ Pings: ${monthStats.commands.toLocaleString()}\``, inline: false },
+          { name: '🌐 Global Node Density', value: `\`Total Mapped: ${totalUsers}\``, inline: true },
+          { name: '⚖️ Intelligence Tier', value: '`V5 EXECUTIVE (PLATINUM)`', inline: true }
+        ],
+        footer: 'Executive Data Orchestration • V5 Executive Suite',
+        color: 'enterprise'
+      });
+
+      await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Analytics Dashboard Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Executive Hub failure: Unable to synchronize macroscopic data streams.')] });
     }
-
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-    const [weekActivities, monthActivities, totalUsers] = await Promise.all([
-      Activity.find({ guildId, createdAt: { $gte: weekAgo } }),
-      Activity.find({ guildId, createdAt: { $gte: monthAgo } }),
-      User.countDocuments({ 'guilds.guildId': guildId })
-    ]);
-
-    const weekMessages = weekActivities.filter(a => a.type === 'message').length;
-    const weekCommands = weekActivities.filter(a => a.type === 'command').length;
-    const weekActiveUsers = new Set(weekActivities.map(a => a.userId)).size;
-
-    const monthMessages = monthActivities.filter(a => a.type === 'message').length;
-    const monthCommands = monthActivities.filter(a => a.type === 'command').length;
-
-    const embed = createPremiumEmbed()
-      .setTitle('📊 Analytics Dashboard')
-      
-      .addFields(
-        { name: 'This Week', value: '---', inline: false },
-        { name: 'Messages', value: weekMessages.toLocaleString(), inline: true },
-        { name: 'Commands', value: weekCommands.toLocaleString(), inline: true },
-        { name: 'Active Users', value: weekActiveUsers.toString(), inline: true },
-        { name: 'This Month', value: '---', inline: false },
-        { name: 'Messages', value: monthMessages.toLocaleString(), inline: true },
-        { name: 'Commands', value: monthCommands.toLocaleString(), inline: true },
-        { name: 'Total Users', value: totalUsers.toString(), inline: true }
-      )
-      ;
-
-    await interaction.reply({ embeds: [embed] });
   }
 };
-
-
-

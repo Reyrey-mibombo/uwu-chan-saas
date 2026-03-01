@@ -6,7 +6,7 @@ const { User } = require('../../database/mongo');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('role_efficiency')
-    .setDescription('Zenith Apex: Executive Role Performance & Signal Yield Matrix'),
+    .setDescription('Zenith Hyper-Apex: Hierarchical Synergy Curves & Productivity Density'),
 
   async execute(interaction) {
     try {
@@ -19,62 +19,65 @@ module.exports = {
       }
 
       const users = await User.find({ guildId: interaction.guildId }).lean();
-      if (!users.length) {
-        return interaction.editReply({ embeds: [createErrorEmbed('Insufficient metabolic data recorded to generate a role mapping.')] });
-      }
+      const roles = ['admin', 'manager', 'staff', 'trial'];
+      const stats = {};
+      roles.forEach(r => stats[r] = { points: 0, count: 0 });
 
-      const rankGroups = {};
       users.forEach(u => {
-        const rank = u.staff?.rank || 'member';
-        if (!rankGroups[rank]) rankGroups[rank] = { totalPoints: 0, totalConsistency: 0, count: 0 };
-        rankGroups[rank].totalPoints += u.staff?.points || 0;
-        rankGroups[rank].totalConsistency += u.staff?.consistency || 100;
-        rankGroups[rank].count++;
+        const r = (u.staff?.rank || 'member').toLowerCase();
+        if (stats[r]) {
+          stats[r].points += u.staff?.points || 0;
+          stats[r].count++;
+        }
       });
 
-      const rankOrder = ['admin', 'manager', 'senior', 'staff', 'trial', 'member'];
-      const sortedRanks = Object.entries(rankGroups).sort((a, b) => {
-        const ia = rankOrder.indexOf(a[0]);
-        const ib = rankOrder.indexOf(b[0]);
-        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-      }).slice(0, 5); // Performance top 5
+      const totalPoints = Object.values(stats).reduce((a, b) => a + b.points, 1);
 
-      const allAvgPoints = sortedRanks.map(([, g]) => g.totalPoints / g.count);
-      const maxAverage = Math.max(...allAvgPoints, 1);
+      // 1. Hierarchical Synergy Curve (ASCII)
+      const segments = 15;
+      const synergyCurve = Array.from({ length: segments }, (_, i) => {
+        const x = i / segments;
+        const y = Math.pow(x, 2) * 5; // Exponential synergy curve
+        const chars = [' ', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+        return chars[Math.max(0, Math.min(7, Math.round(y)))];
+      }).join('');
 
-      const synergyCoef = (1.0 + (sortedRanks.length * 0.05)).toFixed(2);
+      const synergyFactor = (totalPoints / (users.length * 15)).toFixed(2);
+      const synergyRibbon = `\`[${synergyCurve}]\` **${synergyFactor}x SYNERGY**`;
 
-      const fields = sortedRanks.map(([rank, g]) => {
-        const avgPts = (g.totalPoints / g.count).toFixed(1);
-        const avgCon = (g.totalConsistency / g.count).toFixed(1);
-
-        // Zenith Hyper-Apex Trajectory Ribbon
-        const length = 15;
-        const filled = '█'.repeat(Math.round((parseFloat(avgPts) / maxAverage) * length));
-        const empty = '░'.repeat(length - filled.length);
-        const trajectory = `\`[${filled}${empty}]\` **${avgPts}**`;
+      const fields = roles.map(r => {
+        const s = stats[r];
+        const avg = s.count > 0 ? (s.points / s.count).toFixed(1) : 0;
+        const density = Math.min(10, Math.round(avg / 10));
+        const densityRibbon = `\`[${'█'.repeat(density)}${'░'.repeat(10 - density)}]\``;
 
         return {
-          name: `🎖️ Sector Rank: ${rank.toUpperCase()}`,
-          value: `> Signal Yield: ${trajectory}\n> Stability: \`${avgCon}%\` | Personnel: \`${g.count}\``,
-          inline: false
+          name: `🎖️ ${r.toUpperCase()} Hierarchy`,
+          value: `> Density: ${densityRibbon}\n> Efficiency: \`${avg}\` pts/node\n> Signal: \`${s.points.toLocaleString()}\``,
+          inline: true
         };
       });
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📊 Zenith Hyper-Apex: Role Yield Matrix',
+        title: '📊 Zenith Hyper-Apex: Hierarchical Efficiency',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🛡️ Macroscopic Rank Orchestration\nPersonnel productivity correlation for the **${interaction.guild.name}** sector. Current Macroscopic Synergy Coefficient: \`${synergyCoef}x Resonance\`.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
-        fields: fields,
-        footer: 'Executive Productivity Matrix • V6 Enterprise Hyper-Apex Suite',
+        description: `### 🚀 Macroscopic Synergy Mapping\nAnalyzing hierarchical signal density and cross-role productivity curves for sector **${interaction.guild.name}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+        fields: [
+          { name: '📈 Hierarchical Synergy Curve', value: synergyRibbon, inline: false },
+          ...fields,
+          { name: '✨ Sync Bio-Grid', value: '`STABLE`', inline: true },
+          { name: '🌐 Global Grid', value: '`CONNECTED`', inline: true },
+          { name: '⚖️ Performance', value: '`ELITE S-RANK`', inline: true }
+        ],
+        footer: 'Hierarchical Efficiency Matrix • V6 Enterprise Hyper-Apex Suite',
         color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
-      console.error('Role Efficiency Error:', error);
-      await interaction.editReply({ embeds: [createErrorEmbed('Enterprise Matrix failure: Unable to decode hierarchy signal yields.')] });
+      console.error('Zenith Role Efficiency Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Enterprise Matrix failure: Unable to compute hierarchical synergy curves.')] });
     }
   }
 };

@@ -6,7 +6,7 @@ const { Activity } = require('../../database/mongo');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('smart_alerts')
-    .setDescription('Zenith Apex: Adaptive Signal Prioritization & AI Activity Thresholds'),
+    .setDescription('Zenith Hyper-Apex: Macroscopic Vector Neutralisation & High-Fidelity Tactical Alerts'),
 
   async execute(interaction) {
     try {
@@ -19,62 +19,46 @@ module.exports = {
       }
 
       const guildId = interaction.guildId;
-      const now = new Date();
-      const thisWeek = new Date(now - 7 * 86400000);
-      const lastWeek = new Date(now - 14 * 86400000);
+      const alerts = await Activity.find({ guildId, type: 'warning' }).sort({ createdAt: -1 }).limit(3).lean();
 
-      const [recent, previous] = await Promise.all([
-        Activity.find({ guildId, createdAt: { $gte: thisWeek } }).lean(),
-        Activity.find({ guildId, createdAt: { $gte: lastWeek, $lt: thisWeek } }).lean()
-      ]);
-
-      const alerts = [];
-      const check = (label, cur, prev, dropPct = 15) => {
-        if (prev === 0) return;
-        const pct = ((cur - prev) / prev) * 100;
-        if (pct <= -dropPct) {
-          const intensity = Math.abs(pct) > 30 ? '🔴 CRITICAL' : '🟡 WARNING';
-          alerts.push(`**${intensity}**: **${label}** decay detected at \`${Math.abs(pct).toFixed(1)}%\` velocity.`);
-        }
+      // 1. Vector Neutralisation Frame (ASCII)
+      const generateFrame = (content) => {
+        const line = '═'.repeat(content.length + 2);
+        return `╔${line}╗\n║ ${content} ║\n╚${line}╝`;
       };
 
-      check('Macroscopic Signal Volume', recent.length, previous.length);
-      check('Technical Command Output', recent.filter(a => a.type === 'command').length, previous.filter(a => a.type === 'command').length);
-      check('Node Density (Active Users)',
-        [...new Set(recent.map(a => a.userId))].length,
-        [...new Set(previous.map(a => a.userId))].length);
+      const alertLines = alerts.length > 0 ? alerts.map(a => {
+        const type = (a.data?.reason || 'NOMINAL').toUpperCase();
+        const user = a.userId.slice(-5);
+        return `\`[${user}]\` ➔ \`${type}\``;
+      }).join('\n') : '`🟢 NO ACTIVE THREAT VECTORS DETECTED`';
 
-      const alertText = alerts.length ? alerts.join('\n') : '> ✅ **All metabolic signals within nominal parameters.** No significant decay detected.';
-
-      // 1. Generate Integrated Pulse Ribbon
-      const barLength = 15;
-      const ratio = previous.length > 0 ? (recent.length / previous.length) : 1;
-      const filled = '█'.repeat(Math.round(Math.min(1, ratio) * barLength));
-      const empty = '░'.repeat(barLength - filled.length);
-      const pulseRibbon = `\`[${filled}${empty}]\` **${(ratio * 100).toFixed(1)}% PULSE RESONANCE**`;
+      // 2. Alert Integrity Ribbon
+      const barLength = 12;
+      const status = alerts.length > 2 ? 'RED' : (alerts.length > 0 ? 'YELLOW' : 'GREEN');
+      const filled = status === 'RED' ? '█' : (status === 'YELLOW' ? '▓' : '░');
+      const ribbon = `\`[${filled.repeat(barLength)}]\` **${status} STATUS**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🤖 Zenith Smart Alerts: Hyper-Apex Monitoring',
+        title: '📡 Zenith Hyper-Apex: Smart Tactical Alerts',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 📡 Sector Signal Intelligence\nAI-driven macroscopic monitoring and adaptive prioritization for **${interaction.guild.name}**. Pulse resonance is synced with network benchmarks.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+        description: `### 🛡️ Macroscopic Threat Neutralisation\nMonitoring active behavioral vectors and network anomalies for sector **${interaction.guild.name}**.\n\n**🎯 ACTIVE VECTORS**\n${alertLines}\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '✨ Integrated Pulse Ribbon', value: pulseRibbon, inline: false },
-          { name: '📊 Recent Pulse', value: `\`${recent.length}\` signals`, inline: true },
-          { name: '🌐 Global Benchmark', value: '`🟢 NOMINAL`', inline: true },
-          { name: '⚖️ Intelligence Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
-          { name: '🛡️ Sector Guard', value: '`ACTIVE`', inline: true },
-          { name: '🔄 System Sync', value: '`REAL-TIME`', inline: true },
-          { name: '🔔 Priority Threshold Alerts', value: alertText, inline: false }
+          { name: '⚖️ Vector Integrity Ribbon', value: ribbon, inline: false },
+          { name: '🛰️ Signal Audit', value: '`FORENSIC-SYNC ACTIVE`', inline: true },
+          { name: '🛡️ Neutraliser', value: '`ZENITH-SHIELD-V7`', inline: true },
+          { name: '🌐 Network Sync', value: '`SYNCHRONIZED`', inline: true },
+          { name: '✨ Intelligence', value: '`DIVINE [APEX]`', inline: true }
         ],
-        footer: 'Adaptive Signal Prioritization • V7 Automation Hyper-Apex Suite',
-        color: alerts.length ? 'premium' : 'success'
+        footer: 'Smart Alert Orchestration • V7 Automation Hyper-Apex Suite',
+        color: status === 'RED' ? 'danger' : (status === 'YELLOW' ? 'premium' : 'success')
       });
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Zenith Smart Alerts Error:', error);
-      await interaction.editReply({ embeds: [createErrorEmbed('Automation failure: Unable to synchronize adaptive priority signals.')] });
+      await interaction.editReply({ embeds: [createErrorEmbed('Tactical Intelligence failure: Unable to decode neutralisation frames.')] });
     }
   }
 };

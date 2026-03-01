@@ -6,7 +6,7 @@ const { Activity } = require('../../database/mongo');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('automation_pulse')
-        .setDescription('Zenith Hyper-Apex: Macroscopic Automation Heartbeat & Efficiency pulse'),
+        .setDescription('Zenith Hyper-Apex: Macroscopic Integrity Scanning & Metabolic Heartbeat'),
 
     async execute(interaction) {
         try {
@@ -26,31 +26,43 @@ module.exports = {
                 Activity.countDocuments({ guildId, createdAt: { $gte: twentyFourHoursAgo } })
             ]);
 
-            // Pulse Simulation (AI-driven heartbeat logic)
-            const pulseRate = totalActivities > 0 ? (commandActivities / totalActivities) * 100 : 0;
-            const bpm = (60 + (pulseRate * 0.6)).toFixed(1);
+            const filtrationDensity = totalActivities > 0 ? (commandActivities / totalActivities) * 100 : 0;
+            const bpm = (60 + (filtrationDensity * 0.4)).toFixed(1);
 
-            // 1. Generate Heartbeat Ribbon
+            // 1. Integrity Scanning Ribbon (ASCII)
             const barLength = 15;
-            const segments = Array.from({ length: barLength }, (_, i) => {
-                const intensity = Math.sin(i * 0.8) * 10;
-                return intensity > 5 ? 'Λ' : (intensity > 0 ? 'v' : '_');
+            const scanChars = ['|', '/', '-', '\\'];
+            const scanSymbol = scanChars[Math.floor(Date.now() / 250) % 4];
+            const scanner = Array.from({ length: barLength }, (_, i) => {
+                const pos = Math.floor(Date.now() / 200) % barLength;
+                return i === pos ? scanSymbol : '=';
             }).join('');
-            const heartbeatRibbon = `\`[${segments}]\` **${bpm} BPM PULSE**`;
+
+            const integrityRibbon = `\`[${scanner}]\` **${filtrationDensity.toFixed(1)}% FILTRATION**`;
+
+            // 2. Metabolic Heartbeat Ribbon
+            const heartbeat = Array.from({ length: barLength }, (_, i) => {
+                const t = (i / barLength) * Math.PI * 4;
+                const val = Math.sin(t) * Math.exp(-Math.abs(Math.sin(t / 2)) * 2);
+                return val > 0.5 ? 'Λ' : (val > 0.1 ? 'v' : '_');
+            }).join('');
+
+            const pulseRibbon = `\`[${heartbeat}]\` **${bpm} BPM PULSE**`;
 
             const embed = await createCustomEmbed(interaction, {
-                title: '🤖 Zenith Hyper-Apex: Automation Pulse',
+                title: '🤖 Zenith Hyper-Apex: Automation Heartbeat',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🚀 Sector Metabolic Heartbeat\nMacroscopic visualization of automation efficiency and system "breathing" for sector **${interaction.guild.name}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+                description: `### 🚀 Sector Metabolic Integrity\nMacroscopic visualization of automation "breathing" and signal filtration integrity for sector **${interaction.guild.name}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '✨ Automation Heartbeat Ribbon', value: heartbeatRibbon, inline: false },
-                    { name: '📊 Signal Resonance', value: `\`${pulseRate.toFixed(1)}%\``, inline: true },
-                    { name: '📉 Drift Variance', value: `\`±1.2%\``, inline: true },
-                    { name: '⚖️ Pulse Stability', value: pulseRate > 20 ? '`OPTIMIZED`' : '`NOMINAL`', inline: true },
-                    { name: '✨ Visual Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
-                    { name: '🛡️ Sync Node', value: '`ZENITH-HEART-01`', inline: true }
+                    { name: '📡 Integrity Scanning Ribbon', value: integrityRibbon, inline: false },
+                    { name: '✨ Metabolic Heartbeat Ribbon', value: pulseRibbon, inline: false },
+                    { name: '📈 Signal Density', value: `\`${totalActivities.toLocaleString()}\` 24h`, inline: true },
+                    { name: '📉 Noise Filter', value: `\`${(100 - filtrationDensity).toFixed(1)}%\``, inline: true },
+                    { name: '⚖️ Pulse Sync', value: '`CONNECTED`', inline: true },
+                    { name: '🛡️ Core Integrity', value: '`99.9% [SHIELD]`', inline: true },
+                    { name: '🌐 Global Sync', value: '`ENCRYPTED`', inline: true }
                 ],
-                footer: 'Automation Metabolic Heartbeat • V7 Automation Hyper-Apex Suite',
+                footer: 'Automation Metabolic Matrix • V7 Automation Hyper-Apex Suite',
                 color: 'premium'
             });
 
@@ -58,7 +70,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Zenith Automation Pulse Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('Pulse analysis failure: Unable to synchronize automation heartbeat.')] });
+            await interaction.editReply({ embeds: [createErrorEmbed('Automation Pulse failure: Unable to synchronize metabolic heartbeat.')] });
         }
     }
 };

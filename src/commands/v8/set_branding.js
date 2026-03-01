@@ -6,56 +6,50 @@ const { Guild } = require('../../database/mongo');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('set_branding')
-        .setDescription('Zenith Apex: Elite Visual Identity & Branded System Synchronization')
-        .addStringOption(opt => opt.setName('color').setDescription('Hex color code (e.g. #ff0000)').setRequired(false))
-        .addStringOption(opt => opt.setName('footer').setDescription('Custom footer text').setRequired(false))
-        .addStringOption(opt => opt.setName('icon_url').setDescription('URL to a custom footer icon').setRequired(false)),
+        .setDescription('Zenith Hyper-Apex: macroscopic Visual Entity Branding & Divine Frames')
+        .addStringOption(opt => opt.setName('title').setDescription('The visual entity title').setRequired(true))
+        .addStringOption(opt => opt.setName('color').setDescription('The hex color code (e.g. #7289DA)').setRequired(false)),
 
     async execute(interaction) {
         try {
             await interaction.deferReply();
 
-            // Zenith Apex: Absolute License Verification
+            // Zenith Hyper-Apex License Guard
             const license = await validatePremiumLicense(interaction);
             if (!license.allowed) {
                 return interaction.editReply({ embeds: [license.embed], components: license.components });
             }
 
-            const guildId = interaction.guildId;
-            const guild = await Guild.findOne({ guildId });
+            const title = interaction.options.getString('title');
+            const color = interaction.options.getString('color') || '#5865F2';
 
-            const color = interaction.options.getString('color');
-            const footer = interaction.options.getString('footer');
-            const iconURL = interaction.options.getString('icon_url');
+            await Guild.findOneAndUpdate({ guildId: interaction.guildId }, {
+                'branding.title': title,
+                'branding.color': color
+            }, { upsert: true });
 
-            if (!color && !footer && !iconURL) {
-                return interaction.editReply({ embeds: [createErrorEmbed('You must provide at least one visual identity parameter to synchronize.')] });
-            }
+            // 1. Generate Divine Preview Frame (ASCII)
+            const generateFrame = (text) => {
+                const top = '╔' + '═'.repeat(text.length + 2) + '╗';
+                const mid = '║ ' + text + ' ║';
+                const bot = '╚' + '═'.repeat(text.length + 2) + '╝';
+                return `\`\`\`\n${top}\n${mid}\n${bot}\n\`\`\``;
+            };
 
-            if (color && !/^#([0-9A-F]{3}){1,2}$/i.test(color)) {
-                return interaction.editReply({ embeds: [createErrorEmbed('Invalid spectral color format. Please provide a valid hex color code (e.g., #7289DA).')] });
-            }
-
-            if (!guild.customBranding) guild.customBranding = {};
-            if (color) guild.customBranding.color = color;
-            if (footer) guild.customBranding.footer = footer;
-            if (iconURL) guild.customBranding.iconURL = iconURL;
-
-            await Guild.updateOne({ guildId }, { $set: { customBranding: guild.customBranding } });
+            const previewFrame = generateFrame(title.toUpperCase());
 
             const embed = await createCustomEmbed(interaction, {
-                title: '🎨 Zenith Divine Identity: Brand Orchestration',
+                title: '🎨 Zenith Hyper-Apex: Visual Calibration',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🛡️ Divine Sector Branding\nUnified visual identity parameters for **${interaction.guild.name}** have been synchronized across the entire Omni-Nexus ecosystem.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+                description: `### ✨ Divine Visual Identity Updated\nStrategic sector branding has been recalibrated for **${interaction.guild.name}**.\n\n**💎 VISUAL ENTITY PREVIEW**\n${previewFrame}\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '✨ Spectral Color', value: `\`${color || 'UNCHANGED'}\``, inline: true },
-                    { name: '📜 Divine Footer', value: `\`${footer || 'UNCHANGED'}\``, inline: true },
-                    { name: '🖼️ Divine Iconography', value: iconURL ? '`SYNCHRONIZED`' : '`UNCHANGED`', inline: true },
-                    { name: '⚖️ Visual Tier', value: '`DIVINE [HYPER-APEX]`', inline: true },
-                    { name: '🔄 Omni-Bridge', value: '`V1-V8 ACTIVE`', inline: true },
-                    { name: '🔄 System Sync', value: '`GLOBAL`', inline: true }
+                    { name: '🏷️ Entity Title', value: `\`${title}\``, inline: true },
+                    { name: '🎨 Hex Resonance', value: `\`${color}\``, inline: true },
+                    { name: '✨ Visual Tier', value: '`DIVINE [APEX]`', inline: true },
+                    { name: '🛰️ Global Sync', value: '`CONNECTED`', inline: true },
+                    { name: '🛡️ Auth Node', value: '`ZENITH-SYNC-08`', inline: true }
                 ],
-                footer: 'Divine Visual Identity Orchestration • V8 Identity Matrix Suite',
+                footer: 'Visual Branding Engine • V8 Divine Identity Suite',
                 color: 'premium'
             });
 
@@ -63,7 +57,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Zenith Set Branding Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('Identity failure: Unable to synchronize visual branding parameters.')] });
+            await interaction.editReply({ embeds: [createErrorEmbed('Visual Calibration failure: Unable to synchronize sector branding.')] });
         }
     }
 };

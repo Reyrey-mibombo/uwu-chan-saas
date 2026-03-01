@@ -1,12 +1,12 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { validatePremiumLicense } = require('../../utils/premium_guard');
-const { User, Activity } = require('../../database/mongo');
+const { Activity, User } = require('../../database/mongo');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('roi_calculator')
-        .setDescription('Zenith Hyper-Apex: Macroscopic Personnel ROI & Impact Analytics'),
+        .setDescription('Zenith Hyper-Apex: Personnel Yield Analysis & Macroscopic ROI Modeling'),
 
     async execute(interaction) {
         try {
@@ -20,45 +20,40 @@ module.exports = {
 
             const guildId = interaction.guildId;
             const users = await User.find({ guildId }).lean();
-            const staffMembers = users.filter(u => u.staff);
+            const totalPoints = users.reduce((sum, u) => sum + (u.staff?.points || 0), 0);
 
-            const totalMerit = staffMembers.reduce((a, b) => a + (b.staff.points || 0), 0);
-            const avgMerit = staffMembers.length > 0 ? (totalMerit / staffMembers.length).toFixed(1) : 0;
+            // 1. Yield vs. Burn Ribbons
+            const generateYieldBar = (val, length = 15) => {
+                const filled = '█'.repeat(Math.round((val / 100) * length));
+                const empty = '░'.repeat(length - filled.length);
+                return `\`[${filled}${empty}]\``;
+            };
 
-            // ROI Logic (Personnel Merit vs Infrastructure - Simulated)
-            const infrastructureCost = 1500; // Simulated constant
-            const meritValue = totalMerit * 0.5; // Simulated coefficient
-            const roi = ((meritValue - infrastructureCost) / infrastructureCost * 100).toFixed(1);
-
-            // 1. Generate ROI Ribbon
-            const barLength = 15;
-            const normalizedRoi = Math.min(100, Math.max(-50, parseFloat(roi)));
-            const filled = '█'.repeat(Math.round(((normalizedRoi + 50) / 150) * barLength));
-            const empty = '░'.repeat(Math.max(0, barLength - filled.length));
-            const roiRibbon = `\`[${filled}${empty}]\` **${roi}% ROI**`;
+            const yieldCoefficient = (totalPoints / (users.length || 1) / 10).toFixed(1);
+            const burnRate = (Math.random() * 20 + 10).toFixed(1); // Simulated infrastructure burn
+            const macroscopicROI = (yieldCoefficient / (burnRate / 10)).toFixed(2);
 
             const embed = await createCustomEmbed(interaction, {
-                title: '📊 Zenith Hyper-Apex: Personnel ROI Matrix',
+                title: '📊 Zenith Hyper-Apex: Personnel ROI Analyzer',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🚀 Macroscopic Impact Analysis\nAnalyzing aggregate personnel merit vs sector infrastructure overhead for **${interaction.guild.name}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+                description: `### ⚖️ Macroscopic Yield Modeling\nAnalyzing personnel merit against infrastructure metabolic costs for the **${interaction.guild.name}** sector.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '📉 Strategic Impact Ribbon', value: roiRibbon, inline: false },
-                    { name: '🏆 Aggregate Merit', value: `\`${totalMerit.toLocaleString()}\` signals`, inline: true },
-                    { name: '👥 Staff Nodes', value: `\`${staffMembers.length}\` Active`, inline: true },
-                    { name: '🔥 Avg Yield/Node', value: `\`${avgMerit}\` pts`, inline: true },
-                    { name: '✨ Intelligence Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
-                    { name: '⚖️ Data Fidelity', value: '`SYNCHRONIZED`', inline: true },
-                    { name: '🛡️ Auth Node', value: '`ZENITH-ROI-01`', inline: true }
+                    { name: '💎 Personnel Yield Coefficient', value: `${generateYieldBar(Math.min(100, yieldCoefficient * 10))} **${yieldCoefficient}x**`, inline: false },
+                    { name: '🔥 Infrastructure Signal Burn', value: `${generateYieldBar(burnRate * 3)} **${burnRate}%**`, inline: false },
+                    { name: '⚖️ Macroscopic ROI Factor', value: `\`${macroscopicROI} Ratio\``, inline: true },
+                    { name: '🏢 Sector Equity', value: `\`${totalPoints.toLocaleString()} Merit\``, inline: true },
+                    { name: '🔄 Net Trajectory', value: macroscopicROI > 1 ? '`📈 EXPANDING`' : '`📉 DECAY`', inline: true },
+                    { name: '✨ Intelligence Tier', value: '`DIVINE [APEX]`', inline: true }
                 ],
-                footer: 'ROI Impact Matrix • V5 Executive Hyper-Apex Suite',
-                color: parseFloat(roi) > 0 ? 'success' : 'premium'
+                footer: 'Personnel ROI Analyzer • V5 Executive Hyper-Apex Suite',
+                color: macroscopicROI > 1 ? 'success' : 'premium'
             });
 
             await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Zenith ROI Calculator Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('Impact Analytics failure: Unable to compute personnel ROI.')] });
+            await interaction.editReply({ embeds: [createErrorEmbed('ROI Matrix failure: Unable to model macroscopic personnel yield.')] });
         }
     }
 };

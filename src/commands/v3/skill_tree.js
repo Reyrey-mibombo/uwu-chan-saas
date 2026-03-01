@@ -6,8 +6,8 @@ const { User } = require('../../database/mongo');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('skill_tree')
-        .setDescription('Zenith Hyper-Apex: Personnel Proficiency Mapping & Tactical Skill Trees')
-        .addUserOption(opt => opt.setName('user').setDescription('Personnel to audit').setRequired(false)),
+        .setDescription('Zenith Hyper-Apex: Macroscopic Proficiency Branches & Skill Mastery')
+        .addUserOption(opt => opt.setName('user').setDescription('Sector Personnel (Optional)').setRequired(false)),
 
     async execute(interaction) {
         try {
@@ -19,32 +19,51 @@ module.exports = {
                 return interaction.editReply({ embeds: [license.embed], components: license.components });
             }
 
-            const target = interaction.options.getUser('user') || interaction.user;
-            const user = await User.findOne({ userId: target.id, guildId: interaction.guildId }).lean();
+            const targetUser = interaction.options.getUser('user') || interaction.user;
+            const userData = await User.findOne({ userId: targetUser.id, guildId: interaction.guildId }).lean();
 
-            if (!user || !user.staff) {
-                return interaction.editReply({ embeds: [createErrorEmbed(`No proficiency trace found. <@${target.id}> is unmapped.`)] });
+            if (!userData || !userData.staff) {
+                return interaction.editReply({ embeds: [createErrorEmbed(`No signal dossier found for <@${targetUser.id}>.`)] });
             }
 
-            const pts = user.staff.points || 0;
-            const mastery = user.staff.mastery || {};
+            const points = userData.staff.points || 0;
+            const rank = (userData.staff.rank || 'Trial').toUpperCase();
 
-            // Skill Nodes Logic
-            const checkNode = (required) => pts >= required ? '✅' : '🔒';
-            const progress = (cur, req) => `\`[${'█'.repeat(Math.min(5, Math.floor((cur / req) * 5)))}${'░'.repeat(Math.max(0, 5 - Math.floor((cur / req) * 5)))}]\``;
+            // 1. Proficiency Branches (ASCII Art)
+            const skillMap = [
+                `    [OPERATIONAL]`,
+                `         |`,
+                `    +----+----+`,
+                `    |         |`,
+                `[LEAD]     [TECH]`,
+                `    |         |`,
+                `  (MASTERY: ${Math.min(100, (points / 50).toFixed(0))}%)`
+            ].join('\n');
+
+            // 2. Mastery Progress Ribbons
+            const generateRibbon = (val, length = 10) => {
+                const filled = '█'.repeat(Math.round((val / 100) * length));
+                const empty = '░'.repeat(length - filled.length);
+                return `\`[${filled}${empty}]\``;
+            };
+
+            const leadership = Math.min(100, Math.round(points / 20));
+            const technical = Math.min(100, Math.round(points / 15));
+            const tactical = Math.min(100, Math.round(points / 25));
 
             const embed = await createCustomEmbed(interaction, {
-                title: `🌌 Zenith Hyper-Apex: Skill Mapping [${target.username}]`,
-                thumbnail: target.displayAvatarURL({ dynamic: true }),
-                description: `### 🛡️ Personnel Proficiency Audit\nMapping interactive signal mastery and technical specializations for personnel **${target.username}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+                title: `🌳 Zenith Hyper-Apex: Proficiency Branches`,
+                thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+                description: `### 🛡️ Macroscopic Skill Matrix\nMapping neural proficiency branches and command specializations for **${targetUser.username}**.\n\n\`\`\`\n${skillMap}\`\`\`\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '🔥 Core Proficiency (Merit)', value: `Level: \`${Math.floor(pts / 100)}\` | Total: \`${pts}\``, inline: false },
-                    { name: '📂 Operational Branch', value: `${checkNode(100)} Basic Patrol\n${checkNode(500)} Master Dispatch\n${checkNode(1000)} Sector Authority`, inline: true },
-                    { name: '📊 Analytics Branch', value: `${checkNode(200)} Signal Audit\n${checkNode(600)} Macro Analysis\n${checkNode(1200)} AI Synchronization`, inline: true },
-                    { name: '🛡️ Security Branch', value: `${checkNode(300)} Quick Guard\n${checkNode(700)} Threat Neutralizer\n${checkNode(1500)} Guardian Titan`, inline: true },
-                    { name: '⚖️ Mastery Velocity', value: `> Tech: ${progress(mastery.technical || 0, 100)}\n> Admin: ${progress(mastery.admin || 0, 100)}\n> Social: ${progress(mastery.social || 0, 100)}`, inline: false }
+                    { name: '👑 Leadership Vector', value: `${generateRibbon(leadership)} **${leadership}%**`, inline: true },
+                    { name: '⚙️ Technical Vector', value: `${generateRibbon(technical)} **${technical}%**`, inline: true },
+                    { name: '⚔️ Tactical Vector', value: `${generateRibbon(tactical)} **${tactical}%**`, inline: true },
+                    { name: '📊 Core Proficiency', value: `\`${rank} RANK SPECIALIST\``, inline: true },
+                    { name: '✨ Signal Yield', value: `\`${points.toLocaleString()} pts\``, inline: true },
+                    { name: '🔄 Sync Rating', value: '`OPTIMAL`', inline: true }
                 ],
-                footer: 'Tactical Proficiency Mapping • V3 Workforce Hyper-Apex Suite',
+                footer: 'Skill Tree Visualization • V3 Workforce Hyper-Apex Suite',
                 color: 'premium'
             });
 
@@ -52,7 +71,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Zenith Skill Tree Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('Skill Tree failure: Unable to decode personnel proficiency matrices.')] });
+            await interaction.editReply({ embeds: [createErrorEmbed('Skill Matrix failure: Unable to map neural proficiency branches.')] });
         }
     }
 };

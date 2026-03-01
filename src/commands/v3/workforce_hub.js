@@ -18,28 +18,33 @@ module.exports = {
             }
 
             const embed = await createCustomEmbed(interaction, {
-                title: '🏢 Zenith Workforce Apex: Command Portal',
+                title: '🏢 Zenith Workforce Hyper-Apex: Command Nexus',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🚀 Strategic Personnel Nexus\nUnified administrative interface for the **${interaction.guild.name}** sector. Access high-fidelity telemetry and personnel optimization matrices through the authorized terminal below.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+                description: `### 🚀 Macroscopic Personnel Orchestration\nUnified administrative interface for the **${interaction.guild.name}** sector. Access high-fidelity telemetry, collaborative synergy, and tactical proficiency matrices.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '📊 Optimizer', value: 'Predictive modeling & Velocity forensics', inline: true },
-                    { name: '📈 Efficiency', value: 'Spectral progress gauges & Yield metrics', inline: true },
-                    { name: '🗂️ Dossiers', value: 'High-fidelity identity verification', inline: true },
-                    { name: '⚖️ Intelligence Tier', value: '`PLATINUM [APEX]`', inline: true },
-                    { name: '🛡️ Sector Guard', value: '`ACTIVE`', inline: true },
-                    { name: '🔄 Syncing', value: '`REAL-TIME`', inline: true }
+                    { name: '📊 Optimizer', value: 'Predictive modeling & Velocity', inline: true },
+                    { name: '🤝 Synergy', value: 'Collaborative resonance ribbons', inline: true },
+                    { name: '🌌 Skill Tree', value: 'Proficiency & Specialization mapping', inline: true },
+                    { name: '🌐 Global Benchmark', value: '`🟢 TOP 5% SIGNAL YIELD`', inline: true },
+                    { name: '✨ Visual Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
+                    { name: '🛡️ Sector Guard', value: '`ZENITH-SYNC ACTIVE`', inline: true }
                 ],
-                footer: 'Zenith Apex Workforce Orchestration • V3 Strategic Suite',
+                footer: 'Zenith Hyper-Apex Workforce Orchestration • V3 Strategic Suite',
                 color: 'premium'
             });
 
-            const row = new ActionRowBuilder().addComponents(
+            const row1 = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('v3_optimizer').setLabel('Optimizer').setStyle(ButtonStyle.Primary).setEmoji('📊'),
-                new ButtonBuilder().setCustomId('v3_efficiency').setLabel('Efficiency').setStyle(ButtonStyle.Secondary).setEmoji('📈'),
+                new ButtonBuilder().setCustomId('v3_synergy').setLabel('Team Synergy').setStyle(ButtonStyle.Primary).setEmoji('🤝'),
+                new ButtonBuilder().setCustomId('v3_efficiency').setLabel('Efficiency').setStyle(ButtonStyle.Secondary).setEmoji('📈')
+            );
+
+            const row2 = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('v3_skills').setLabel('Skill Tree').setStyle(ButtonStyle.Secondary).setEmoji('🌌'),
                 new ButtonBuilder().setCustomId('v3_dossiers').setLabel('Dossiers').setStyle(ButtonStyle.Secondary).setEmoji('🗂️')
             );
 
-            await interaction.editReply({ embeds: [embed], components: [row] });
+            await interaction.editReply({ embeds: [embed], components: [row1, row2] });
 
         } catch (error) {
             console.error('Workforce Hub Error:', error);

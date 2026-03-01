@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const mongoose = require('mongoose');
 const express = require('express');
 const path = require('path');
@@ -16,7 +16,7 @@ const TicketSystem = require('./systems/ticketSystem');
 const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 
-// Correctly imported DailyActivity model
+// Daily activity model (for message counting)
 const DailyActivity = require('./models/activity');
 
 const client = new Client({
@@ -93,6 +93,84 @@ client.once('ready', async () => {
   await commandHandler.deployCommands(client, testGuildId || null).catch(e => logger.error('Deploy error: ' + e.message));
 
   setInterval(() => client.systems.license.syncLicenses(), 60000);
+
+  // ---------- Activity Alert Monitor ----------
+  const ALERT_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
+
+  async function checkActivityAlerts() {
+    try {
+      logger.log('[Activity Alert] Checking activity levels...');
+      // Get all guilds with alerts enabled and a channel set
+      const guilds = await Guild.find({
+        'settings.alerts.enabled': true,
+        'settings.alerts.channelId': { $ne: null }
+      }).lean();
+
+      if (!guilds.length) return;
+
+      // Yesterday's date in YYYY-MM-DD (UTC)
+      const yesterday = new Date();
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      for (const guildData of guilds) {
+        try {
+          const { guildId, settings } = guildData;
+          const { channelId, roleId, threshold } = settings.alerts;
+
+          const discordGuild = client.guilds.cache.get(guildId);
+          if (!discordGuild) {
+            logger.log(`[Activity Alert] Guild ${guildId} not found (bot left?)`);
+            continue;
+          }
+
+          const activityRecord = await DailyActivity.findOne({
+            guildId,
+            date: yesterdayStr
+          }).lean();
+
+          const messageCount = activityRecord?.messageCount || 0;
+
+          if (messageCount < threshold) {
+            const channel = discordGuild.channels.cache.get(channelId);
+            if (!channel) {
+              logger.log(`[Activity Alert] Channel ${channelId} not found in guild ${guildId}`);
+              continue;
+            }
+
+            const embed = new EmbedBuilder()
+              .setColor('#f04747')
+              .setAuthor({ name: discordGuild.name, iconURL: discordGuild.iconURL({ dynamic: true }) })
+              .setTitle('⚠️ Low Activity Detected')
+              .setDescription(
+                `Yesterday (**${yesterdayStr}**) the server had only **${messageCount}** messages.\n` +
+                `This is below the threshold of **${threshold}** messages.`
+              )
+              .addFields(
+                { name: '📉 Total Messages', value: messageCount.toLocaleString(), inline: true },
+                { name: '⚙️ Threshold', value: threshold.toLocaleString(), inline: true }
+              )
+              .setFooter({ text: 'Activity Alert System' })
+              .setTimestamp();
+
+            const content = roleId ? `<@&${roleId}>` : '';
+            await channel.send({ content, embeds: [embed] });
+            logger.log(`[Activity Alert] Alert sent for guild ${guildId} (${messageCount} < ${threshold})`);
+          }
+        } catch (err) {
+          logger.error(`[Activity Alert] Error processing guild ${guildData.guildId}:`, err);
+        }
+      }
+    } catch (err) {
+      logger.error('[Activity Alert] Fatal error:', err);
+    }
+  }
+
+  // Run once immediately after startup (optional)
+  checkActivityAlerts();
+
+  // Schedule periodic checks
+  setInterval(checkActivityAlerts, ALERT_CHECK_INTERVAL);
 });
 
 // Real Data Ingestion Pipeline
@@ -100,7 +178,7 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!message.guild) return;
 
-  const today = new Date().toISOString().split('T')[0]; // Fixed: was split('T') missing index
+  const today = new Date().toISOString().split('T')[0];
 
   try {
     await DailyActivity.findOneAndUpdate(
@@ -159,7 +237,6 @@ client.on('interactionCreate', async interaction => {
         return;
       }
 
-      // FIXED: Replaced broken OR operators with proper ||
       if (interaction.customId.startsWith('apply_accept_') || interaction.customId.startsWith('apply_deny_')) {
         await handleReviewAction(interaction);
         return;
@@ -274,12 +351,10 @@ client.on('interactionCreate', async interaction => {
       const consistency = parseInt(interaction.fields.getTextInputValue('promo_consistency'));
       const warnings = parseInt(interaction.fields.getTextInputValue('promo_warnings'));
 
-      // FIXED: Replaced broken OR operators with proper ||
       if (isNaN(points) || isNaN(shifts) || isNaN(consistency) || isNaN(warnings)) {
         return interaction.reply({ content: '❌ Please enter valid numbers for all fields.', ephemeral: true });
       }
 
-      // FIXED: Restored database field names (these were missing)
       await Guild.findOneAndUpdate(
         { guildId: interaction.guildId },
         {

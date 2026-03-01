@@ -1,12 +1,12 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Ticket } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ticketlogs')
     .setDescription('View all ticket logs with detailed embeds')
-    .addStringOption(opt => 
+    .addStringOption(opt =>
       opt.setName('status')
         .setDescription('Filter by status')
         .setRequired(false)
@@ -29,136 +29,90 @@ module.exports = {
     .addIntegerOption(opt => opt.setName('limit').setDescription('Number of tickets to show').setRequired(false))
     .setDefaultMemberPermissions(8192n),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
-    
-    const statusFilter = interaction.options.getString('status') || 'all';
-    const typeFilter = interaction.options.getString('type');
-    const limit = interaction.options.getInteger('limit') || 10;
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
 
-    const query = { guildId: interaction.guildId };
-    if (statusFilter !== 'all') {
-      query.status = statusFilter;
-    }
-    if (typeFilter) {
-      query.category = typeFilter;
-    }
+      const statusFilter = interaction.options.getString('status') || 'all';
+      const typeFilter = interaction.options.getString('type');
+      const limit = Math.min(interaction.options.getInteger('limit') || 10, 20);
 
-    const tickets = await Ticket.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+      const query = { guildId: interaction.guildId };
+      if (statusFilter !== 'all') {
+        query.status = statusFilter;
+      }
+      if (typeFilter) {
+        query.category = typeFilter;
+      }
 
-    if (!tickets.length) {
-      return interaction.editReply({ content: '?? No tickets found.', ephemeral: true });
-    }
+      const tickets = await Ticket.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean();
 
-    const pendingTickets = tickets.filter(t => t.status === 'open');
-    const claimedTickets = tickets.filter(t => t.status === 'claimed');
-    const closedTickets = tickets.filter(t => t.status === 'closed');
+      if (!tickets.length) {
+        return interaction.editReply({ embeds: [createErrorEmbed('No tickets found matching your query.')] });
+      }
 
-    const embeds = [];
+      const pendingTickets = tickets.filter(t => t.status === 'open');
+      const claimedTickets = tickets.filter(t => t.status === 'claimed');
+      const closedTickets = tickets.filter(t => t.status === 'closed');
 
-    if (pendingTickets.length > 0) {
-      for (const ticket of pendingTickets.slice(0, 5)) {
-        const embed = createCoolEmbed()
-          .setTitle(ticket.category === 'report_staff' ? `?? Staff Report` : `?? Feedback`)
-          
+      const embeds = [];
+
+      const buildTicketEmbed = (ticket, title, color) => {
+        const e = createCoolEmbed()
+          .setTitle(title)
           .addFields(
-            { name: '?? Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '?? Submitted By', value: ticket.username || 'Unknown', inline: true },
-            { name: '?? Status', value: '? **Pending** - Not claimed yet', inline: true }
+            { name: '🎫 Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
+            { name: '👤 Submitted By', value: ticket.username || 'Unknown', inline: true }
           )
-          ;
+          .setColor(color);
+
+        if (ticket.status === 'open') e.addFields({ name: '📊 Status', value: '⏳ **Pending**', inline: true });
+        else if (ticket.status === 'claimed') e.addFields({ name: '📊 Status', value: `👋 Claimed by ${ticket.claimedByName || 'Staff'}`, inline: true });
+        else if (ticket.status === 'closed') e.addFields({ name: '📊 Status', value: `🔒 Closed by ${ticket.closedByName || 'Staff'}`, inline: true });
 
         if (ticket.category === 'report_staff') {
-          embed.addFields(
-            { name: '????? Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '?? Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: true },
-            { name: '?? Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 100) : 'None', inline: false }
+          e.addFields(
+            { name: '👥 Staff Member', value: ticket.staffName || 'N/A', inline: true },
+            { name: '📝 Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: false },
+            { name: '📎 Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 500) : 'None', inline: false }
           );
         } else {
-          embed.addFields(
-            { name: '?? Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 150) : 'N/A', inline: false }
+          e.addFields(
+            { name: '💡 Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 500) : 'N/A', inline: false }
           );
           if (ticket.imageUrl) {
-            embed.setImage(ticket.imageUrl);
+            e.setImage(ticket.imageUrl);
           }
         }
+        return e;
+      };
 
-        embeds.push(embed);
+      for (const t of pendingTickets.slice(0, 3)) embeds.push(buildTicketEmbed(t, t.category === 'report_staff' ? '🚨 Pending Staff Report' : '💡 Pending Feedback', 'warning'));
+      for (const t of claimedTickets.slice(0, 3)) embeds.push(buildTicketEmbed(t, t.category === 'report_staff' ? '👋 Claimed Staff Report' : '👋 Claimed Feedback', 'primary'));
+      for (const t of closedTickets.slice(0, 3)) embeds.push(buildTicketEmbed(t, t.category === 'report_staff' ? '🔒 Closed Staff Report' : '🔒 Closed Feedback', 'dark'));
+
+      const summaryEmbed = createCoolEmbed()
+        .setTitle('🎫 Ticket System Logs Summary')
+        .setDescription(`Showing the most recent \`${tickets.length}\` results matching your filters.`)
+        .addFields(
+          { name: '⏳ Pending', value: `\`${pendingTickets.length}\``, inline: true },
+          { name: '👋 Claimed', value: `\`${claimedTickets.length}\``, inline: true },
+          { name: '🔒 Closed', value: `\`${closedTickets.length}\``, inline: true }
+        )
+        .setColor('info');
+
+      await interaction.editReply({ embeds: [summaryEmbed, ...embeds].slice(0, 10) });
+    } catch (error) {
+      console.error(error);
+      const errEmbed = createErrorEmbed('An error occurred while fetching ticket logs.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
-
-    if (claimedTickets.length > 0) {
-      for (const ticket of claimedTickets.slice(0, 5)) {
-        const embed = createCoolEmbed()
-          .setTitle(ticket.category === 'report_staff' ? `?? Staff Report (Claimed)` : `?? Feedback (Claimed)`)
-          
-          .addFields(
-            { name: '?? Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '?? Submitted By', value: ticket.username || 'Unknown', inline: true },
-            { name: '?? Status', value: `? Claimed by ${ticket.claimedByName || 'Staff'}`, inline: true }
-          )
-          ;
-
-        if (ticket.category === 'report_staff') {
-          embed.addFields(
-            { name: '????? Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '?? Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: true },
-            { name: '?? Evidence', value: ticket.evidence ? ticket.evidence.substring(0, 100) : 'None', inline: false }
-          );
-        } else {
-          embed.addFields(
-            { name: '?? Feedback', value: ticket.feedback ? ticket.feedback.substring(0, 150) : 'N/A', inline: false }
-          );
-        }
-
-        embeds.push(embed);
-      }
-    }
-
-    if (closedTickets.length > 0) {
-      for (const ticket of closedTickets.slice(0, 5)) {
-        const embed = createCoolEmbed()
-          .setTitle(ticket.category === 'report_staff' ? `?? Staff Report (Closed)` : `?? Feedback (Closed)`)
-          
-          .addFields(
-            { name: '?? Ticket ID', value: `\`${ticket._id.toString().slice(-6).toUpperCase()}\``, inline: true },
-            { name: '?? Submitted By', value: ticket.username || 'Unknown', inline: true },
-            { name: '?? Closed By', value: ticket.closedByName || 'Staff', inline: true }
-          )
-          ;
-
-        if (ticket.category === 'report_staff') {
-          embed.addFields(
-            { name: '????? Staff Member', value: ticket.staffName || 'N/A', inline: true },
-            { name: '?? Reason', value: ticket.reason ? ticket.reason.substring(0, 100) : 'N/A', inline: false }
-          );
-        }
-
-        embeds.push(embed);
-      }
-    }
-
-    const summaryEmbed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      
-      .setTimestamp()
-      .setTitle('?? Ticket Summary')
-      
-      .addFields(
-        { name: '? Pending', value: `${pendingTickets.length}`, inline: true },
-        { name: '? Claimed', value: `${claimedTickets.length}`, inline: true },
-        { name: '?? Closed', value: `${closedTickets.length}`, inline: true }
-      )
-      
-      ;
-
-    await interaction.editReply({ embeds: [summaryEmbed, ...embeds].slice(0, 10) });
   }
 };
-
-
-
-

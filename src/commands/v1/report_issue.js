@@ -1,25 +1,38 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
+const { createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('report_issue')
-    .setDescription('Report an issue with the bot')
+    .setDescription('Report an issue with the bot or server')
     .addStringOption(opt => opt.setName('issue').setDescription('Describe the issue').setRequired(true)),
 
   async execute(interaction) {
-    const issue = interaction.options.getString('issue');
-    
-    const guildData = await Guild.findOne({ guildId: interaction.guildId }) || new Guild({ guildId: interaction.guildId });
-    if (!guildData.reportedIssues) guildData.reportedIssues = [];
-    guildData.reportedIssues.push({
-      userId: interaction.user.id,
-      issue,
-      timestamp: new Date(),
-      status: 'open'
-    });
-    await guildData.save();
-    
-    await interaction.reply({ content: `✅ Issue reported: "${issue}". Thank you for your feedback!`, ephemeral: true });
+    try {
+      await interaction.deferReply({ ephemeral: true });
+      const issue = interaction.options.getString('issue');
+
+      const guildData = await Guild.findOne({ guildId: interaction.guildId }) || new Guild({ guildId: interaction.guildId });
+      if (!guildData.reportedIssues) guildData.reportedIssues = [];
+      guildData.reportedIssues.push({
+        userId: interaction.user.id,
+        issue,
+        timestamp: new Date(),
+        status: 'open'
+      });
+      await guildData.save();
+
+      const embed = createSuccessEmbed('Issue Reported', `✅ Your issue has been successfully logged:\n\n*"${issue}"*\n\nThank you for your feedback!`);
+      await interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      console.error(error);
+      const errEmbed = createErrorEmbed('An error occurred while reporting the issue. Please try again later.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
+    }
   }
 };

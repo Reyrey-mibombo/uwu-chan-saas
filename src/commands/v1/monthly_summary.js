@@ -1,5 +1,5 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Guild, Activity, Shift, Warning } = require('../../database/mongo');
 
 module.exports = {
@@ -8,35 +8,42 @@ module.exports = {
     .setDescription('View monthly activity summary'),
 
   async execute(interaction) {
-    const guild = interaction.guild;
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
-    const [activities, shifts, warnings, guildData] = await Promise.all([
-      Activity.find({ guildId: guild.id, createdAt: { $gte: thirtyDaysAgo } }),
-      Shift.find({ guildId: guild.id, createdAt: { $gte: thirtyDaysAgo } }),
-      Warning.find({ guildId: guild.id, createdAt: { $gte: thirtyDaysAgo } }),
-      Guild.findOne({ guildId: guild.id })
-    ]);
-    
-    const activeStaff = new Set(shifts.map(s => s.userId)).size;
-    const totalShiftHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
-    
-    const embed = createCoolEmbed()
-      .setTitle('📊 Monthly Summary')
-      .setThumbnail(guild.iconURL())
-      .addFields(
-        { name: '👥 Active Staff', value: `${activeStaff}`, inline: true },
-        { name: '⏱️ Total Hours', value: `${Math.round(totalShiftHours)}h`, inline: true },
-        { name: '⚠️ Warnings', value: `${warnings.length}`, inline: true },
-        { name: '📝 Activities', value: `${activities.length}`, inline: true },
-        { name: '👋 Members', value: `${guild.memberCount}`, inline: true }
-      )
-      
-      ;
+    try {
+      await interaction.deferReply();
+      const guild = interaction.guild;
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    await interaction.reply({ embeds: [embed] });
+      const [activities, shifts, warnings, guildData] = await Promise.all([
+        Activity.find({ guildId: guild.id, createdAt: { $gte: thirtyDaysAgo } }),
+        Shift.find({ guildId: guild.id, createdAt: { $gte: thirtyDaysAgo } }),
+        Warning.find({ guildId: guild.id, createdAt: { $gte: thirtyDaysAgo } }),
+        Guild.findOne({ guildId: guild.id })
+      ]);
+
+      const activeStaff = new Set(shifts.map(s => s.userId)).size;
+      const totalShiftHours = shifts.reduce((acc, s) => acc + (s.duration || 0), 0) / 3600;
+
+      const embed = createCoolEmbed()
+        .setTitle(`📊 30-Day Summary for ${guild.name}`)
+        .setThumbnail(guild.iconURL({ dynamic: true }))
+        .addFields(
+          { name: '👥 Active Staff', value: `\`${activeStaff}\` members`, inline: true },
+          { name: '⏱️ Total Shift Hours', value: `\`${Math.round(totalShiftHours)}h\``, inline: true },
+          { name: '⚠️ Warnings Issued', value: `\`${warnings.length}\``, inline: true },
+          { name: '📝 Logged Activities', value: `\`${activities.length}\``, inline: true },
+          { name: '👋 Total Server Members', value: `\`${guild.memberCount}\``, inline: true }
+        )
+        .setColor('info');
+
+      await interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      console.error(error);
+      const errEmbed = createErrorEmbed('An error occurred while fetching the monthly summary.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
+    }
   }
 };
-
-
-

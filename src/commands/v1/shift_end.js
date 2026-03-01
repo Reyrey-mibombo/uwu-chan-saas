@@ -1,5 +1,5 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,29 +7,44 @@ module.exports = {
     .setDescription('End your work shift'),
 
   async execute(interaction, client) {
-    const staffSystem = client.systems.staff;
-    const userId = interaction.user.id;
-    const guildId = interaction.guildId;
-    
-    const result = await staffSystem.endShift(userId, guildId);
-    
-    if (!result.success) {
-      return interaction.reply({ content: '❌ You dont have an active shift!', ephemeral: true });
-    }
-    
-    const embed = createCoolEmbed()
-      .setTitle('✅ Shift Ended')
-      .setDescription(`Your shift has ended!`)
-      .addFields(
-        { name: 'Duration', value: `${result.hours}h ${result.minutes}m`, inline: true },
-        { name: 'Total Seconds', value: `${Math.round(result.duration)}s`, inline: true }
-      )
-      
-      ;
+    try {
+      await interaction.deferReply({ ephemeral: true });
+      const staffSystem = client.systems.staff;
+      const userId = interaction.user.id;
+      const guildId = interaction.guildId;
 
-    await interaction.reply({ embeds: [embed] });
+      if (!staffSystem) {
+        return interaction.editReply({ embeds: [createErrorEmbed('Staff system is currently offline.')] });
+      }
+
+      const result = await staffSystem.endShift(userId, guildId);
+
+      if (!result.success) {
+        return interaction.editReply({ embeds: [createErrorEmbed('You do not have an active shift to end!')] });
+      }
+
+      const hours = result.hours || 0;
+      const minutes = result.minutes || 0;
+      const totalSeconds = Math.round(result.duration || 0);
+
+      const embed = createCoolEmbed()
+        .setTitle('✅ Shift Ended')
+        .setDescription('Your shift has successfully ended. Great work!')
+        .addFields(
+          { name: '⏱️ Duration', value: `\`${hours}h ${minutes}m\``, inline: true },
+          { name: '📊 Total Seconds', value: `\`${totalSeconds}s\``, inline: true }
+        )
+        .setColor('success');
+
+      await interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      console.error(error);
+      const errEmbed = createErrorEmbed('An error occurred while ending your shift.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
+    }
   }
 };
-
-
-

@@ -1,5 +1,5 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
+const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -8,50 +8,64 @@ module.exports = {
     .addUserOption(opt => opt.setName('user').setDescription('The staff member').setRequired(false)),
 
   async execute(interaction, client) {
-    const user = interaction.options.getUser('user') || interaction.user;
-    const member = interaction.guild.members.cache.get(user.id) || await interaction.guild.members.fetch(user.id).catch(() => null);
-    const staffSystem = client.systems.staff;
+    try {
+      await interaction.deferReply();
+      const user = interaction.options.getUser('user') || interaction.user;
+      const member = interaction.guild.members.cache.get(user.id) || await interaction.guild.members.fetch(user.id).catch(() => null);
+      const staffSystem = client.systems.staff;
 
-    const points = await staffSystem.getPoints(user.id, interaction.guildId);
-    const rank = await staffSystem.getRank(user.id, interaction.guildId);
-    const score = await staffSystem.calculateStaffScore(user.id, interaction.guildId);
-    const warnings = await staffSystem.getUserWarnings(user.id, interaction.guildId);
+      if (!staffSystem) {
+        return interaction.editReply({ embeds: [createErrorEmbed('Staff system is currently offline.')] });
+      }
 
-    // Fetch global level/XP
-    const { User } = require('../../database/mongo');
-    const { createRadarChart } = require('../../utils/charts');
+      const points = await staffSystem.getPoints(user.id, interaction.guildId);
+      const rank = await staffSystem.getRank(user.id, interaction.guildId);
+      const score = await staffSystem.calculateStaffScore(user.id, interaction.guildId);
+      const warnings = await staffSystem.getUserWarnings(user.id, interaction.guildId);
 
-    const dbUser = await User.findOne({ userId: user.id });
-    const xp = dbUser?.stats?.xp || 0;
-    const level = dbUser?.stats?.level || 1;
+      // Fetch global level/XP
+      const { User } = require('../../database/mongo');
+      const { createRadarChart } = require('../../utils/charts');
 
-    // Generate Visual Radar Chart
-    const warningPenalty = Math.max(0, 100 - (warnings.total * 20));
-    const activityScore = Math.min(100, points > 0 ? (points / 50) * 100 : 0);
-    const xpScore = Math.min(100, (level / 10) * 100);
+      const dbUser = await User.findOne({ userId: user.id });
+      const xp = dbUser?.stats?.xp || 0;
+      const level = dbUser?.stats?.level || 1;
 
-    const chartUrl = createRadarChart(
-      ['Overall Score', 'Shift Activity', 'Behavior', 'Bot Engagement'],
-      [score || 0, activityScore, warningPenalty, xpScore],
-      'Staff Skills'
-    );
+      // Generate Visual Radar Chart
+      const warningPenalty = Math.max(0, 100 - ((warnings?.total || 0) * 20));
+      const activityScore = Math.min(100, points > 0 ? (points / 50) * 100 : 0);
+      const xpScore = Math.min(100, (level / 10) * 100);
 
-    const embed = createCoolEmbed({
-      title: `👤 ${user.username}'s Profile`,
-      thumbnail: user.displayAvatarURL(),
-      image: chartUrl,
-      color: 'info'
-    }).addFields(
-      { name: '📛 Username', value: user.username, inline: true },
-      { name: '🏷️ Nickname', value: member?.nickname || 'None', inline: true },
-      { name: '📅 Joined Server', value: member?.joinedAt ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown', inline: true },
-      { name: '⭐ Points', value: `${points}`, inline: true },
-      { name: '🏆 Rank', value: rank, inline: true },
-      { name: '📈 Score', value: `${score}/100`, inline: true },
-      { name: '⚠️ Warnings', value: `${warnings.total}`, inline: true },
-      { name: '🎮 Bot Level', value: `Level ${level}\n*${xp} XP*`, inline: true }
-    );
+      const chartUrl = createRadarChart(
+        ['Overall Score', 'Shift Activity', 'Behavior', 'Bot Engagement'],
+        [score || 0, activityScore, warningPenalty, xpScore],
+        'Staff Skills'
+      );
 
-    await interaction.reply({ embeds: [embed] });
+      const embed = createCoolEmbed()
+        .setTitle(`👤 ${user.username}'s Staff Profile`)
+        .setThumbnail(user.displayAvatarURL())
+        .setImage(chartUrl)
+        .addFields(
+          { name: '📛 Username', value: user.username, inline: true },
+          { name: '🏷️ Nickname', value: member?.nickname || 'None', inline: true },
+          { name: '📅 Joined Server', value: member?.joinedTimestamp ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Unknown', inline: true },
+          { name: '⭐ Points', value: `${points}`, inline: true },
+          { name: '🏆 Rank', value: rank, inline: true },
+          { name: '📈 Score', value: `${score || 0}/100`, inline: true },
+          { name: '⚠️ Warnings', value: `${warnings?.total || 0}`, inline: true },
+          { name: '🎮 Global Level', value: `Level ${level}\n*(${xp} XP)*`, inline: true }
+        );
+
+      await interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      console.error(error);
+      const errEmbed = createErrorEmbed('An error occurred while fetching the staff profile.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
+    }
   }
 };

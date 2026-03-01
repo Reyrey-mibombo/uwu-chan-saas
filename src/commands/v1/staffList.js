@@ -1,51 +1,68 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
-const { createCoolEmbed } = require('../../utils/embeds');
-const { User, Shift } = require('../../database/mongo');
+const { createCoolEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('staff_list')
-    .setDescription('List all staff members in the server')
+    .setDescription('List all staff members and their ranks')
     .addIntegerOption(opt => opt.setName('page').setDescription('Page number').setRequired(false)),
 
-  async execute(interaction, client) {
-    await interaction.deferReply();
+  async execute(interaction) {
+    try {
+      await interaction.deferReply();
 
-    const users = await User.find({ 
-      'staff.rank': { $ne: null, $exists: true }
-    }).lean();
+      const users = await User.find({
+        'staff.rank': { $ne: null, $exists: true }
+      }).lean();
 
-    if (!users.length) {
-      return interaction.editReply('❌ No staff members found.');
+      if (!users || !users.length) {
+        return interaction.editReply({ embeds: [createErrorEmbed('No staff members found in the database.')] });
+      }
+
+      const page = Math.max(interaction.options.getInteger('page') || 1, 1);
+      const perPage = 10;
+      const totalPages = Math.ceil(users.length / perPage);
+
+      if (page > totalPages) {
+        return interaction.editReply({ embeds: [createErrorEmbed(`Invalid page. There are only \`${totalPages}\` pages available.`)] });
+      }
+
+      const start = (page - 1) * perPage;
+      const rankOrder = { owner: 1, admin: 2, manager: 3, senior: 4, staff: 5, trial: 6 };
+
+      const sorted = users
+        .filter(u => u.staff?.rank)
+        .sort((a, b) => {
+          const rankA = rankOrder[a.staff.rank] || 99;
+          const rankB = rankOrder[b.staff.rank] || 99;
+          if (rankA !== rankB) return rankA - rankB;
+          return (b.staff.points || 0) - (a.staff.points || 0); // fallback sort by points
+        });
+
+      const staffPage = sorted.slice(start, start + perPage);
+
+      const list = staffPage.map((u, i) => {
+        const rank = u.staff?.rank || 'trial';
+        const points = u.staff?.points || 0;
+        return `\`${String(start + i + 1).padStart(2)}.\` **${u.username || 'Unknown'}** — \`${rank.toUpperCase()}\` • ${points} pts`;
+      }).join('\n');
+
+      const embed = createCoolEmbed()
+        .setTitle(`👥 Global Staff List (${users.length} Total)`)
+        .setDescription(list || 'No staff found on this page.')
+        .setFooter({ text: `Page ${page} of ${totalPages} • Use /staff_list page:<num>` })
+        .setColor('enterprise');
+
+      await interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      console.error(error);
+      const errEmbed = createErrorEmbed('An error occurred while fetching the staff list.');
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [errEmbed] });
+      } else {
+        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+      }
     }
-
-    const page = interaction.options.getInteger('page') || 1;
-    const perPage = 10;
-    const totalPages = Math.ceil(users.length / perPage);
-    const start = (page - 1) * perPage;
-    const staff = users.slice(start, start + perPage);
-
-    const rankOrder = { admin: 1, manager: 2, senior: 3, staff: 4, trial: 5 };
-    const sorted = staff
-      .filter(u => u.staff?.rank)
-      .sort((a, b) => (rankOrder[a.staff.rank] || 99) - (rankOrder[b.staff.rank] || 99));
-
-    const list = sorted.map((u, i) => {
-      const rank = u.staff?.rank || 'member';
-      const points = u.staff?.points || 0;
-      return `\`${String(start + i + 1).padStart(2)}\` **${u.username || 'Unknown'}** - ${rank} (${points} pts)`;
-    }).join('\n');
-
-    const embed = createCoolEmbed()
-      .setTitle('👥 Staff List')
-      .setDescription(list || 'No staff found')
-      
-      
-      ;
-
-    await interaction.editReply({ embeds: [embed] });
   }
 };
-
-
-

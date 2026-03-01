@@ -12,6 +12,12 @@ module.exports = {
     try {
       await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
+
+      // V2 Expansion: Graceful Setup Guard
+      const { ensureGuildConfig } = require('../../utils/setup_guard');
+      const { isConfigured, embed: setupEmbed, components } = await ensureGuildConfig(interaction);
+      if (!isConfigured) return interaction.editReply({ embeds: [setupEmbed], components });
+
       const guildId = interaction.guildId;
 
       const userData = await User.findOne({ userId: targetUser.id, guildId: guildId }).lean();

@@ -11,6 +11,12 @@ module.exports = {
     try {
       await interaction.deferReply();
       const user = interaction.options.getUser('user') || interaction.user;
+
+      // V2 Expansion: Graceful Setup Guard
+      const { ensureGuildConfig } = require('../../utils/setup_guard');
+      const { isConfigured, embed: setupEmbed, components } = await ensureGuildConfig(interaction);
+      if (!isConfigured) return interaction.editReply({ embeds: [setupEmbed], components });
+
       const staffSystem = client.systems.staff;
 
       if (!staffSystem) {

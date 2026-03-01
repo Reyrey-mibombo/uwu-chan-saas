@@ -76,44 +76,42 @@ module.exports = {
       const completionRate = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📅 Network Patrol Optimizer',
+        title: '📊 Workforce Optimization Matrix',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `Reviewing execution metrics gathered across the trailing **${period} Day** span.`,
+        description: `### 🛡️ Operational Analytics: Sector ${interaction.guild.name}\nMacroscopic evaluation of workforce execution gathered over a **${period}-day** trajectory. Analysis based on real-time patrol telemetry.`,
         fields: [
           { name: '🌐 Total Trace Yield', value: `\`${totalShifts}\` Pings`, inline: true },
           { name: '✅ Authorized Patrols', value: `\`${completedShifts}\` Retained`, inline: true },
-          { name: '📈 Retention Trajectory', value: `\`${completionRate}%\``, inline: true },
-          { name: '⏱️ Total Shift Volume', value: `\`${totalHours.toFixed(1)}h\``, inline: true },
-          { name: '👥 Network Node Density', value: `\`${avgShiftsPerUser}\` Avg Shifts`, inline: true }
-        ]
+          { name: '📈 Retention Rate', value: `\`${completionRate}%\``, inline: true },
+          { name: '⏱️ Man-Hours Logged', value: `\`${totalHours.toFixed(1)}h\``, inline: true },
+          { name: '👥 Node Density', value: `\`${avgShiftsPerUser}\` Avg Shifts`, inline: true },
+          { name: '🏢 Sector Health', value: completionRate >= 80 ? '`Optimal`' : '`Degraded`', inline: true }
+        ],
+        footer: 'Algorithmic Workforce Projection • V3 Strategic Suite',
+        color: completionRate >= 80 ? 'success' : 'premium'
       });
 
-      const underperforming = staffData.filter(s => s.total < period / 3);
+      const underperforming = staffData.filter(s => s.total < period / 4);
       const overperforming = staffData.filter(s => s.total >= period / 2);
 
       if (underperforming.length > 0) {
-        const underperformers = underperforming.slice(0, 5).map(s => `<@${s.userId}> ➔ \`${s.total}\` Deployments`);
-        embed.addFields({ name: '⚠️ Decay Flagged Operators', value: underperformers.join('\n'), inline: false });
+        const list = underperforming.slice(0, 5).map(s => `🔴 <@${s.userId}> : \`${s.total}\` Deployments`).join('\n');
+        embed.addFields({ name: '⚠️ Operational Decay Flagged', value: list, inline: false });
       }
 
       if (overperforming.length > 0) {
-        const topPerformers = overperforming.slice(0, 5).map(s => `<@${s.userId}> ➔ \`${s.total}\` Deployments (\`${s.hours.toFixed(1)}h\`)`);
-        embed.addFields({ name: '⭐ Model Operative Vectors', value: topPerformers.join('\n'), inline: false });
+        const list = overperforming.slice(0, 5).map(s => `🔵 <@${s.userId}> : \`${s.total}\` Deployments (${s.hours.toFixed(1)}h)`).join('\n');
+        embed.addFields({ name: '⭐ Model Operative Vectors', value: list, inline: false });
       }
 
       const suggestions = generateSuggestions(staffData, period);
-      embed.addFields({ name: '🔧 Backend Algorithmic Insight', value: suggestions, inline: false });
+      embed.addFields({ name: '🔧 Strategic Intelligence Output', value: `> ${suggestions}`, inline: false });
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Shift Optimizer Error:', error);
-      const errEmbed = createErrorEmbed('A backend tracking error occurred resolving shift optimizer projections.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Strategic Intelligence Module failure: Unable to resolve shift projections.')] });
     }
   }
 };
@@ -123,21 +121,13 @@ function generateSuggestions(staffData, period) {
   const targetShifts = Math.ceil(period / 3);
 
   const inactive = staffData.filter(s => s.total === 0);
-  if (inactive.length > 0) {
-    suggestions.push(`> **${inactive.length} Operators** yielded *zero* patrol interactions across this query window.\n> Consider evaluating active status limits.`);
-  }
+  if (inactive.length > 0) suggestions.push(`**Personnel Risk:** ${inactive.length} operators show zero operational footprint. Recommend status audit.`);
 
-  const overloaded = staffData.filter(s => s.total > targetShifts * 1.5);
-  if (overloaded.length > 0) {
-    const list = overloaded.slice(0, 3).map(s => `<@${s.userId}>`).join(', ');
-    suggestions.push(`> **Model Decay Vulnerability:** ${list} are exceeding expected bounds. Distribute payload balance.`);
-  }
+  const overloaded = staffData.filter(s => s.total > targetShifts * 2);
+  if (overloaded.length > 0) suggestions.push('**Sustainability Alert:** High density observed in core team. Recommend payload redistribution.');
 
-  const underperforming = staffData.filter(s => s.total < targetShifts && s.total > 0);
-  if (underperforming.length > 0) {
-    const list = underperforming.slice(0, 3).map(s => `<@${s.userId}>`).join(', ');
-    suggestions.push(`> Review patrol schedules targeting ${list} to increase network retention coverage limits.`);
-  }
+  const underperf = staffData.filter(s => s.total < targetShifts && s.total > 0);
+  if (underperf.length > 0) suggestions.push('**Growth Potential:** Trailing performance in mid-tier nodes. Target scheduling optimization.');
 
-  return suggestions.length > 0 ? suggestions.join('\n\n') : '*All algorithm tracks are behaving optimally.*';
+  return suggestions.length > 0 ? suggestions.join('\n\n') : 'All operational vectors are behaving within optimal bounds.';
 }

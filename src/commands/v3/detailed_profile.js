@@ -47,44 +47,42 @@ module.exports = {
       const warnings = user.staff.warnings || 0;
       const consistency = user.staff.consistency || 100;
       const reputation = user.staff.reputation || 0;
-      const achievements = user.staff.achievements || [];
+      const level = user.staff.level || 1;
+      const accomplishments = user.staff.achievements?.length || 0;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `👤 Chronological Profile: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Global identity credentials authenticated locally for **${interaction.guild.name}**.`,
+        title: `🗂️ Personnel Dossier: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Authorized Identity Verification\nMacroscopic identity credentials authenticated locally for sector **${interaction.guild.name}**. Cross-referencing V2 telemetry logs.`,
         fields: [
-          { name: '🏆 Core Status', value: `\`${rank.charAt(0).toUpperCase() + rank.slice(1)}\``, inline: true },
-          { name: '⭐ Points yield', value: `\`${points}\``, inline: true },
-          { name: '💫 Reputation', value: `\`${reputation}\``, inline: true },
-          { name: '⚠️ Disciplinary', value: `\`${warnings}\``, inline: true },
+          { name: '🏆 Operational Rank', value: `\`${rank.toUpperCase()}\``, inline: true },
+          { name: '✨ Level Clearance', value: `\`LVL ${level}\``, inline: true },
+          { name: '💫 Honor Rating', value: `\`${reputation}\``, inline: true },
+          { name: '⭐ Aggregate Points', value: `\`${points.toLocaleString()}\``, inline: true },
           { name: '📈 Consistency', value: `\`${consistency}%\``, inline: true },
-          { name: '🏅 Badges', value: `\`${achievements.length}\``, inline: true },
-          { name: '🔄 Last 30d Patrols', value: `\`${completedShifts}/${totalShifts}\` Completed`, inline: true },
-          { name: '⏱️ Last 30d Time', value: `\`${totalHours.toFixed(1)}h\``, inline: true }
-        ]
+          { name: '🏅 Active Merits', value: `\`${accomplishments}\` Records`, inline: true },
+          { name: '🔄 30D Patrol Yield', value: `\`${completedShifts}/${totalShifts}\``, inline: true },
+          { name: '⏱️ 30D Time Delta', value: `\`${totalHours.toFixed(1)}h\``, inline: true }
+        ],
+        footer: 'Dossier Access Logged • V3 Strategic Suite',
+        color: 'enterprise'
       });
 
       if (activities.length > 0) {
         const recentActivity = activities.map(a => {
           const date = new Date(a.createdAt).toLocaleDateString();
-          return `> **${a.type}** ➔ \`${date}\``;
+          return `\`[${date}]\` **${a.type.toUpperCase()}** ➔ Authorized Linkage`;
         });
-        embed.addFields({ name: '📜 Recent Ledger Events', value: recentActivity.join('\n') });
+        embed.addFields({ name: '📜 High-Fidelity Ledger Events', value: recentActivity.join('\n') });
       } else {
-        embed.addFields({ name: '📜 Recent Ledger Events', value: '*No logged footprint exists.*' });
+        embed.addFields({ name: '📜 High-Fidelity Ledger Events', value: '*No logged footprint exists in the active registry.*' });
       }
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Detailed Profile Error:', error);
-      const errEmbed = createErrorEmbed('An error occurred querying detailed identity metrics.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Identity Retrieval failure: Unable to decode personnel dossier.')] });
     }
   }
 };

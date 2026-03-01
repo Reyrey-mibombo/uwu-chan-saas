@@ -52,31 +52,28 @@ module.exports = {
       const chart = generateEfficiencyChart(efficiencyScore);
 
       const embed = await createCustomEmbed(interaction, {
-        title: `📈 Performance Yield: ${targetUser.username}`,
-        description: `Trailing analysis generated over a designated **${period} Day** window.`,
-        thumbnail: targetUser.displayAvatarURL(),
+        title: `📊 Strategic Yield Analysis: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Performance Telemetry: Sector ${interaction.guild.name}\nAutomated diagnostic of personnel execution gathered over a **${period} Day** vector. Analysis based on behavioral consistency and interaction yields.`,
         fields: [
-          { name: '📊 Efficiency Grade', value: chart, inline: false },
-          { name: '⚙️ Yield Constraints:', value: 'Commands / Interactions / Chat', inline: false },
-          { name: '✅ Command Ping', value: `\`${commands}\``, inline: true },
-          { name: '💬 Total Processed', value: `\`${messages}\``, inline: true },
-          { name: '⚠️ Server Warnings', value: `\`${warnings}\``, inline: true },
+          { name: '⚖️ Efficiency Gradient', value: chart, inline: false },
+          { name: '⚙️ Operational Constraints', value: 'Yield distribution across core interaction modules.', inline: false },
+          { name: '✅ Command Module', value: `\`${commands}\` Pings`, inline: true },
+          { name: '💬 Chat Intelligence', value: `\`${messages}\` Logs`, inline: true },
+          { name: '⚠️ Security Warnings', value: `\`${warnings}\` Incidents`, inline: true },
           { name: '🛡️ Local Consistency', value: `\`${staff.consistency || 100}%\``, inline: true },
           { name: '💫 Reputation Yield', value: `\`${staff.reputation || 0}\``, inline: true },
-          { name: '⭐ Lifetime Points', value: `\`${staff.points || 0}\``, inline: true }
-        ]
+          { name: '⭐ Lifetime Points', value: `\`${(staff.points || 0).toLocaleString()}\``, inline: true }
+        ],
+        footer: 'Predictive Spectral Analytics • V3 Strategic Suite',
+        color: efficiencyScore >= 80 ? 'success' : 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Efficiency Chart Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred tracking trailing chart efficiency metrics.');
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
-      } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
-      }
+      await interaction.editReply({ embeds: [createErrorEmbed('Efficiency Analytics failure: Unable to establish behavioral telemetry.')] });
     }
   }
 };
@@ -84,24 +81,22 @@ module.exports = {
 function calculateEfficiency(commands, warnings, messages, consistency) {
   const positiveActions = commands + messages;
   const totalActions = positiveActions + warnings;
-
   if (totalActions === 0) return 50;
-
   const actionScore = (positiveActions / Math.max(totalActions, 1)) * 70;
   const consistencyScore = (consistency / 100) * 30;
-
   return Math.min(100, Math.max(0, Math.round(actionScore + consistencyScore)));
 }
 
 function generateEfficiencyChart(score) {
   const bars = Math.round(score / 10);
-  let chart = '';
-  for (let i = 0; i < 10; i++) {
-    if (i < bars) {
-      chart += i < 6 ? '🟢' : i < 8 ? '🟡' : '🔴';
-    } else {
-      chart += '⬜';
-    }
-  }
-  return chart + ` **${score}%**`;
+  const barChar = '█';
+  const emptyChar = '░';
+  const visual = `\`${barChar.repeat(bars)}${emptyChar.repeat(10 - bars)}\` **${score}%**`;
+
+  let grade = 'C';
+  if (score >= 95) grade = 'S+ (Elite)';
+  else if (score >= 85) grade = 'A (Exceptional)';
+  else if (score >= 70) grade = 'B (Standard)';
+
+  return `${visual}\n> **Calculated Grade:** \`Rank [${grade}]\``;
 }

@@ -24,8 +24,8 @@ module.exports = {
             const rankEmojis = ['🛡️', '🌟', '💎', '👑', '🔥', '🚀'];
 
             const embed = await createCustomEmbed(interaction, {
-                title: '📜 Server Promotion Requirements',
-                description: `These are the official qualifications needed to climb the ranks in **${interaction.guild.name}**.`,
+                title: '📜 Strategic Advancement Handbook',
+                description: `Official operational qualifications required for hierarchical advancement within the **${interaction.guild.name}** network.`,
                 thumbnail: interaction.guild.iconURL({ dynamic: true })
             });
 
@@ -34,21 +34,21 @@ module.exports = {
                 const emoji = rankEmojis[i % rankEmojis.length];
 
                 const details = [
-                    `⭐ **Points:** \`${req.points || 0}\``,
-                    `🔄 **Shifts:** \`${req.shifts || 0}\``,
-                    `📈 **Consistency:** \`${req.consistency || 0}%\``,
-                    req.maxWarnings !== undefined ? `⚠️ **Max Warnings:** \`${req.maxWarnings}\`` : null,
-                    req.shiftHours > 0 ? `⏱️ **Min Hours:** \`${req.shiftHours}h\`` : null
+                    `> ⭐ **Points**: \`${(req.points || 0).toLocaleString()}\``,
+                    `> 🔄 **Shifts**: \`${(req.shifts || 0).toLocaleString()}\``,
+                    `> 📈 **Reliability**: \`${req.consistency || 0}%\``,
+                    req.maxWarnings !== undefined ? `> ⚠️ **Risk Limit**: \`${req.maxWarnings}\`` : null,
+                    req.shiftHours > 0 ? `> ⏱️ **Flight Time**: \`${req.shiftHours}h\`` : null
                 ].filter(Boolean).join('\n');
 
                 embed.addFields({
-                    name: `${emoji} ${rank.toUpperCase()}`,
+                    name: `${emoji} Classification: ${rank.toUpperCase()}`,
                     value: details,
                     inline: true
                 });
             });
 
-            embed.setFooter({ text: 'Promotions are processed automatically upon meeting these targets!' });
+            embed.setFooter({ text: 'Advancement protocols are strictly enforced based on target fulfillment.' });
 
             await interaction.editReply({ embeds: [embed] });
 

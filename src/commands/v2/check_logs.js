@@ -31,15 +31,16 @@ module.exports = {
       const username = targetUser ? `<@${targetUser.id}>'s` : 'Server';
 
       const embed = await createCustomEmbed(interaction, {
-        title: `📜 Activity Logs: Last ${days} Days`,
-        description: `A snapshot of ${username} logged footprint in **${interaction.guild.name}**.`,
-        thumbnail: targetUser ? targetUser.displayAvatarURL() : interaction.guild.iconURL(),
+        title: `📜 Operational Footprint: Last ${days} Days`,
+        description: `### 🛡️ Transaction Log Snapshot\nRetrieved ${username} tactical footprint data from the **${interaction.guild.name}** operational ledger.`,
+        thumbnail: targetUser ? targetUser.displayAvatarURL({ dynamic: true }) : interaction.guild.iconURL({ dynamic: true }),
         fields: [
-          { name: '📋 Total Activities', value: `\`${activities.length}\``, inline: true },
-          { name: '⚠️ Disciplinary Warnings', value: `\`${warnings.length}\``, inline: true },
-          { name: '🔄 Logged Shifts', value: `\`${shifts.length}\``, inline: true }
+          { name: '📋 Total Transactions', value: `\`${activities.length.toLocaleString()}\` Events`, inline: true },
+          { name: '⚠️ Risk Indicators', value: `\`${warnings.length.toLocaleString()}\` Warnings`, inline: true },
+          { name: '🔄 Service Patrols', value: `\`${shifts.length.toLocaleString()}\` Shifts`, inline: true }
         ],
-        footer: 'Data queried securely via MongoDB aggregations.'
+        footer: 'Intelligence queried securely via high-performance MongoDB aggregations.',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

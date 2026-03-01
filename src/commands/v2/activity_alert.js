@@ -72,16 +72,17 @@ module.exports = {
             }
 
             const embed = await createCustomEmbed(interaction, {
-                title: changed ? '✅ Activity Alerts Updated' : '📊 Activity Alert Configuration',
-                description: 'Background process that listens for sudden drops in general server chat traffic over a set threshold.',
+                title: changed ? '✅ Traffic Monitor Calibrated' : '📊 Operational Traffic Intelligence',
+                description: `### 🛡️ Real-Time Engagement Monitoring\nBackground process calibrated to detect significant fluctuations in general server traffic volume in the **${interaction.guild.name}** sector.`,
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
                 fields: [
-                    { name: '🔔 Engine Status', value: alerts.enabled ? '✅ `Enabled`' : '❌ `Disabled`', inline: true },
-                    { name: '📢 Output Channel', value: alerts.channelId ? `<#${alerts.channelId}>` : '`Not Set`', inline: true },
-                    { name: '👥 Target Role', value: alerts.roleId ? `<@&${alerts.roleId}>` : '`None`', inline: true },
-                    { name: '⚙️ Warning Threshold', value: `**${alerts.threshold}** Messages/Day`, inline: false }
+                    { name: '🔔 Engine Status', value: alerts.enabled ? '🟢 `OPERATIONAL`' : '🔴 `DECOMMISSIONED`', inline: true },
+                    { name: '📢 Output Node', value: alerts.channelId ? `<#${alerts.channelId}>` : '*No Node Bound*', inline: true },
+                    { name: '👥 Alert Target', value: alerts.roleId ? `<@&${alerts.roleId}>` : '*No Role Broadcast*', inline: true },
+                    { name: '⚙️ Sensitivity Threshold', value: `\`${alerts.threshold.toLocaleString()}\` Messages / 24h`, inline: false }
                 ],
-                footer: 'Alert system monitors global server traffic volume'
+                footer: 'Monitoring algorithms analyze rolling traffic density patterns.',
+                color: alerts.enabled ? 'success' : 'primary'
             });
 
             await interaction.editReply({ embeds: [embed] });

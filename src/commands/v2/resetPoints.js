@@ -29,12 +29,14 @@ module.exports = {
       );
 
       const embed = await createCustomEmbed(interaction, {
-        title: '☢️ Economy Reset Initiated',
-        description: `**SUCCESS:** The staff economy for **${interaction.guild.name}** has been wiped.`,
+        title: '☢️ Enterprise Economy Wipeout',
+        description: `**PROTOCOL EXECUTED:** The local staff economy for **${interaction.guild.name}** has been completely synchronized to zero state.`,
         fields: [
-          { name: '📊 Profiles Affected', value: `\`${result.modifiedCount}\` Staff Records`, inline: true }
+          { name: '📊 Operational Impact', value: `\`${result.modifiedCount}\` Personnel Records Sanitized`, inline: true },
+          { name: '⚖️ Action Type', value: 'Full Economy Reset', inline: true }
         ],
-        footer: `Executed by ${interaction.user.tag}`
+        footer: `System Wipe Activated By: ${interaction.user.tag}`,
+        color: 'error'
       });
 
       await interaction.editReply({ embeds: [embed] });

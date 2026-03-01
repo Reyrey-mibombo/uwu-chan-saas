@@ -47,16 +47,17 @@ module.exports = {
             await guildData.save();
 
             const embed = await createCustomEmbed(interaction, {
-                title: `⚙️ Requirements Overwritten: ${rank.toUpperCase()}`,
-                description: `Successfully locked in 5 advanced requirements for the **${rank.toUpperCase()}** milestone!`,
+                title: `⚙️ Operational Calibration: ${rank.toUpperCase()}`,
+                description: `Successfully synchronized 5 advanced target constraints for the **${rank.toUpperCase()}** milestone within the **${interaction.guild.name}** sector.`,
                 fields: [
-                    { name: '1️⃣ ⭐ Minimum Points', value: `\`${points}\``, inline: true },
-                    { name: '2️⃣ 🔄 Minimum Shifts', value: `\`${shifts}\``, inline: true },
-                    { name: '3️⃣ 📈 Min Consistency', value: `\`${consistency}%\``, inline: true },
-                    { name: '4️⃣ ⚠️ Max Warnings', value: `\`${maxWarnings}\``, inline: true },
-                    { name: '5️⃣ ⏱️ Min Shift Hours', value: shiftHours > 0 ? `\`${shiftHours}h\`` : '`Disabled`', inline: true }
+                    { name: '1️⃣ ⭐ Target Points', value: `\`${points.toLocaleString()}\``, inline: true },
+                    { name: '2️⃣ 🔄 Engagement Shifts', value: `\`${shifts}\``, inline: true },
+                    { name: '3️⃣ 📈 Reliability Index', value: `\`${consistency}%\``, inline: true },
+                    { name: '4️⃣ ⚠️ Risk Tolerance', value: `\`<= ${maxWarnings}\``, inline: true },
+                    { name: '5️⃣ ⏱️ Flight Time', value: shiftHours > 0 ? `\`${shiftHours}h\`` : '*No Constraint Established*', inline: true }
                 ],
-                footer: 'Upgrade to Enterprise to unlock all 10 custom milestone constraints'
+                footer: 'Milestone parameters are enforced by the background automation engine.',
+                color: 'enterprise'
             });
 
             await interaction.editReply({ embeds: [embed] });

@@ -18,14 +18,24 @@ module.exports = {
       const rep = user?.staff?.reputation || 0;
       const rank = user?.staff?.rank || 'member';
 
+      // Reputation Tiers for "Cool Feature"
+      let tier = 'Neutral';
+      if (rep >= 1000) tier = '🌌 Legendary';
+      else if (rep >= 500) tier = '💎 Platinum';
+      else if (rep >= 250) tier = '🥇 Gold';
+      else if (rep >= 100) tier = '🥈 Silver';
+      else if (rep >= 50) tier = '🥉 Bronze';
+
       const embed = await createCustomEmbed(interaction, {
-        title: `💫 Reputation: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `<@${targetUser.id}>'s reputation and standing inside **${interaction.guild.name}**.`,
+        title: `💫 Personnel Reputation: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `Official reputation standing for <@${targetUser.id}> in the **${interaction.guild.name}** network.`,
         fields: [
-          { name: '⭐ Reputation Points', value: `**${rep}**`, inline: true },
-          { name: '🏆 Current Rank', value: `\`${rank.toUpperCase()}\``, inline: true }
-        ]
+          { name: '⭐ Reputation Points', value: `**${rep.toLocaleString()}**`, inline: true },
+          { name: '🏅 Reputation Tier', value: `\`${tier}\``, inline: true },
+          { name: '🏆 Official Rank', value: `\`${rank.toUpperCase()}\``, inline: true }
+        ],
+        color: rep >= 100 ? 'enterprise' : 'primary'
       });
 
       await interaction.editReply({ embeds: [embed] });

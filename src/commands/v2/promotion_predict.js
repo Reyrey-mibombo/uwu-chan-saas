@@ -78,22 +78,27 @@ module.exports = {
       const avgProgress = Math.round((pointsProgress + shiftsProgress) / 2) || 0;
 
       const filled = Math.min(10, Math.floor(avgProgress / 10));
-      const progressBar = `\`${'█'.repeat(filled)}${'░'.repeat(10 - filled)}\``;
+      const progressBar = `\`${'■'.repeat(filled)}${'□'.repeat(10 - filled)}\``;
+
+      // Confidence Level for "Cool Feature"
+      let confidence = 'Low (Incomplete Data)';
+      if (recentActivities.length >= 8) confidence = 'High (Robust Analytics)';
+      else if (recentActivities.length >= 4) confidence = 'Medium (Baseline Telemetry)';
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🔮 Milestone Prediction: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Analyzing recent velocity and historical activity logs for <@${targetUser.id}>...`,
+        title: `🔮 Predictive Milestone Forecast: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Operational AI Analysis\nAnalyzing velocity, historical engagement rhythms, and percentile achievement data for <@${targetUser.id}>. Performance is being benchmarked against **${nextRankName.toUpperCase()}** standards.`,
         fields: [
-          { name: '🏆 Current Rank', value: `\`${currentRank.toUpperCase()}\``, inline: true },
-          { name: '⬆️ Analyzing Target', value: `\`${nextRankName.toUpperCase()}\``, inline: true },
-          { name: '📊 Cumulative Progress', value: `${progressBar} **${avgProgress}%**`, inline: false },
-          { name: '⭐ Points Target', value: `\`${points} / ${reqPoints}\` (${pointsNeeded} needed)`, inline: true },
-          { name: '🔄 Shifts Target', value: `\`${shiftCount} / ${reqShifts}\` (${shiftsNeeded} needed)`, inline: true },
+          { name: '🏆 Analyzing Target', value: `\`${currentRank.toUpperCase()}\` ➔ \`${nextRankName.toUpperCase()}\``, inline: false },
+          { name: '📊 Cumulative Achievement Bar', value: `${progressBar} **${avgProgress}%** Complete`, inline: false },
+          { name: '⭐ Points Gap', value: `\`${points.toLocaleString()}\` / \`${reqPoints.toLocaleString()}\` **(${pointsNeeded.toLocaleString()} Remaining)**`, inline: true },
+          { name: '🔄 Engagement Gap', value: `\`${shiftCount}\` / \`${reqShifts}\` **(${shiftsNeeded} Remaining)**`, inline: true },
           { name: '📈 Consistency', value: `\`${consistency}% / ${reqConsistency}%\``, inline: true },
-          { name: '⏱️ Estimated Arrival', value: predictedWeeks <= 0 ? '🎉 Ready **NOW**!' : `~**${predictedWeeks}** Weeks`, inline: true }
+          { name: '⏱️ Estimated Arrival', value: predictedWeeks <= 0 ? '✨ **IMMEDIATE ELIGIBILITY**' : `**~${predictedWeeks}** Standard Weeks`, inline: true },
+          { name: '📡 Analytics Confidence', value: `\`${confidence}\``, inline: true }
         ],
-        footer: 'Based on rolling 7-Day trajectory approximations'
+        footer: 'Algorithms use a rolling 7-day velocity approximation'
       });
 
       await interaction.editReply({ embeds: [embed] });

@@ -50,6 +50,8 @@ module.exports = {
             guildData = new Guild({ guildId, name: interaction.guild.name, ownerId: interaction.guild.ownerId });
         }
 
+        const { createCustomEmbed } = require('../../utils/embeds');
+
         if (sub === 'role') {
             const rank = interaction.options.getString('rank');
             const role = interaction.options.getRole('role');
@@ -57,29 +59,26 @@ module.exports = {
             guildData.rankRoles[rank] = role.id;
             guildData.markModified('rankRoles');
             await guildData.save();
-            return interaction.editReply({
-                embeds: [new EmbedBuilder()
-      .setColor('#2b2d31')
-      
-      .setTimestamp()
-                    .setTitle('? Rank Role Set')
-                    .setDescription(`**${rank.toUpperCase()}** ? <@&${role.id}>`)
-                    ]
+
+            const embed = await createCustomEmbed(interaction, {
+                title: '🛡️ Classification Role Assigned',
+                description: `Successfully synchronized the **${rank.toUpperCase()}** classification to the <@&${role.id}> role.`,
+                color: 'success'
             });
+            return interaction.editReply({ embeds: [embed] });
         }
 
         if (sub === 'channel') {
             const channel = interaction.options.getChannel('channel');
             guildData.settings.promotionChannel = channel.id;
             await guildData.save();
-            return interaction.editReply({
-                embeds: [new EmbedBuilder()
-      .setColor('#2b2d31')
-      
-      .setTimestamp()
-                    .setTitle('? Promotion Channel Set')
-                    .setDescription(`Promotions will be announced in <#${channel.id}>`)]
+
+            const embed = await createCustomEmbed(interaction, {
+                title: '📡 Announcement Node Established',
+                description: `Promotion advancement signals will now be broadcast to <#${channel.id}>.`,
+                color: 'success'
             });
+            return interaction.editReply({ embeds: [embed] });
         }
 
         if (sub === 'requirements') {
@@ -92,19 +91,19 @@ module.exports = {
             guildData.promotionRequirements[rank] = { points: pts, shifts, consistency, maxWarnings };
             guildData.markModified('promotionRequirements');
             await guildData.save();
-            return interaction.editReply({
-                embeds: [new EmbedBuilder()
-      .setColor('#2b2d31')
-      
-      .setTimestamp()
-                    .setTitle(`? Requirements Set for ${rank.toUpperCase()}`)
-                    .addFields(
-                        { name: '? Points', value: pts.toString(), inline: true },
-                        { name: '?? Shifts', value: shifts.toString(), inline: true },
-                        { name: '?? Consistency', value: `${consistency}%`, inline: true },
-                        { name: '?? Max Warnings', value: maxWarnings.toString(), inline: true }
-                    )]
+
+            const embed = await createCustomEmbed(interaction, {
+                title: `⚙️ Calibration Complete: ${rank.toUpperCase()}`,
+                description: `Operational requirements for the **${rank.toUpperCase()}** classification have been successfully updated.`,
+                fields: [
+                    { name: '⭐ Points', value: `\`${pts.toLocaleString()}\``, inline: true },
+                    { name: '🔄 Shifts', value: `\`${shifts}\``, inline: true },
+                    { name: '📈 Reliability', value: `\`${consistency}%\``, inline: true },
+                    { name: '⚠️ Risk Limit', value: `\`${maxWarnings}\``, inline: true }
+                ],
+                color: 'enterprise'
             });
+            return interaction.editReply({ embeds: [embed] });
         }
 
         if (sub === 'view') {
@@ -114,20 +113,22 @@ module.exports = {
             const fields = RANKS.map(r => {
                 const roleId = rankRoles[r];
                 const req = reqs[r];
-                const roleStr = roleId ? `<@&${roleId}>` : '? Not set';
-                const reqStr = req ? `${req.points}pts / ${req.shifts} shifts / ${req.consistency}% / max ${req.maxWarnings} warns` : '(defaults)';
-                return { name: `${r.toUpperCase()}`, value: `Role: ${roleStr}\nReqs: ${reqStr}`, inline: false };
+                const roleStr = roleId ? `<@&${roleId}>` : '*Not Established*';
+                const reqStr = req ? `\`${req.points} PTS\` | \`${req.shifts} SHIFTS\` | \`${req.consistency}%\` | \`<= ${req.maxWarnings} WARNS\`` : '*Using Global Defaults*';
+                return { name: `📂 Classification: ${r.toUpperCase()}`, value: `> **Discord Role**: ${roleStr}\n> **Requirements**: ${reqStr}`, inline: false };
             });
             const ch = guildData.settings?.promotionChannel;
-            return interaction.editReply({
-                embeds: [new EmbedBuilder()
-      .setColor('#2b2d31')
-      
-      .setTimestamp()
-                    .setTitle('?? Promotion Setup')
-                    .addFields({ name: '?? Announcement Channel', value: ch ? `<#${ch}>` : '? Not set' }, ...fields)
-                    ]
+
+            const embed = await createCustomEmbed(interaction, {
+                title: '📋 Enterprise Configuration Overview',
+                description: `Core operational parameters for hierarchical advancement in **${interaction.guild.name}**.`,
+                fields: [
+                    { name: '📡 Announcement Node', value: ch ? `<#${ch}>` : '*No Node Established*' },
+                    ...fields
+                ],
+                footer: 'Authorized Management Glance'
             });
+            return interaction.editReply({ embeds: [embed] });
         }
     }
 };

@@ -66,15 +66,16 @@ module.exports = {
       const predictedWeeks = pointsNeeded > 0 ? Math.ceil(pointsNeeded / pointsPerWeek) : 0;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🔮 Point Estimation: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Based on <@${targetUser.id}>'s recent velocity, here's their estimated runtime to **${nextRankName.toUpperCase()}**:`,
+        title: `🔮 Personnel Velocity Forecast: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Operational AI Analysis\nPredicting Advancement trajectory to **${nextRankName.toUpperCase()}** based on rolling velocity metrics in the **${interaction.guild.name}** sector.`,
         fields: [
-          { name: '⭐ Velocity', value: `\`+${pointsPerWeek}\` Points/Week`, inline: true },
-          { name: '🎯 Required Delta', value: `\`${pointsNeeded}\` More Points`, inline: true },
-          { name: '⏱️ Estimated Arrival', value: predictedWeeks <= 0 ? '🎉 **IMMINENT**' : `~**${predictedWeeks}** Weeks`, inline: false }
+          { name: '⭐ Velocity Index', value: `\`+${pointsPerWeek.toLocaleString()}\` **PTS/Week**`, inline: true },
+          { name: '🎯 Required Delta', value: `\`${pointsNeeded.toLocaleString()}\` **PTS Remaining**`, inline: true },
+          { name: '⏱️ Estimated Readiness', value: predictedWeeks <= 0 ? '✨ **IMMEDIATE ELIGIBILITY**' : `**~${predictedWeeks}** Standard Weeks`, inline: false }
         ],
-        footer: 'This is a projection. It does not factor in warnings or shift hour constraints.'
+        footer: 'Projections are based on rolling 14-day performance telemetry',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

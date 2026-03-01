@@ -87,23 +87,23 @@ module.exports = {
       const progress = Math.round((metCount / totalCount) * 100) || 0;
 
       const filled = Math.min(10, Math.floor(progress / 10));
-      const progressBar = `\`${'█'.repeat(filled)}${'░'.repeat(10 - filled)}\``;
+      const progressBar = `\`${'■'.repeat(filled)}${'□'.repeat(10 - filled)}\``;
 
       const reqList = requirements.map(r => {
-        const emoji = r.met ? '✅' : '❌';
-        return `${emoji} **${r.name}**: \`${r.current} / ${r.required}\` ${r.reverse ? '(Max Allowed)' : ''}`;
+        const status = r.met ? '🟢' : '🔴';
+        return `${status} **${r.name}**: \`${r.current.toLocaleString()} / ${r.required.toLocaleString()}\` ${r.reverse ? '(Limit)' : ''}`;
       }).join('\n');
 
       const embed = await createCustomEmbed(interaction, {
-        title: `📈 Promotion Status: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Analyzing requirements to advance to **${nextRankName.toUpperCase()}** in **${interaction.guild.name}**...`,
+        title: `📈 Advancement Telemetry: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Operational Milestone Analysis\nCurrently benchmarking performance metrics against **${nextRankName.toUpperCase()}** standards in the **${interaction.guild.name}** sector.`,
         fields: [
-          { name: '🏆 Current Rank', value: `\`${currentRank.toUpperCase()}\``, inline: true },
-          { name: '⬆️ Target Rank', value: `\`${nextRankName.toUpperCase()}\``, inline: true },
-          { name: '📊 Cumulative Progress', value: `${progressBar} **${progress}%**\n(${metCount}/${totalCount} Milestones Met)`, inline: false },
+          { name: '🏆 Current Status', value: `\`${currentRank.toUpperCase()}\` ➔ \`${nextRankName.toUpperCase()}\``, inline: false },
+          { name: '📊 Target Readiness', value: `${progressBar} **${progress}%** Verified\n*(${metCount}/${totalCount} Operational Milestones Cleared)*`, inline: false },
           { name: '📋 Objective Checklist', value: reqList, inline: false }
-        ]
+        ],
+        color: progress >= 100 ? 'success' : 'primary'
       });
 
       await interaction.editReply({ embeds: [embed] });

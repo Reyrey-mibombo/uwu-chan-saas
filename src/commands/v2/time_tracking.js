@@ -32,15 +32,16 @@ module.exports = {
       };
 
       const embed = await createCustomEmbed(interaction, {
-        title: `⏱️ Temporal Tracker: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Cumulative time clocked for <@${targetUser.id}> by timeframe within **${interaction.guild.name}**.`,
+        title: `⏱️ Temporal Operational Matrix: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ Service Time Aggregation\nComprehensive analysis of authenticated patrol cycles for <@${targetUser.id}> within the **${interaction.guild.name}** sector.`,
         fields: [
-          { name: '🌞 Today', value: calcTime(daily), inline: true },
-          { name: '📅 This Week', value: calcTime(weekly), inline: true },
-          { name: '🗓️ This Month', value: calcTime(monthly), inline: true }
+          { name: '🌞 Diurnal (Today)', value: calcTime(daily), inline: true },
+          { name: '📅 Weekly Cycle', value: calcTime(weekly), inline: true },
+          { name: '🗓️ Mensal (Month)', value: calcTime(monthly), inline: true }
         ],
-        footer: 'Values represent strictly authenticated logged completion times.'
+        footer: 'Metrics are derived from strictly validated service logs.',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

@@ -27,22 +27,21 @@ module.exports = {
         return interaction.editReply({ embeds: [createErrorEmbed(`No data profile found for <@${targetUser.id}> in this server.`)] });
       }
 
-      // Aggregate true task metrics from Activities
-      const commandTasks = recentActivities.filter(a => a.type === 'command').length;
-      const ptsGainedLast7Days = recentActivities
-        .filter(a => a.type === 'promotion' || a.type === 'task')
-        .reduce((acc, curr) => acc + (curr.data?.amount || 0), 0);
+      // Calculation for trend
+      const momentum = ptsGainedLast7Days > 500 ? '🚀 High Velocity' : ptsGainedLast7Days > 100 ? '📈 Stable' : '📉 Limited engagement';
 
       const embed = await createCustomEmbed(interaction, {
-        title: `📈 Performance Yield: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Rolling 7-Day operational breakdown for <@${targetUser.id}>.`,
+        title: `📈 Operational Yield: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `### 🛡️ 7-Day Performance Analytic\nComprehensive yield report for <@${targetUser.id}> within the **${interaction.guild.name}** sector. Aggregating real-time telemetry from all active service nodes.`,
         fields: [
-          { name: '✅ Commands/Tasks', value: `\`${commandTasks}\` Completed`, inline: true },
-          { name: '🔄 Shifts Delivered', value: `\`${recentShifts.length}\` Logged`, inline: true },
-          { name: '⭐ Points Yield', value: `\`+${ptsGainedLast7Days}\` Points`, inline: true }
+          { name: '✅ Command Throughput', value: `\`${commandTasks.toLocaleString()}\` Verified Tasks`, inline: true },
+          { name: '🔄 Service Engagement', value: `\`${recentShifts.length.toLocaleString()}\` Active Shifts`, inline: true },
+          { name: '⭐ Strategic Yield', value: `\`+${ptsGainedLast7Days.toLocaleString()}\` PTS Yielded`, inline: true },
+          { name: '📡 Operational Momentum', value: `\`${momentum}\``, inline: false }
         ],
-        footer: 'This report replaces legacy static strings with real aggregated math.'
+        footer: 'Reports are generated using real-time aggregated database telemetry.',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

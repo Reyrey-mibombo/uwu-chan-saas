@@ -26,16 +26,17 @@ module.exports = {
       const result = await staffSystem.addPoints(user.id, interaction.guildId, amount, reason);
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🎁 Bonus Points Awarded',
-        thumbnail: user.displayAvatarURL(),
-        description: `Successfully awarded bonus points to **${user.tag}**!`,
+        title: '🎁 High-Performance Bonus Awarded',
+        thumbnail: user.displayAvatarURL({ dynamic: true }),
+        description: `Personnel recognition protocol complete for **${user.tag}**!`,
         fields: [
-          { name: '👤 Staff Member', value: `<@${user.id}>`, inline: true },
-          { name: '📈 Awarded', value: `\`+${amount}\` Points`, inline: true },
-          { name: '💰 Total Balance', value: `\`${result.total}\` Points`, inline: true },
-          { name: '📝 Award Reason', value: `*${reason}*`, inline: false }
+          { name: '👤 Recognized Personnel', value: `<@${user.id}>`, inline: true },
+          { name: '📈 Bonus Injected', value: `\`+${amount.toLocaleString()}\` **PTS**`, inline: true },
+          { name: '💰 Adjusted Balance', value: `\`${result.total.toLocaleString()}\` **PTS**`, inline: true },
+          { name: '📝 Awarding Protocol', value: `*${reason}*`, inline: false }
         ],
-        footer: `Authorized by ${interaction.user.tag}`
+        footer: `Authorization Signal: ${interaction.user.tag}`,
+        color: 'enterprise'
       });
 
       await interaction.editReply({ embeds: [embed] });

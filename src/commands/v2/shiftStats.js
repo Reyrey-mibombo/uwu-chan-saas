@@ -29,17 +29,18 @@ module.exports = {
       const activeShifts = shifts.filter(s => s.endTime == null && s.status !== 'ended').length;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `⏱️ Shift Stats: ${targetUser.username}`,
-        description: `A comprehensive statistical breakdown of all recorded patrols for <@${targetUser.id}>.`,
-        thumbnail: targetUser.displayAvatarURL(),
+        title: `⏱️ Patrol Analytics: ${targetUser.username}`,
+        description: `### 🛡️ Operational Record Breakdown\nA comprehensive statistical analysis of all service patrols recorded for <@${targetUser.id}> within the **${interaction.guild.name}** sector.`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
         fields: [
-          { name: '📊 Patrols Logged', value: `\`${totalShifts}\` Shifts`, inline: true },
-          { name: '⏱️ Lifetime Duration', value: `\`${hours}h ${minutes}m\``, inline: true },
-          { name: '📈 Avg. Patrol Time', value: `\`${Math.floor(avgDuration / 60)}m\``, inline: true },
-          { name: '✅ Status Completed', value: `\`${completedShifts}\` Processed`, inline: true },
-          { name: '🔴 Currently Active', value: activeShifts > 0 ? '`ON PATROL`' : '`None`', inline: true }
+          { name: '📊 Patrols Executed', value: `\`${totalShifts.toLocaleString()}\` Logged`, inline: true },
+          { name: '⏱️ Total Service Time', value: `\`${hours}h ${minutes}m\``, inline: true },
+          { name: '📈 Avg. Deployment', value: `\`${Math.floor(avgDuration / 60)}m\``, inline: true },
+          { name: '✅ Validated Records', value: `\`${completedShifts.toLocaleString()}\` Completed`, inline: true },
+          { name: '🔴 Deployment Status', value: activeShifts > 0 ? '`ON ACTIVE PATROL`' : '`Standby`', inline: true }
         ],
-        footer: 'Only logs processed within this specific Discord server are counted.'
+        footer: 'Statistics are localized to the current server environment.',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

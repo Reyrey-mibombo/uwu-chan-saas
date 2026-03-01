@@ -31,15 +31,16 @@ module.exports = {
       await user.save();
 
       const embed = await createCustomEmbed(interaction, {
-        title: '✅ Reputation Supercharged',
-        description: `Successfully injected reputation into **${targetUser.tag}**'s server profile.`,
-        thumbnail: targetUser.displayAvatarURL(),
+        title: '✅ Reputation Signal Supercharged',
+        description: `Successfully updated the reputation telemetry for **${targetUser.tag}** in the local sector.`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
         fields: [
-          { name: '👤 User', value: `<@${targetUser.id}>`, inline: true },
-          { name: '➕ Added', value: `+${amount} Rep`, inline: true },
-          { name: '💫 Total Reputation', value: `**${user.staff.reputation}** Rep`, inline: true }
+          { name: '👤 Personnel', value: `<@${targetUser.id}>`, inline: true },
+          { name: '➕ Injected', value: `\`+${amount.toLocaleString()}\` **REP**`, inline: true },
+          { name: '💫 Current Total', value: `**${user.staff.reputation.toLocaleString()}** **REP**`, inline: true }
         ],
-        footer: `Authorized by ${interaction.user.tag}`
+        footer: `Authorized By Superior Command: ${interaction.user.tag}`,
+        color: amount > 0 ? 'success' : 'error'
       });
 
       await interaction.editReply({ embeds: [embed] });

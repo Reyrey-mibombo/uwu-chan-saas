@@ -81,18 +81,18 @@ module.exports = {
         return interaction.editReply({ embeds: [createErrorEmbed('No staff members are currently eligible for promotion.')] });
       }
 
-      const top5 = eligible.slice(0, 10);
+      const top5 = eligible.slice(0, 5);
       const list = top5.map((e, i) => {
-        const medals = ['', '🥇', '🥈', '🥉'];
-        const medal = medals[i + 1] || `${i + 1}.`;
-        return `${medal} **${e.username}** → \`${e.nextRank.toUpperCase()}\`\n└ ⭐ \`${e.points}\` 🔄 \`${e.shiftCount}\` 📈 \`${e.consistency}%\``;
-      }).join('\n\n');
+        const positions = ['🥇 TOP PRIORITY', '🥈 HIGH PRIORITY', '🥉 TARGETED', '⚖️ MONITORING', '⚖️ MONITORING'];
+        const tag = positions[i] || `\`#${i + 1}\``;
+        return `> **${tag}**: **${e.username}**\n> ➔ **Target**: \`${e.nextRank.toUpperCase()}\`\n> 📊 **Metrics**: ⭐ \`${e.points.toLocaleString()}\` | 🔄 \`${e.shiftCount}\` | 📈 \`${e.consistency}%\` | 🎯 \`${e.progress}%\` Readied\n`;
+      }).join('\n');
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📋 Next Promotion Queue',
+        title: '📋 Enterprise Promotion Pipeline',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `**${eligible.length}** staff members are ready for promotion in this server!\n\n${list}`,
-        footer: 'Automatically calculating dynamic server milestones'
+        description: `### 🛡️ Authorized Personnel Queue\nCurrently **${eligible.length}** personnel meet or exceed the eligibility threshold for advancement in the **${interaction.guild.name}** sector.\n\n${list}\n\n*Queue is generated based on real-time performance telemetry.*`,
+        footer: 'Automated Advancement Algorithms'
       });
 
       await interaction.editReply({ embeds: [embed] });

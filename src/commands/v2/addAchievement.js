@@ -74,15 +74,16 @@ module.exports = {
       await Promise.all([userData.save(), activity.save()]);
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🏆 Achievement Unlocked!`,
-        description: `**${title}** has been securely awarded to <@${targetUser.id}>.`,
-        thumbnail: targetUser.displayAvatarURL(),
+        title: `🏆 Strategic Merit Authenticated`,
+        description: `### 🛡️ Professional Achievement Awarded\nThe high-command has officially recognized <@${targetUser.id}> with the **${title}** classification for exemplary service.`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
         fields: [
-          { name: '📋 Category', value: `\`${category}\``, inline: true },
-          { name: '🏅 Granted By', value: `<@${interaction.user.id}>`, inline: true },
-          { name: '🔢 Total Medals', value: `\`${userData.staff.achievements.length}\``, inline: true }
+          { name: '📋 Merit Category', value: `\`${category}\``, inline: true },
+          { name: '🎖️ Registered By', value: `<@${interaction.user.id}>`, inline: true },
+          { name: '🔢 Medal Inventory', value: `\`${userData.staff.achievements.length}\` Distinct Merits`, inline: true }
         ],
-        footer: 'Achievements boost eligibility during automated promotion checks.'
+        footer: 'Achievements boost advancement eligibility during autonomous promotion scans.',
+        color: 'success'
       });
 
       await interaction.editReply({ embeds: [embed] });

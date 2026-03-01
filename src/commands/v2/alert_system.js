@@ -34,32 +34,36 @@ module.exports = {
         const name = interaction.options.getString('name');
         const condition = interaction.options.getString('condition');
 
-        // Check limits to prevent DB bloat
         if (guildData.alerts.length >= 10) {
-          return interaction.editReply({ embeds: [createErrorEmbed('You have reached the maximum active alert limit of 10.')] });
+          return interaction.editReply({ embeds: [createErrorEmbed('Maximum operational alert capacity (10) has been reached for this sector.')] });
         }
 
         guildData.alerts.push({ name, condition, createdBy: interaction.user.id });
         await guildData.save();
 
         const embed = await createCustomEmbed(interaction, {
-          title: '✅ Alert System Online',
-          description: `Successfully registered a custom listener rule named **${name}**.`,
+          title: '✅ Alert Protocol Synchronized',
+          description: `Successfully registered a new tactical listener rule within the **${interaction.guild.name}** monitoring grid.`,
           fields: [
-            { name: '⚙️ Triggers When', value: `\`${condition}\``, inline: false }
-          ]
+            { name: '📡 Rule Designation', value: `\`${name.toUpperCase()}\``, inline: true },
+            { name: '⚙️ Logic Condition', value: `\`${condition}\``, inline: true }
+          ],
+          color: 'success'
         });
 
         return interaction.editReply({ embeds: [embed] });
       }
 
       if (subcommand === 'list') {
+        const list = guildData.alerts.map((a, i) => `> **${i + 1}.** \`${a.name}\` ➔ \`${a.condition}\``).join('\n');
+
         const embed = await createCustomEmbed(interaction, {
-          title: '🔔 Custom Alert Rules',
+          title: '🔔 Active Operational Alerts',
           thumbnail: interaction.guild.iconURL({ dynamic: true }),
           description: guildData.alerts.length > 0
-            ? guildData.alerts.map((a, i) => `**${i + 1}.** \`${a.name}\` ➔ ${a.condition}`).join('\n')
-            : '*No alerts currently configured for this server.*'
+            ? `### 🛡️ Monitoring Grid Status: ONLINE\nThe following listener rules are active in the **${interaction.guild.name}** sector:\n\n${list}`
+            : '*No active alert protocols detected in the current sector.*',
+          color: 'premium'
         });
 
         return interaction.editReply({ embeds: [embed] });
@@ -72,14 +76,15 @@ module.exports = {
         guildData.alerts = guildData.alerts.filter(a => a.name !== name);
 
         if (guildData.alerts.length === originalLength) {
-          return interaction.editReply({ embeds: [createErrorEmbed(`No alert named **${name}** could be found.`)] });
+          return interaction.editReply({ embeds: [createErrorEmbed(`Search failed: No alert rule designated **${name}** exists.`)] });
         }
 
         await guildData.save();
 
         const embed = await createCustomEmbed(interaction, {
-          title: '🗑️ Alert Removed',
-          description: `Successfully wiped the listener rule **${name}** from the database.`
+          title: '🗑️ Alert Protocol Terminated',
+          description: `Successfully decommissioned the listener rule **${name}** from the operational grid.`,
+          color: 'error'
         });
 
         return interaction.editReply({ embeds: [embed] });

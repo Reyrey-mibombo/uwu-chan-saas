@@ -59,20 +59,27 @@ module.exports = {
         consistency >= reqConsistency &&
         warningCount <= reqMaxWarnings;
 
+      // Visual progress bars for "Cool Feature"
+      const getBar = (current, target) => {
+        const percent = Math.min(100, Math.floor((current / target) * 100));
+        const filled = Math.floor(percent / 10);
+        return `\`${'■'.repeat(filled)}${'□'.repeat(10 - filled)}\` **${percent}%**`;
+      };
+
       const embed = await createCustomEmbed(interaction, {
-        title: canPromote ? '✅ ELIGIBLE FOR PROMOTION' : '❌ REQUIREMENTS NOT MET',
+        title: canPromote ? '✅ ELIGIBILITY SIGNAL: CLEAR' : '❌ ELIGIBILITY SIGNAL: INCOMPLETE',
         description: canPromote
-          ? `🎉 **${targetUser.username}** has cleared all hurdles for **${nextRankName.toUpperCase()}**!`
-          : `💪 Keep grinding! **${targetUser.username}** needs more activity to reach **${nextRankName.toUpperCase()}**.`,
-        thumbnail: targetUser.displayAvatarURL(),
+          ? `### 🎇 Milestone Achieved\n**${targetUser.username}** has successfully fulfilled all operational requirements for the **${nextRankName.toUpperCase()}** rank.`
+          : `### 📈 Operational Roadmap\n**${targetUser.username}** is currently on the path to **${nextRankName.toUpperCase()}**. Further activity is required to hit target benchmarks.`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
         fields: [
-          { name: '🏆 Current Rank', value: `\`${currentRank.toUpperCase()}\``, inline: true },
-          { name: '⬆️ Target Rank', value: `\`${nextRankName.toUpperCase()}\``, inline: true },
-          { name: '⭐ Points Target', value: `\`${points} / ${reqPoints}\` ${points >= reqPoints ? '✅' : '❌'}`, inline: false },
-          { name: '🔄 Shifts Target', value: `\`${shiftCount} / ${reqShifts}\` ${shiftCount >= reqShifts ? '✅' : '❌'}`, inline: true },
-          { name: '📈 Consistency', value: `\`${consistency}% / ${reqConsistency}%\` ${consistency >= reqConsistency ? '✅' : '❌'}`, inline: true },
-          { name: '⚠️ Warning Limit', value: `\`${warningCount} / ${reqMaxWarnings}\` ${warningCount <= reqMaxWarnings ? '✅' : '❌'}`, inline: true }
-        ]
+          { name: '🏆 Rank Trajectory', value: `\`${currentRank.toUpperCase()}\` ➔ \`${nextRankName.toUpperCase()}\``, inline: false },
+          { name: '⭐ Points Protocol', value: `${getBar(points, reqPoints)}\n*Current:* \`${points.toLocaleString()}\` / *Target:* \`${reqPoints.toLocaleString()}\``, inline: true },
+          { name: '🔄 Shift Volume', value: `${getBar(shiftCount, reqShifts)}\n*Current:* \`${shiftCount}\` / *Target:* \`${reqShifts}\``, inline: true },
+          { name: '📈 Consistency Rating', value: `${getBar(consistency, reqConsistency)}\n*Current:* \`${consistency}%\` / *Target:* \`${reqConsistency}%\``, inline: true },
+          { name: '⚠️ Risk Factor (Warnings)', value: `\`${warningCount} / ${reqMaxWarnings}\` ${warningCount <= reqMaxWarnings ? '✅' : '❌'}`, inline: true }
+        ],
+        color: canPromote ? 'success' : 'primary'
       });
 
       await interaction.editReply({ embeds: [embed] });

@@ -66,42 +66,41 @@ module.exports = {
             const generateProgressBar = (current, max) => {
                 const pct = Math.min(100, Math.round((current / max) * 100)) || 0;
                 const filled = Math.min(10, Math.floor(pct / 10));
-                return `\`${'█'.repeat(filled)}${'░'.repeat(10 - filled)}\` **${pct}%**`;
+                return `\`${'■'.repeat(filled)}${'□'.repeat(10 - filled)}\` **${pct}%**`;
             };
 
             const embed = await createCustomEmbed(interaction, {
-                title: `📊 Promotion Path: ${nextRankName.toUpperCase()}`,
-                description: `Hey <@${targetUser.id}>, here is your authentic journey to becoming a **${nextRankName.toUpperCase()}** in **${interaction.guild.name}**.`,
-                thumbnail: targetUser.displayAvatarURL(),
-                footer: 'Data updates automatically as you complete shifts and tasks! ✨'
+                title: `📊 Strategic Advancement Progress: ${nextRankName.toUpperCase()}`,
+                description: ` personnel development telemetry for <@${targetUser.id}> within the **${interaction.guild.name}** sector. Current trajectory is positive.`,
+                thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+                fields: [
+                    {
+                        name: '⭐ Points Acquisition',
+                        value: `${generateProgressBar(stats.points, nextReq.points)}\n*Status:* \`${stats.points.toLocaleString()}\` / \`${nextReq.points.toLocaleString()}\``,
+                        inline: false
+                    },
+                    {
+                        name: '🔄 Operational Engagements (Shifts)',
+                        value: `${generateProgressBar(stats.shifts, nextReq.shifts)}\n*Status:* \`${stats.shifts.toLocaleString()}\` / \`${nextReq.shifts.toLocaleString()}\``,
+                        inline: false
+                    },
+                    {
+                        name: '📈 Reliability Rating (Consistency)',
+                        value: `${generateProgressBar(stats.consistency, nextReq.consistency)}\n*Status:* \`${stats.consistency}%\` / \`${nextReq.consistency}%\``,
+                        inline: false
+                    }
+                ],
+                footer: 'Telemetry synchronized with real-time server activity'
             });
 
-            embed.addFields(
-                {
-                    name: `⭐ Points: \`${stats.points} / ${nextReq.points}\``,
-                    value: generateProgressBar(stats.points, nextReq.points),
-                    inline: false
-                },
-                {
-                    name: `🔄 Shifts: \`${stats.shifts} / ${nextReq.shifts}\``,
-                    value: generateProgressBar(stats.shifts, nextReq.shifts),
-                    inline: false
-                },
-                {
-                    name: `📈 Consistency: \`${stats.consistency}% / ${nextReq.consistency}%\``,
-                    value: generateProgressBar(stats.consistency, nextReq.consistency),
-                    inline: false
-                }
-            );
-
             if (nextReq.maxWarnings !== undefined) {
-                const warningStatus = stats.warnings <= nextReq.maxWarnings ? '✅ Clear' : '❌ Too many warnings';
-                embed.addFields({ name: '⚠️ Warning Limit', value: `\`${stats.warnings} / ${nextReq.maxWarnings}\` (${warningStatus})`, inline: true });
+                const warningStatus = stats.warnings <= nextReq.maxWarnings ? '🟢 Within Limits' : '🔴 EXCEEDED';
+                embed.addFields({ name: '⚠️ Risk Factor (Warnings)', value: `\`${stats.warnings} / ${nextReq.maxWarnings}\` (${warningStatus})`, inline: true });
             }
 
             if (nextReq.shiftHours > 0) {
-                const hoursStatus = stats.shiftHours >= nextReq.shiftHours ? '✅ Met' : '❌ Needs Hours';
-                embed.addFields({ name: '⏱️ Minimum Hours', value: `\`${stats.shiftHours}h / ${nextReq.shiftHours}h\` (${hoursStatus})`, inline: true });
+                const hoursStatus = stats.shiftHours >= nextReq.shiftHours ? '🟢 Met' : '🟡 In Progress';
+                embed.addFields({ name: '⏱️ Flight Time (Hours)', value: `\`${stats.shiftHours}h / ${nextReq.shiftHours}h\` (${hoursStatus})`, inline: true });
             }
 
             await interaction.editReply({ embeds: [embed] });

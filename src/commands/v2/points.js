@@ -20,14 +20,29 @@ module.exports = {
       const userPoints = await staffSystem.getPoints(user.id, interaction.guildId);
       const rank = await staffSystem.getRank(user.id, interaction.guildId);
 
+      // Calculate progress to next rank for a "Cool feature"
+      const { RANK_THRESHOLDS, RANK_ORDER } = require('./progress_tracker');
+      const currentIndex = RANK_ORDER.indexOf(rank.toLowerCase());
+      const nextRank = RANK_ORDER[currentIndex + 1];
+      const nextThreshold = nextRank ? RANK_THRESHOLDS[nextRank] : null;
+
+      let progressText = '🏆 **MAX RANK ACHIEVED**';
+      if (nextThreshold) {
+        const remaining = nextThreshold - userPoints;
+        const percent = Math.min(100, Math.floor((userPoints / nextThreshold) * 100));
+        progressText = `📈 **${percent}%** to \`${nextRank.toUpperCase()}\` (Needs ${remaining} more)`;
+      }
+
       const embed = await createCustomEmbed(interaction, {
-        title: `💰 Points Balance: ${user.username}`,
-        thumbnail: user.displayAvatarURL(),
-        description: `Here is the current economic standing for <@${user.id}> in **${interaction.guild.name}**.`,
+        title: `👤 Personnel Economy: ${user.username}`,
+        thumbnail: user.displayAvatarURL({ dynamic: true }),
+        description: `Detailed economic telemetry for <@${user.id}> within the **${interaction.guild.name}** sector.`,
         fields: [
-          { name: '⭐ Total Points', value: `\`${userPoints}\``, inline: true },
-          { name: '🏆 Current Rank', value: `\`${rank.toUpperCase()}\``, inline: true }
-        ]
+          { name: '⭐ Total Points', value: `\`${userPoints.toLocaleString()}\``, inline: true },
+          { name: '🏆 Current Rank', value: `\`${rank.toUpperCase()}\``, inline: true },
+          { name: '📊 Progression', value: progressText, inline: false }
+        ],
+        color: userPoints > 500 ? 'premium' : 'primary'
       });
 
       await interaction.editReply({ embeds: [embed] });

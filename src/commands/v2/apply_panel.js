@@ -26,16 +26,17 @@ module.exports = {
             }
 
             const panelEmbed = await createCustomEmbed(interaction, {
-                title: config.panelTitle || '📋 Server Application',
-                description: 'Click the button below to start your application!\n\n> Please answer all questions truthfully. Your application will be forwarded securely to our staff team for review.',
+                title: config.panelTitle || '📋 Strategic Personnel Acquisition',
+                description: '### 🛡️ Authorized Recruitment Terminal\nInitialize your official application for service within the **${interaction.guild.name}** sector. Please provide authentic telemetry responses to all terminal prompts.\n\n> Submission signals are encrypted and routed directly to the high-command review grid.',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                footer: `Powered by ${interaction.client.user.username} Recruitment`
+                footer: `Official Recruitment Engine • ${interaction.guild.name} Staffing`,
+                color: 'enterprise'
             });
 
             const actionRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setCustomId('start_application')
-                    .setLabel('Start Application')
+                    .setLabel('Initialize Application')
                     .setEmoji('📝')
                     .setStyle(ButtonStyle.Success)
             );
@@ -44,14 +45,15 @@ module.exports = {
             const applyChannel = await interaction.guild.channels.fetch(config.applyChannelId).catch(() => null);
 
             if (!applyChannel) {
-                return interaction.editReply({ embeds: [createErrorEmbed(`Could not locate the configured channel <#${config.applyChannelId}>. Ensure the channel was not deleted.`)] });
+                return interaction.editReply({ embeds: [createErrorEmbed(`Search failed: Could not locate the injection node <#${config.applyChannelId}>.`)] });
             }
 
             await applyChannel.send({ embeds: [panelEmbed], components: [actionRow] });
 
             const success = await createCustomEmbed(interaction, {
-                title: '✅ Deployment Successful',
-                description: `Successfully spawned the interactive Application Modal in <#${config.applyChannelId}>.`
+                title: '✅ Recruitment Terminal Deployed',
+                description: `Successfully materialized the interactive application interface in <#${config.applyChannelId}>.`,
+                color: 'success'
             });
             await interaction.editReply({ embeds: [success] });
 

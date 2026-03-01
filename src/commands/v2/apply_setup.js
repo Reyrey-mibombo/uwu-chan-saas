@@ -48,15 +48,16 @@ module.exports = {
             await config.save();
 
             const embed = await createCustomEmbed(interaction, {
-                title: '✨ Application Pipeline Deployed',
-                description: `Your custom application listener is now successfully linked to your server channels in **${interaction.guild.name}**!`,
+                title: '✨ Strategic Talent Pipeline Deployed',
+                description: `Successfully established a high-fidelity application listener for the **${interaction.guild.name}** sector. All incoming signals are now routed for review.`,
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
                 fields: [
-                    { name: '📝 Panel Channel', value: `<#${applyChannel.id}>`, inline: true },
-                    { name: '🕵️ Review Channel', value: `<#${reviewChannel.id}>`, inline: true },
-                    { name: '🔔 Reviewer Ping', value: reviewerRole ? `<@&${reviewerRole.id}>` : '*None*', inline: true }
+                    { name: '📝 Injection Node', value: `<#${applyChannel.id}>`, inline: true },
+                    { name: '🕵️ Review Grid', value: `<#${reviewChannel.id}>`, inline: true },
+                    { name: '🔔 Alert Role', value: reviewerRole ? `<@&${reviewerRole.id}>` : '*No Role Broadcast*', inline: true }
                 ],
-                footer: 'Execute /apply_panel in the intended channel to spawn the UI menu.'
+                footer: 'Deployment signal verified. Execute /apply_panel to initialize the UI.',
+                color: 'success'
             });
 
             await interaction.editReply({ embeds: [embed] });

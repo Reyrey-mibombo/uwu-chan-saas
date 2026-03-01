@@ -18,13 +18,14 @@ module.exports = {
             }
 
             const embed = await createCustomEmbed(interaction, {
-                title: '⚙️ Promotion System Setup',
-                description: 'Welcome to the premium server promotion setup engine! Use the dropdown menu below to configure each rank\'s minimum requirements and link them to Discord roles.',
+                title: '⚙️ Enterprise Advancement Configuration',
+                description: `Welcome to the high-performance advancement setup suite for **${interaction.guild.name}**. Initialize and calibrate your server's promotion logic using the centralized control menu below.`,
                 fields: [
-                    { name: '📋 Instructions', value: '1. Select a rank to configure.\n2. Set the point thresholds, shift counts, and consistency requirements.\n3. Link the rank to a Discord role for automatic assignment.', inline: false },
-                    { name: '✨ Pro Tip', value: 'Enable the `Automation` module utilizing `/promo_toggle` to activate the automatic background promotion engine.', inline: false }
+                    { name: '📋 Configuration Protocol', value: '1. Select a designated rank classification.\n2. Calibrate point thresholds and engagement requirements.\n3. Link classifications to Discord roles for automated deployment.', inline: false },
+                    { name: '📡 System Synchronization', value: 'Use `/promo_toggle` to activate the background automation engine once calibration is complete.', inline: false }
                 ],
-                footer: 'Interactive Configuration Pipeline'
+                footer: 'Hyper-Advanced Configuration Interface',
+                color: 'premium'
             });
 
             // Dynamically load available ranks from the database keys

@@ -27,15 +27,15 @@ module.exports = {
       const totalShifts = shifts.length;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🎁 Reward Profile: ${targetUser.username}`,
-        thumbnail: targetUser.displayAvatarURL(),
-        description: `Here are the authentic rewards metrics for <@${targetUser.id}>.`,
+        title: `🎁 Specialized Reward Profile: ${targetUser.username}`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `High-fidelity reward metrics tracking for <@${targetUser.id}> within the **${interaction.guild.name}** operational sector.`,
         fields: [
-          { name: '✨ Available Points', value: `\`${available}\``, inline: true },
-          { name: '⏱️ Lifetime Logged', value: `\`${lifetimeHours}\` Hours`, inline: true },
-          { name: '📅 Total Shifts', value: `\`${totalShifts}\` Shifts`, inline: true }
+          { name: '✨ Available Points', value: `\`${available.toLocaleString()}\``, inline: true },
+          { name: '⏱️ Lifetime Logged', value: `\`${lifetimeHours.toLocaleString()}\` **HRS**`, inline: true },
+          { name: '📅 Total Engagements', value: `\`${totalShifts.toLocaleString()}\` **Shifts**`, inline: true }
         ],
-        footer: 'Authentic Data • Non-Estimations'
+        color: available > 1000 ? 'enterprise' : 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

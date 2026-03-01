@@ -33,15 +33,16 @@ module.exports = {
       await user.save();
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📉 Points Deducted',
-        description: `Successfully removed points from **${targetUser.tag}**'s server profile.`,
-        thumbnail: targetUser.displayAvatarURL(),
+        title: '📉 Administrative Point Deduction',
+        description: `Personnel record updated for **${targetUser.tag}**. Points have been successfully extracted from the local server profile.`,
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
         fields: [
-          { name: '👤 User', value: `<@${targetUser.id}>`, inline: true },
-          { name: '➖ Deducted', value: `-${amount} Pts`, inline: true },
-          { name: '📝 Reason', value: `*${reason}*`, inline: false }
+          { name: '👤 Targeted Personnel', value: `<@${targetUser.id}>`, inline: true },
+          { name: '➖ Points Extracted', value: `\`-${amount.toLocaleString()}\` **PTS**`, inline: true },
+          { name: '📝 Protocol/Reason', value: `*${reason}*`, inline: false }
         ],
-        footer: `Authorized by ${interaction.user.tag}`
+        footer: `Authorization: ${interaction.user.tag}`,
+        color: 'error'
       });
 
       await interaction.editReply({ embeds: [embed] });

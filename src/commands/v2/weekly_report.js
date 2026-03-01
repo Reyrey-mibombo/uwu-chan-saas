@@ -27,17 +27,18 @@ module.exports = {
       const avgHours = activeStaff > 0 ? (totalHours / activeStaff).toFixed(1) : 0;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📊 Server Weekly Report',
-        description: `A 7-Day macroscopic breakdown of the staff economy within **${interaction.guild.name}**.`,
+        title: '📊 Macroscopic Operational Intelligence',
+        description: `### 🛡️ 7-Day Staff Economy Breakdown\nStrategic performance analysis and resource allocation metrics for the **${interaction.guild.name}** sector. Aggregating multi-node telemetry.`,
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
         fields: [
-          { name: '👤 Active Participating Staff', value: `\`${activeStaff}\` Members`, inline: true },
-          { name: '🔄 Total Patrols Cast', value: `\`${shifts.length}\` Shifts`, inline: true },
-          { name: '⏱️ Average Time Yield', value: `\`${avgHours}h\`/Staff Member`, inline: true },
-          { name: '📋 Total Server Events', value: `\`${activities.length}\` Transmitted`, inline: true },
-          { name: '💰 Paid Staff Pool', value: `\`${users.length}\` Profiles Registered`, inline: true }
+          { name: '👤 Workforce Capacity', value: `\`${activeStaff.toLocaleString()}\` Active Personnel`, inline: true },
+          { name: '🔄 Operational Throughput', value: `\`${shifts.length.toLocaleString()}\` Patrols Cast`, inline: true },
+          { name: '⏱️ Average Time Yield', value: `\`${avgHours}h\` / Personnel`, inline: true },
+          { name: '📋 Sector Transactions', value: `\`${activities.length.toLocaleString()}\` Logged Events`, inline: true },
+          { name: '💰 Registered Data Profiles', value: `\`${users.length.toLocaleString()}\` Staff Entities`, inline: true }
         ],
-        footer: 'Data strictly sandboxed to current guild.'
+        footer: 'Intelligence is sandboxed to the current localized guild environment.',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

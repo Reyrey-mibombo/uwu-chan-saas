@@ -23,22 +23,22 @@ module.exports = {
 
       const list = await Promise.all(users.map(async (u, i) => {
         const medals = ['🥇', '🥈', '🥉'];
-        const medal = medals[i] || `\`${i + 1}.\``;
+        const position = medals[i] || `\`#${i + 1}\``;
 
         let username = u.username;
         if (!username) {
           const fetched = await interaction.client.users.fetch(u.userId).catch(() => null);
-          username = fetched ? fetched.username : 'Unknown User';
+          username = fetched ? fetched.username : 'Unknown Personnel';
         }
 
-        return `${medal} **${username}** — \`${u.staff?.points || 0}\` Points`;
+        return `${position} **${username}** — \`${u.staff?.points?.toLocaleString() || 0}\` **PTS**`;
       }));
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🏆 Server Economy Leaderboard',
+        title: '🏆 Enterprise Economy Leaderboard',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `The highest achieving staff members inside **${interaction.guild.name}**:\n\n${list.join('\n')}`,
-        footer: 'Real-Data Rankings'
+        description: `High-value personnel within the **${interaction.guild.name}** sector:\n\n${list.join('\n')}\n\n*Rankings are updated in real-time based on local server performance.*`,
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

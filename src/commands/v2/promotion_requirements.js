@@ -25,8 +25,8 @@ module.exports = {
       const emojis = ['⭐', '🌟', '💎', '👑', '🔥', '🚀'];
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📋 Active Promotion Objectives',
-        description: `Minimum target metrics required to progress through the hierarchy in **${interaction.guild.name}**.`,
+        title: '📋 Strategic Advancement Objectives',
+        description: `Official metric targets required for hierarchical progression within the **${interaction.guild.name}** sector.`,
         thumbnail: interaction.guild.iconURL({ dynamic: true })
       });
 
@@ -35,23 +35,19 @@ module.exports = {
         const req = guild.promotionRequirements[rankName];
         const fields = [];
 
-        if (req.points) fields.push(`⭐ Points: **${req.points}**`);
-        if (req.shifts) fields.push(`🔄 Shifts: **${req.shifts}**`);
-        if (req.consistency) fields.push(`📈 Consistency: **${req.consistency}%**`);
-        if (req.maxWarnings !== undefined && req.maxWarnings !== null) fields.push(`⚠️ Max Warnings: **${req.maxWarnings}**`);
-        if (req.shiftHours) fields.push(`⏰ Shift Hours: **${req.shiftHours}**`);
-        if (req.achievements) fields.push(`🏅 Achievements: **${req.achievements}**`);
-        if (req.reputation) fields.push(`💫 Reputation: **${req.reputation}**`);
-        if (req.daysInServer) fields.push(`📅 Days in Server: **${req.daysInServer}**`);
-        if (req.cleanRecordDays) fields.push(`✅ Clean Record Days: **${req.cleanRecordDays}**`);
+        if (req.points) fields.push(`> ⭐ **Target Points**: \`${req.points.toLocaleString()}\``);
+        if (req.shifts) fields.push(`> 🔄 **Target Shifts**: \`${req.shifts}\``);
+        if (req.consistency) fields.push(`> 📈 **Reliability Rating**: \`${req.consistency}%\``);
+        if (req.maxWarnings !== undefined) fields.push(`> ⚠️ **Warning Threshold**: \`<= ${req.maxWarnings}\``);
+        if (req.shiftHours) fields.push(`> ⏱️ **Flight Time**: \`${req.shiftHours}h\``);
 
-        const value = fields.length > 0 ? fields.join('\n') : '*No specific requirements configured.*';
+        const value = fields.length > 0 ? fields.join('\n') : '*No specific operational constraints configured.*';
+        const titleLabel = rankName.charAt(0).toUpperCase() + rankName.slice(1);
 
-        const title = rankName.charAt(0).toUpperCase() + rankName.slice(1);
         embed.addFields({
-          name: `${emojis[i % emojis.length]} Target: ${title}`,
+          name: `${emojis[i % emojis.length]} Rank: ${titleLabel}`,
           value: value,
-          inline: false
+          inline: true
         });
       }
 

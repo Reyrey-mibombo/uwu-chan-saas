@@ -3,33 +3,36 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger'); // Assumes you have your custom logger
 
-const commandsPath = path.join(__dirname, '../commands');
-// Including v1_context alongside the standard versions
-const defaultVersions = ['v1', 'v1_context', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
-const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+function loadCommands() {
+  const { Collection } = require('discord.js');
+  const commands = new Collection();
+  const commandsPath = path.join(__dirname, '../commands');
+  // Including v1_context alongside the standard versions
+  const defaultVersions = ['v1', 'v1_context', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
+  const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
 
-// Make sure v1_context is always injected if we are dynamically splitting ENABLED_TIERS
-if (versions.includes('v1') && !versions.includes('v1_context')) {
-  versions.push('v1_context');
-}
+  // Make sure v1_context is always injected if we are dynamically splitting ENABLED_TIERS
+  if (versions.includes('v1') && !versions.includes('v1_context')) {
+    versions.push('v1_context');
+  }
 
-for (const version of versions) {
-  const versionPath = path.join(commandsPath, version.trim());
-  if (!fs.existsSync(versionPath)) continue;
+  for (const version of versions) {
+    const versionPath = path.join(commandsPath, version.trim());
+    if (!fs.existsSync(versionPath)) continue;
 
-  const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
-  for (const file of commandFiles) {
-    try {
-      const command = require(path.join(versionPath, file));
-      if ('data' in command && 'execute' in command) {
-        commands.set(command.data.name, command);
+    const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
+    for (const file of commandFiles) {
+      try {
+        const command = require(path.join(versionPath, file));
+        if ('data' in command && 'execute' in command) {
+          commands.set(command.data.name, command);
+        }
+      } catch (e) {
+        console.error(`Error loading ${file}: ${e.message}`);
       }
-    } catch (e) {
-      console.error(`Error loading ${file}: ${e.message}`);
     }
   }
-}
-return commands;
+  return commands;
 }
 
 class CommandHandler {

@@ -1,76 +1,57 @@
 ﻿const { SlashCommandBuilder } = require('discord.js');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
+const { validatePremiumLicense } = require('../../utils/premium_guard');
 const { Activity } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('audit_logs')
-    .setDescription('View audit logs')
-    .addUserOption(option =>
-      option.setName('user')
-        .setDescription('Filter by user')
-        .setRequired(false))
-    .addStringOption(option =>
-      option.setName('type')
-        .setDescription('Filter by action type')
-        .setRequired(false)
-        .addChoices(
-          { name: 'Warning', value: 'warning' },
-          { name: 'Ban', value: 'ban' },
-          { name: 'Kick', value: 'kick' },
-          { name: 'Mute', value: 'mute' },
-          { name: 'Command', value: 'command' }
-        ))
-    .addIntegerOption(option =>
-      option.setName('limit')
-        .setDescription('Number of logs to show')
-        .setMinValue(5)
-        .setMaxValue(50)
-        .setRequired(false)),
+    .setDescription('Zenith Apex: High-Fidelity Guardian Security Ledger'),
 
   async execute(interaction) {
     try {
-      const user = interaction.options.getUser('user');
-      const type = interaction.options.getString('type');
-      const limit = interaction.options.getInteger('limit') || 10;
+      await interaction.deferReply();
+
+      // Zenith License Guard
+      const license = await validatePremiumLicense(interaction);
+      if (!license.allowed) {
+        return interaction.editReply({ embeds: [license.embed], components: license.components });
+      }
+
       const guildId = interaction.guildId;
-
-      const query = { guildId };
-      if (user) query.userId = user.id;
-      if (type) query.type = type;
-
-      const logs = await Activity.find(query)
+      const logs = await Activity.find({ guildId })
         .sort({ createdAt: -1 })
-        .limit(limit);
+        .limit(8);
 
       if (logs.length === 0) {
-        return interaction.reply({ content: 'No audit logs found for this query parameters.', ephemeral: true });
+        return interaction.editReply({ embeds: [createErrorEmbed('No audit log signals found in the active telemetry registry.')] });
       }
 
       const formatLog = (log) => {
-        const user = log.userId ? `<@${log.userId}>` : '`Unknown Node`';
-        const mod = log.data?.moderatorId ? `<@${log.data.moderatorId}>` : '`SYSTEM`';
-        const action = log.type || log.data?.action || 'unknown';
-        const reason = log.data?.reason || 'No Reason Provided';
-        const time = log.createdAt.toLocaleString();
-        return `\`[${time}]\` **${action.toUpperCase()}** | User: ${user} | Auth: ${mod}\n> Reason: *${reason}*`;
+        const time = new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const action = log.type?.toUpperCase() || 'SIGNAL';
+        const user = log.userId ? `<@${log.userId}>` : '`Unknown`';
+        return `\`[${time}]\` **${action}** ░ ${user}`;
       };
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📋 Guardian Security Ledger',
+        title: '📋 Zenith Guardian Security Ledger',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🛡️ Operational Audit Node: ${interaction.guild.name}\nChronological trace of authenticated security interventions and system events. Filtering results for authorized personnel.`,
+        description: `### 🛡️ Operational Audit Node\nChronological forensic trace of security interventions and system metabolic events in the **${interaction.guild.name}** sector.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
         fields: [
-          { name: '📑 High-Fidelity Audit Output', value: logs.map(formatLog).join('\n\n') || '*No logged signals detected in the active registry.*', inline: false }
+          { name: '📑 High-Fidelity Ledger Output', value: logs.map(formatLog).join('\n') || '*Active registry empty.*', inline: false },
+          { name: '⚖️ Data Fidelity', value: '`ULTRA-PREMIUM`', inline: true },
+          { name: '🛰️ Monitor Cache', value: '`ENCRYPTED`', inline: true },
+          { name: '🛡️ Auth Node', value: '`ZENITH-01`', inline: true }
         ],
-        footer: 'Authorized Security Audit Log • V4 Guardian Suite',
+        footer: 'Authenticated Security Ledger • V4 Guardian Apex Suite',
         color: 'premium'
       });
 
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
     } catch (error) {
-      console.error('Audit Logs Error:', error);
-      await interaction.reply({ content: 'Guardian Audit failure: Unable to decode encrypted ledger entries.', ephemeral: true });
+      console.error('Zenith Audit Logs Error:', error);
+      await interaction.editReply({ embeds: [createErrorEmbed('Guardian Ledger failure: Unable to decode encrypted signals.')] });
     }
   }
 };

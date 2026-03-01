@@ -47,24 +47,25 @@ module.exports = {
     }
 
     const formatLog = (log) => {
-      const user = log.userId ? `<@${log.userId}>` : 'Unknown';
-      const mod = log.data?.moderatorId ? `<@${log.data.moderatorId}>` : 'System';
+      const user = log.userId ? `<@${log.userId}>` : '`Unknown Node`';
+      const mod = log.data?.moderatorId ? `<@${log.data.moderatorId}>` : '`SYSTEM`';
       const action = log.type || log.data?.action || 'unknown';
-      const reason = log.data?.reason || 'No reason';
+      const reason = log.data?.reason || 'No Reason Provided';
       const time = log.createdAt.toLocaleString();
-      return `**${action.toUpperCase()}** | ${user} | ${mod} | ${reason} | ${time}`;
+      return `\`[${time}]\` **${action.toUpperCase()}** | User: ${user} | Auth: ${mod}\n> Reason: *${reason}*`;
     };
 
-    const embed = createPremiumEmbed()
-      .setTitle('📋 Audit Logs')
-      
-      .setDescription(logs.map(formatLog).join('\n'))
-      
-      ;
+    const embed = await createCustomEmbed(interaction, {
+      title: '📋 Guardian Security Ledger',
+      thumbnail: interaction.guild.iconURL({ dynamic: true }),
+      description: `### 🛡️ Operational Audit Node: ${interaction.guild.name}\nChronological trace of authenticated security interventions and system events. Filtering results for authorized personnel.`,
+      fields: [
+        { name: '📑 High-Fidelity Audit Output', value: logs.map(formatLog).join('\n\n') || '*No logged signals detected in the active registry.*', inline: false }
+      ],
+      footer: 'Authorized Security Audit Log • V4 Guardian Suite',
+      color: 'premium'
+    });
 
     await interaction.reply({ embeds: [embed] });
   }
-};
-
-
 

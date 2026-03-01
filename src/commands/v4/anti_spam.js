@@ -51,19 +51,6 @@ module.exports = {
         { name: '📡 Signal Ceiling', value: `\`${maxMessages}\` Packets`, inline: true },
         { name: '⏱️ Pulse Interval', value: `\`${interval}\` Seconds`, inline: true },
         { name: '🛡️ Protection Tier', value: enabled ? '`Guardian V4 Standard`' : '`Unprotected`', inline: false }
-      ],
-      footer: 'Threat Neutralization Protocol • V4 Guardian Suite',
-      color: enabled ? 'success' : 'premium'
-    });
-
-    await interaction.reply({ embeds: [embed] });
-
-  } catch(error) {
-    console.error('Anti-Spam Config Error:', error);
-    await interaction.reply({ content: 'Guardian Security failure: Unable to synchronize threat neutralization parameters.', ephemeral: true });
   }
-}
-};
-
 
 

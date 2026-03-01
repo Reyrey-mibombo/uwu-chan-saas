@@ -160,6 +160,8 @@ const userSchema = new mongoose.Schema({
     commandUsage: { type: mongoose.Schema.Types.Mixed, default: {} },
     perks: { type: [String], default: [] },
     equippedPerk: { type: String, default: null },
+    honorPoints: { type: Number, default: 0 },
+    honorific: { type: String, default: 'Unranked' },
     trophies: { type: [String], default: [] },
     streak: { type: Number, default: 0 },
     promotionPending: { type: Boolean, default: false },

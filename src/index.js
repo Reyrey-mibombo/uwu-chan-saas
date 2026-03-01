@@ -306,6 +306,37 @@ client.on('interactionCreate', async interaction => {
       await require('./commands/v2/staff_perks').handleSelect(interaction);
       return;
     }
+
+    // --- V2 Apex Shop Handlers ---
+    const shopActions = ['buy_flair', 'buy_frame', 'buy_title'];
+    if (shopActions.includes(interaction.customId)) {
+      try {
+        const { User } = require('./database/mongo');
+        const userData = await User.findOne({ userId: interaction.user.id, guildId: interaction.guildId });
+
+        let cost = 0;
+        let update = {};
+        let item = '';
+
+        if (interaction.customId === 'buy_flair') { cost = 500; update = { 'staff.tagline': '🌟 ' + userData.staff.tagline }; item = 'Tactical Flair'; }
+        if (interaction.customId === 'buy_frame') { cost = 1000; update = { 'staff.equippedPerk': '💎 ' + (userData.staff.equippedPerk || 'Personnel') }; item = 'Badge Frame'; }
+        if (interaction.customId === 'buy_title') { cost = 5000; update = { 'staff.honorific': '👑 APEX ELITE' }; item = 'Apex Title'; }
+
+        if (userData.staff.points < cost) {
+          return interaction.reply({ content: `❌ Insufficient Strategic Points. Required: \`${cost}\``, ephemeral: true });
+        }
+
+        await User.findOneAndUpdate(
+          { userId: interaction.user.id, guildId: interaction.guildId },
+          { $inc: { 'staff.points': -cost }, $set: update }
+        );
+
+        return interaction.reply({ content: `✅ **Purchase Authenticated**: ${item} has been applied to your profile card.`, ephemeral: true });
+      } catch (err) {
+        logger.error('Shop Purchase Error:', err);
+        return interaction.reply({ content: '❌ Transaction failure: Unable to establish shop connection.', ephemeral: true });
+      }
+    }
   }
 
   if (interaction.isChannelSelectMenu()) {

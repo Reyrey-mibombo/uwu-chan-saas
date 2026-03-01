@@ -36,17 +36,27 @@ module.exports = {
             const boostTier = guild.premiumTier;
             const boostCount = guild.premiumSubscriptionCount || 0;
 
+            const { Shift, User } = require('../../database/mongo');
+            const [globalShifts, globalPointsData] = await Promise.all([
+                Shift.countDocuments({ endTime: { $ne: null } }),
+                User.aggregate([
+                    { $group: { _id: null, total: { $sum: "$staff.points" } } }
+                ])
+            ]);
+            const globalPoints = globalPointsData[0]?.total || 0;
+
             const embed = await createCustomEmbed(interaction, {
-                title: `📊 Live Server Status: ${guild.name}`,
+                title: `📊 Macroscopic Status: ${guild.name}`,
                 thumbnail: guild.iconURL({ dynamic: true }),
-                description: `**ID:** \`${guild.id}\`\n**Owner:** <@${guild.ownerId}>\n**Created:** <t:${Math.floor(guild.createdTimestamp / 1000)}:R>`,
-                footer: 'Data fetched directly from Discord API Cache'
+                description: `**ID:** \`${guild.id}\`\n**Owner:** <@${guild.ownerId}>\n**Clearance:** \`V2 APEX\``,
+                footer: 'Real-time telemetry aggregated from local cache and global spectral logs.'
             });
 
             embed.addFields(
                 { name: '👥 Population', value: `Total: **${totalMembers.toLocaleString()}**\nHumans: **${humans.toLocaleString()}**\nBots: **${bots.toLocaleString()}**`, inline: true },
                 { name: '🟢 Presence', value: `Online: **${onlineMembers.toLocaleString()}**\nIdle: **${idleMembers.toLocaleString()}**\nDND: **${dndMembers.toLocaleString()}**`, inline: true },
                 { name: '💬 Engagement', value: `Text: **${textChannels}**\nVoice: **${voiceChannels}**\nIn Voice: **${voiceActive}**`, inline: true },
+                { name: '🌎 Global Volume', value: `Total Shifts: **${globalShifts.toLocaleString()}**\nGlobal Points: **${globalPoints.toLocaleString()}**`, inline: false },
                 { name: '💎 Boosting', value: `Tier: **${boostTier}**\nBoosts: **${boostCount}**`, inline: true },
                 { name: '🛠️ Metadata', value: `Roles: **${rolesCount}**\nEmojis: **${emojisCount}**`, inline: true }
             );

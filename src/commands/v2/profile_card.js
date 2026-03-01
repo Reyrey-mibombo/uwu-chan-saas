@@ -41,6 +41,7 @@ module.exports = {
 
             const tagline = userData.staff.tagline || 'Operational Personnel';
             const customColor = userData.staff.profileColor || null;
+            const honorific = userData.staff.honorific || 'Standard Personnel';
 
             // Calculate efficiency (completion rate)
             const completedShifts = shifts.filter(s => s.endTime).length;
@@ -56,6 +57,7 @@ module.exports = {
                 description: `### 🛡️ Sector Identity: ${interaction.guild.name}\n> *${tagline}*\nAuthorized personnel profile for **${targetUser.username}**. All telemetry verified.`,
                 fields: [
                     { name: '📂 Classification', value: `\`${rank}\``, inline: true },
+                    { name: '🤝 Honor Reputation', value: `\`${honorific}\``, inline: true },
                     { name: '✨ Level Clearance', value: `\`LVL ${level}\``, inline: true },
                     { name: '🎖️ Tactical Perk', value: `\`${equippedPerk.toUpperCase()}\``, inline: true },
                     { name: '⭐ Strategic Points', value: `\`${points.toLocaleString()}\``, inline: true },
@@ -64,7 +66,7 @@ module.exports = {
                     { name: '🔄 Lifetime Patrols', value: `\`${totalShifts.toLocaleString()}\``, inline: true },
                     { name: '🏅 Active Merits', value: badgeList, inline: false }
                 ],
-                footer: 'Blockchain-verified Operational Identity • V2 Titan',
+                footer: 'Blockchain-verified Operational Identity • V2 Apex',
                 color: customColor || (efficiency >= 90 ? 'success' : 'premium')
             });
 

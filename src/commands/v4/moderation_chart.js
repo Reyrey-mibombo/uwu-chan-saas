@@ -66,23 +66,22 @@ module.exports = {
 
     const total = Object.values(stats).reduce((a, b) => a + b, 0);
 
-    const embed = createPremiumEmbed()
-      .setTitle('📊 Moderation Statistics')
-      
-      .addFields(
-        { name: 'Warnings', value: stats.warn.toString(), inline: true },
-        { name: 'Bans', value: stats.ban.toString(), inline: true },
-        { name: 'Kicks', value: stats.kick.toString(), inline: true },
-        { name: 'Mutes', value: stats.mute.toString(), inline: true },
-        { name: 'Strikes', value: stats.strike.toString(), inline: true },
-        { name: 'Total', value: total.toString(), inline: true }
-      )
-      
-      ;
+    const embed = await createCustomEmbed(interaction, {
+      title: '📊 Secure Sector Analytics',
+      thumbnail: interaction.guild.iconURL({ dynamic: true }),
+      description: `### 🛡️ Macroscopic Incident Report\nAnalysis of security interventions and disciplinary actions gathered over the **${period}** vector in the **${interaction.guild.name}** sector.`,
+      fields: [
+        { name: '⚠️ Disciplinary (Warn)', value: `\`${stats.warn}\``, inline: true },
+        { name: '🚫 Neutralization (Ban)', value: `\`${stats.ban}\``, inline: true },
+        { name: '👢 Extraction (Kick)', value: `\`${stats.kick}\``, inline: true },
+        { name: '🔇 Silencing (Mute)', value: `\`${stats.mute}\``, inline: true },
+        { name: '⚔️ Infractions (Strike)', value: `\`${stats.strike}\``, inline: true },
+        { name: '🌐 Aggregate Payload', value: `\`${total}\` Total`, inline: true }
+      ],
+      footer: 'Guardian Operational Intelligence • V4 Guardian Suite',
+      color: total > 20 ? 'premium' : 'primary'
+    });
 
     await interaction.reply({ embeds: [embed] });
   }
-};
-
-
 

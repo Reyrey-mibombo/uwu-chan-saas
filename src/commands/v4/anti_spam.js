@@ -42,18 +42,27 @@ module.exports = {
     guild.settings.antiSpam.interval = interval;
     await guild.save();
 
-    const embed = createPremiumEmbed()
-      .setTitle('🛡️ Anti-Spam Settings')
-      
-      .addFields(
-        { name: 'Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
-        { name: 'Max Messages', value: maxMessages.toString(), inline: true },
-        { name: 'Interval', value: `${interval} seconds`, inline: true }
-      )
-      ;
+    const embed = await createCustomEmbed(interaction, {
+      title: '🛡️ Guardian Security: Anti-Spam Node',
+      thumbnail: interaction.guild.iconURL({ dynamic: true }),
+      description: `### 📡 Operational Security: Sector ${interaction.guild.name}\nAutomated Threat Detection and Mitigation protocol configuration. Analyzing real-time signal density to prevent network saturation.`,
+      fields: [
+        { name: '⚖️ Node Status', value: enabled ? '`🔵 ACTIVE`' : '`🔴 OFFLINE`', inline: true },
+        { name: '📡 Signal Ceiling', value: `\`${maxMessages}\` Packets`, inline: true },
+        { name: '⏱️ Pulse Interval', value: `\`${interval}\` Seconds`, inline: true },
+        { name: '🛡️ Protection Tier', value: enabled ? '`Guardian V4 Standard`' : '`Unprotected`', inline: false }
+      ],
+      footer: 'Threat Neutralization Protocol • V4 Guardian Suite',
+      color: enabled ? 'success' : 'premium'
+    });
 
     await interaction.reply({ embeds: [embed] });
+
+  } catch(error) {
+    console.error('Anti-Spam Config Error:', error);
+    await interaction.reply({ content: 'Guardian Security failure: Unable to synchronize threat neutralization parameters.', ephemeral: true });
   }
+}
 };
 
 

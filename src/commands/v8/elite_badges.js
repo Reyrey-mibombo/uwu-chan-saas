@@ -37,18 +37,18 @@ module.exports = {
         : '> 🏅 *No elite merit badges authenticated in this sector registry yet.*';
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🏅 Zenith Apex: Elite Personnel Showcase',
+        title: '🏅 Zenith Hyper-Apex: Divine Personnel Showcase',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🎖️ Sector Merit Registry\nAuthenticated elite badges earned by top-tier responders in the **${interaction.guild.name}** sector.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### 🎖️ Divine Merit Registry\nAuthenticated elite indices for the **${interaction.guild.name}** sector. Current Legendary Presence: \`${legendCount > 0 ? 'DOMINANT' : 'STABLE'}\`.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '👑 Legend Trophies', value: `\`${badgeHolders.filter(h => h.pts >= 2000).length}\``, inline: true },
+          { name: '👑 Legend Trophies', value: `\`${legendCount}\``, inline: true },
           { name: '💎 Diamond Metrics', value: `\`${badgeHolders.filter(h => h.pts >= 1000).length}\``, inline: true },
           { name: '🥇 Gold Infractions', value: `\`${badgeHolders.filter(h => h.pts >= 500).length}\``, inline: true },
-          { name: '📜 Macroscopic Merit Ledger', value: list, inline: false },
-          { name: '⚖️ Intelligence Tier', value: '`PLATINUM (APEX)`', inline: true },
-          { name: '🔄 Visibility', value: '`GLOBAL`', inline: true }
+          { name: '📜 Divine Achievement Matrix', value: list, inline: false },
+          { name: '⚖️ Visual Tier', value: '`DIVINE [HYPER-APEX]`', inline: true },
+          { name: '🔄 Omni-Bridge', value: '`ACTIVE`', inline: true }
         ],
-        footer: 'Elite Personnel Showcase • V8 Identity Matrix Suite',
+        footer: 'Divine Personnel Showcase • V8 Identity Matrix Suite',
         color: 'premium'
       });
 

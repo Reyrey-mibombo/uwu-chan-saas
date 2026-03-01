@@ -38,6 +38,8 @@ module.exports = {
         (guild?.premium?.isActive ? 10 : 0)
       ));
 
+      const trend = todayActivity > (weekActivity / 7) ? '📈 EXPANDING' : '📉 DECAY';
+
       // 1. Generate Macroscopic Risk Curve (ASCII Pulse)
       const riskIntensity = 100 - score;
       const pulseSegments = 10;
@@ -45,24 +47,27 @@ module.exports = {
       const empty = '░'.repeat(pulseSegments - filled.length);
       const riskCurve = `\`[${filled}${empty}]\` **${riskIntensity > 40 ? '⚠️ ELEVATED RISK' : '✅ STABLE'}**`;
 
-      // 2. Health Ribbon
-      const healthBar = '█'.repeat(Math.round(score / 10)) + '░'.repeat(10 - Math.round(score / 10));
+      // 2. Metabolic Heartbeat Ribbon
+      const healthSegments = 15;
+      const healthFilled = '█'.repeat(Math.round(score / 100 * healthSegments));
+      const healthEmpty = '░'.repeat(healthSegments - healthFilled.length);
+      const heartbeatRibbon = `\`[${healthFilled}${healthEmpty}]\` **${score}% METABOLISM**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '💊 Zenith Executive: Sector Metabolic Audit',
+        title: '💊 Zenith Hyper-Apex: Sector Metabolic Audit',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🛡️ Sector Health Diagnostic\nAutomated macroscopic audit of behavioral density and system stability for the **${interaction.guild.name}** sector.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### 🛡️ Sector Health Diagnostic\nAutomated macroscopic audit for the **${interaction.guild.name}** sector. Current Stability Trend: **${trend}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '✨ Sector Health Ribbon', value: `\`[${healthBar}]\` **${score}% METABOLISM**`, inline: false },
+          { name: '✨ Metabolic Heartbeat Ribbon', value: heartbeatRibbon, inline: false },
           { name: '📈 Macroscopic Risk Pulse', value: riskCurve, inline: false },
-          { name: '👥 Node Density', value: `\`${memberCount}\` Members`, inline: true },
-          { name: '⚡ 24h Signal Pulse', value: `\`${todayActivity}\` Signals`, inline: true },
-          { name: '📅 7d Cumulative', value: `\`${weekActivity}\``, inline: true },
+          { name: '👥 Node Density', value: `\`${memberCount}\` units`, inline: true },
+          { name: '⚡ 24h Signal Pulse', value: `\`${todayActivity}\` signals`, inline: true },
+          { name: '📅 Stability Trend', value: `**${trend}**`, inline: true },
           { name: '🔄 Active Patrols', value: `\`${activeShifts}\``, inline: true },
-          { name: '🎖️ Intelligence Tier', value: `\`${(guild?.premium?.tier || 'free').toUpperCase()}\``, inline: true },
-          { name: '⚠️ Global Warnings', value: `\`${stats.warnings || 0}\``, inline: true }
+          { name: '🎖️ Visual Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
+          { name: '⚠️ Risk Fragments', value: `\`${stats.warnings || 0}\``, inline: true }
         ],
-        footer: 'Executive Metabolic Diagnostic • V6 Enterprise Apex Suite',
+        footer: 'Executive Metabolic Diagnostic • V6 Enterprise Hyper-Apex Suite',
         color: score >= 80 ? 'success' : 'premium'
       });
 

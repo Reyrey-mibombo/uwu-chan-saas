@@ -34,8 +34,8 @@ module.exports = {
       const fields = REWARD_TIERS.map(tier => {
         const progress = Math.min(100, Math.round((points / tier.threshold) * 100));
 
-        // Zenith Spectral Gauge
-        const barLength = 10;
+        // Zenith Hyper-Apex Spectral Authenticator Ribbon
+        const barLength = 15;
         const filled = '█'.repeat(Math.round((progress / 100) * barLength));
         const empty = '░'.repeat(barLength - filled.length);
         const bar = `\`[${filled}${empty}]\` **${progress}%**`;
@@ -43,26 +43,27 @@ module.exports = {
         const status = points >= tier.threshold ? '✅ AUTHENTICATED' : bar;
         return {
           name: `${points >= tier.threshold ? '✅' : '🔒'} ${tier.label.toUpperCase()}`,
-          value: `> Merit Target: \`${tier.threshold}\`\n> Output: ${status}\n> Reward: *${tier.reward}*`,
+          value: `> Merit Target: \`${tier.threshold}\`\n> Resonance: ${status}\n> Reward: *${tier.reward}*`,
           inline: false
         };
       });
 
       const nextTier = REWARD_TIERS.find(t => points < t.threshold);
       const trajectory = nextTier
-        ? `Trajectory locked: **${nextTier.threshold - points}** merit remaining for **${nextTier.label}**.`
+        ? `Trajectory Locked: **${nextTier.threshold - points}** merit remaining for **${nextTier.label}**.`
         : 'All macroscopic reward vectors successfully authenticated. 👑';
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🎁 Zenith Apex: Merit Distribution Matrix`,
+        title: `🎁 Zenith Hyper-Apex: Merit Distribution Matrix`,
         thumbnail: target.displayAvatarURL({ dynamic: true }),
-        description: `### 🏆 Algorithmic Merit Registry\nAuthenticated reward vectors for personnel **${target.username}**. Analyzing metabolic output against sector thresholds.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### 🏆 Algorithmic Merit Registry\nAuthenticated reward vectors for personnel **${target.username}**. Current Trajectory Resilience: \`HIGH\`. Synchronized with global network average.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: [
-          { name: '⭐ Aggregate Merit', value: `\`${points.toLocaleString()}\``, inline: true },
+          { name: '⭐ Aggregate Merit', value: `\`${points.toLocaleString()}\` signals`, inline: true },
+          { name: '🌐 Global Benchmark', value: '`🟢 ELITE PERFORMANCE`', inline: true },
           { name: '📈 Trajectory Status', value: trajectory, inline: false },
           ...fields
         ],
-        footer: 'Merit Distribution Matrix • V7 Automation Apex Suite',
+        footer: 'Merit Distribution Matrix • V7 Automation Hyper-Apex Suite',
         color: 'premium'
       });
 

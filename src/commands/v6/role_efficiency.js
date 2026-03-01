@@ -42,30 +42,32 @@ module.exports = {
       const allAvgPoints = sortedRanks.map(([, g]) => g.totalPoints / g.count);
       const maxAverage = Math.max(...allAvgPoints, 1);
 
+      const synergyCoef = (1.0 + (sortedRanks.length * 0.05)).toFixed(2);
+
       const fields = sortedRanks.map(([rank, g]) => {
         const avgPts = (g.totalPoints / g.count).toFixed(1);
         const avgCon = (g.totalConsistency / g.count).toFixed(1);
 
-        // Zenith Spectral Gauge
-        const length = 10;
+        // Zenith Hyper-Apex Trajectory Ribbon
+        const length = 15;
         const filled = '█'.repeat(Math.round((parseFloat(avgPts) / maxAverage) * length));
         const empty = '░'.repeat(length - filled.length);
-        const bar = `\`[${filled}${empty}]\` **${avgPts}**`;
+        const trajectory = `\`[${filled}${empty}]\` **${avgPts}**`;
 
         return {
           name: `🎖️ Sector Rank: ${rank.toUpperCase()}`,
-          value: `> Signal Yield: ${bar}\n> Stability: \`${avgCon}%\` | Personnel: \`${g.count}\``,
+          value: `> Signal Yield: ${trajectory}\n> Stability: \`${avgCon}%\` | Personnel: \`${g.count}\``,
           inline: false
         };
       });
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📊 Zenith Executive: Role Yield Matrix',
+        title: '📊 Zenith Hyper-Apex: Role Yield Matrix',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🛡️ Macroscopic Rank Analysis\nPersonnel productivity correlation aggregated by hierarchy for the **${interaction.guild.name}** sector.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### 🛡️ Macroscopic Rank Orchestration\nPersonnel productivity correlation for the **${interaction.guild.name}** sector. Current Macroscopic Synergy Coefficient: \`${synergyCoef}x Resonance\`.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
         fields: fields,
-        footer: 'Executive Productivity Matrix • V6 Enterprise Suite',
-        color: 'enterprise'
+        footer: 'Executive Productivity Matrix • V6 Enterprise Hyper-Apex Suite',
+        color: 'premium'
       });
 
       await interaction.editReply({ embeds: [embed] });

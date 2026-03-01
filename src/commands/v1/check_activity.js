@@ -154,10 +154,9 @@ module.exports = {
                 .setLabel('🔄 Refresh')
                 .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
-                .setCustomId('view_profile')
                 .setLabel('👤 View Profile')
                 .setStyle(ButtonStyle.Link)
-                .setURL(`https://discord.com/users/${targetUser.id}`),
+                .setURL(`https://discord.com/users/${targetUser.id}`),   // ✅ no customId
             new ButtonBuilder()
                 .setCustomId('view_avatar')
                 .setLabel('🖼️ Avatar')

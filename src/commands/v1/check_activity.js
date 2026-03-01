@@ -114,9 +114,9 @@ module.exports = {
         const tempId = `${interaction.channelId}-${Date.now()}`;
         viewModes.set(tempId, 'full');
 
-        // Build initial embed
+        // Build initial embed – FIXED: changed null → 'all'
         const { embed } = await buildEnhancedEmbed(
-            interaction, targetUser, member, presence, activities, bannerURL, accentColor, history, 'full', null, 0
+            interaction, targetUser, member, presence, activities, bannerURL, accentColor, history, 'full', 'all', 0
         );
 
         // --- Create dropdown ---

@@ -18,28 +18,33 @@ module.exports = {
             }
 
             const embed = await createCustomEmbed(interaction, {
-                title: '📊 Zenith Executive Apex: Intelligence Nexus',
+                title: '📊 Zenith Executive Hyper-Apex: Intelligence Nexus',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🔮 Macroscopic Intelligence Orchestration\nUnified administrative portal for sector **${interaction.guild.name}**. Access AI-simulated projections and macroscopic behavioral modeling.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+                description: `### 🔮 Macroscopic Intelligence Orchestration\nUnified administrative portal for sector **${interaction.guild.name}**. Access AI-driven briefings, growth projections, and macroscopic ROI analytics.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
                 fields: [
-                    { name: '📊 Dashboard', value: 'Unified macroscopic data orchestration', inline: true },
+                    { name: '📋 Executive Briefing', value: '24h macroscopic state audit', inline: true },
+                    { name: '📈 ROI Analytics', value: 'Personnel impact vs Overhead', inline: true },
                     { name: '🔮 Growth Projections', value: 'AI-simulated trajectory modeling', inline: true },
-                    { name: '🧠 Personnel Behavior', value: 'AI reliability scoring & Stability analytics', inline: true },
-                    { name: '👥 Node Density', value: `\`${interaction.guild.memberCount}\` Nodes`, inline: true },
-                    { name: '✨ Visual Tier', value: '`PLATINUM [APEX]`', inline: true },
-                    { name: '⚖️ Intelligence', value: '`ENHANCED`', inline: true }
+                    { name: '🌐 Global Benchmark', value: '`🟢 ELITE PERFORMANCE NODE`', inline: true },
+                    { name: '✨ Visual Tier', value: '`PLATINUM [HYPER-APEX]`', inline: true },
+                    { name: '⚖️ Intelligence', value: '`SYNCHRONIZED`', inline: true }
                 ],
-                footer: 'Zenith Apex Executive Intelligence • V5 Executive Suite',
+                footer: 'Zenith Hyper-Apex Executive Intelligence • V5 Executive Suite',
                 color: 'premium'
             });
 
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('v5_dashboard').setLabel('Executive Dashboard').setStyle(ButtonStyle.Primary).setEmoji('📊'),
-                new ButtonBuilder().setCustomId('v5_growth').setLabel('Growth Projections').setStyle(ButtonStyle.Secondary).setEmoji('🔮'),
-                new ButtonBuilder().setCustomId('v5_behavior').setLabel('Behavioral Matrix').setStyle(ButtonStyle.Secondary).setEmoji('🧠')
+            const row1 = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('v5_briefing').setLabel('Executive Briefing').setStyle(ButtonStyle.Primary).setEmoji('📋'),
+                new ButtonBuilder().setCustomId('v5_roi').setLabel('ROI Analytics').setStyle(ButtonStyle.Primary).setEmoji('📈'),
+                new ButtonBuilder().setCustomId('v5_growth').setLabel('Growth Projections').setStyle(ButtonStyle.Secondary).setEmoji('🔮')
             );
 
-            await interaction.editReply({ embeds: [embed], components: [row] });
+            const row2 = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('v5_behavior').setLabel('Behavioral Matrix').setStyle(ButtonStyle.Secondary).setEmoji('🧠'),
+                new ButtonBuilder().setCustomId('v5_dashboard').setLabel('Executive Dashboard').setStyle(ButtonStyle.Secondary).setEmoji('📊')
+            );
+
+            await interaction.editReply({ embeds: [embed], components: [row1, row2] });
 
         } catch (error) {
             console.error('Executive Hub Error:', error);

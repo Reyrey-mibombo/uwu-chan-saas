@@ -301,6 +301,48 @@ client.on('interactionCreate', async interaction => {
       await ticketSetup.handleDMReply(interaction, client);
       return;
     }
+
+    // Context Menu Modals
+    if (interaction.customId.startsWith('modal_quick_warn_')) {
+      try {
+        await interaction.deferReply({ ephemeral: true });
+        const targetUserId = interaction.customId.replace('modal_quick_warn_', '');
+        const reason = interaction.fields.getTextInputValue('warn_reason') || 'No reason provided';
+        const severity = interaction.fields.getTextInputValue('warn_severity') || 'medium';
+
+        const staffSystem = client.systems.staff;
+        if (!staffSystem) {
+          return interaction.editReply({ content: '❌ Staff system is currently offline.' });
+        }
+
+        const result = await staffSystem.addWarning(targetUserId, interaction.guildId, reason, interaction.user.id, severity);
+
+        const targetUser = await client.users.fetch(targetUserId).catch(() => null);
+        const userTag = targetUser ? targetUser.tag : 'Unknown User';
+
+        const { createCoolEmbed } = require('./utils/embeds');
+        const embed = createCoolEmbed()
+          .setTitle('⚠️ Context Menu Warn Executed')
+          .addFields(
+            { name: '👤 User Warned', value: `<@${targetUserId}> (${userTag})`, inline: true },
+            { name: '📉 Points Deducted', value: `\`${result.points}\``, inline: true },
+            { name: '📝 Reason', value: reason, inline: false }
+          )
+          .setColor('warning');
+
+        await interaction.editReply({ embeds: [embed] });
+
+        if (targetUser) {
+          try {
+            await targetUser.send(`**Warning from ${interaction.guild.name}**\nReason: ${reason}\nSeverity: ${severity.toUpperCase()}`);
+          } catch (e) { }
+        }
+      } catch (err) {
+        console.error('QuickWarn Modal Error:', err);
+        await interaction.editReply({ content: '❌ An error occurred processing this warning.' });
+      }
+      return;
+    }
   }
 
   // --- Help menu select menu ---
@@ -405,8 +447,8 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
-  // --- Chat input commands ---
-  if (!interaction.isChatInputCommand()) return;
+  // --- Chat input Commands and Context Menus ---
+  if (!interaction.isChatInputCommand() && !interaction.isUserContextMenuCommand() && !interaction.isMessageContextMenuCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
   if (!command) return;
@@ -416,7 +458,7 @@ client.on('interactionCreate', async interaction => {
   const hasAccess = await versionGuard.checkAccess(
     interaction.guildId,
     interaction.user.id,
-    command.requiredVersion
+    command.requiredVersion || 'v1_context'
   );
 
   logger.info(`Access result: ${JSON.stringify(hasAccess)}`);

@@ -29,9 +29,13 @@ module.exports = {
 
       const result = await staffSystem.startShift(userId, guildId);
 
+      const streakText = result.streakDays && result.streakDays > 1
+        ? `\n🔥 **Daily Streak:** \`${result.streakDays} Days\``
+        : '';
+
       const embed = createCoolEmbed()
         .setTitle('✅ Shift Started')
-        .setDescription(`Your shift has successfully started!\n\n⏱️ **Started at:** <t:${Math.floor(Date.now() / 1000)}:t> (<t:${Math.floor(Date.now() / 1000)}:R>)`)
+        .setDescription(`Your shift has successfully started!${streakText}\n\n⏱️ **Started at:** <t:${Math.floor(Date.now() / 1000)}:t> (<t:${Math.floor(Date.now() / 1000)}:R>)`)
         .addFields(
           { name: 'Shift ID', value: `\`${result.shiftId.toString()}\``, inline: true }
         )

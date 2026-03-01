@@ -41,7 +41,59 @@ class StaffSystem {
       data: { action: 'start', shiftId: shift._id }
     });
 
-    return { success: true, startTime: shift.startTime, shiftId: shift._id };
+    // --- On Duty Role Auto Assignment ---
+    const guildData = await Guild.findOne({ guildId });
+    if (guildData?.settings?.onDutyRole) {
+      try {
+        const discordGuild = await this.client.guilds.fetch(guildId);
+        if (discordGuild) {
+          const member = await discordGuild.members.fetch(userId);
+          if (member) {
+            await member.roles.add(guildData.settings.onDutyRole, 'Started Shift');
+          }
+        }
+      } catch (e) {
+        logger.error(`Failed to assign On Duty role: ${e.message}`);
+      }
+    }
+
+    // --- Shift Streak Gamification ---
+    let streakDays = 0;
+    const now = new Date();
+
+    // Check if there's a shift from the previous day (between 24-48 hours ago)
+    const yesterdayStart = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const yesterdayEnd = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Find the most recent shift before today
+    const lastShiftBeforeToday = await Shift.findOne({
+      userId,
+      guildId,
+      startTime: { $lt: new Date(now.getTime() - 12 * 60 * 60 * 1000) } // At least 12 hours ago to prevent double counting same day
+    }).sort({ startTime: -1 });
+
+    if (user && user.staff) {
+      streakDays = user.staff.streak || 0;
+
+      if (lastShiftBeforeToday) {
+        const timeDiffHours = (now - lastShiftBeforeToday.startTime) / (1000 * 60 * 60);
+        // If their last shift was between 12 and 48 hours ago, increment streak
+        if (timeDiffHours <= 48) {
+          streakDays += 1;
+        } else {
+          // Streak broken
+          streakDays = 1;
+        }
+      } else {
+        // First shift ever or in a long time
+        streakDays = 1;
+      }
+
+      user.staff.streak = streakDays;
+      await user.save();
+    }
+
+    return { success: true, startTime: shift.startTime, shiftId: shift._id, streakDays };
   }
 
   async endShift(userId, guildId) {
@@ -90,6 +142,47 @@ class StaffSystem {
     const hours = Math.floor(shift.duration / 3600);
     const minutes = Math.floor((shift.duration % 3600) / 60);
 
+    // --- Shift Trophies Check ---
+    if (user && user.staff) {
+      if (!user.staff.trophies) user.staff.trophies = [];
+      let newTrophies = false;
+
+      // 1. First Shift Trophy
+      if (!user.staff.trophies.includes('First Shift Completed')) {
+        user.staff.trophies.push('First Shift Completed');
+        newTrophies = true;
+      }
+
+      // 2. Iron Man Trophy (Shift longer than 4 hours)
+      if (hours >= 4 && !user.staff.trophies.includes('Iron Worker (4hr+ Shift)')) {
+        user.staff.trophies.push('Iron Worker (4hr+ Shift)');
+        newTrophies = true;
+      }
+
+      // 3. Streak Trophy
+      if (user.staff.streak >= 7 && !user.staff.trophies.includes('7-Day Streak Master')) {
+        user.staff.trophies.push('7-Day Streak Master');
+        newTrophies = true;
+      }
+
+      if (newTrophies) await user.save();
+    }
+
+    // --- Remove On Duty Role ---
+    if (guild?.settings?.onDutyRole) {
+      try {
+        const discordGuild = await this.client.guilds.fetch(guildId);
+        if (discordGuild) {
+          const member = await discordGuild.members.fetch(userId);
+          if (member) {
+            await member.roles.remove(guild.settings.onDutyRole, 'Ended Shift');
+          }
+        }
+      } catch (e) {
+        logger.error(`Failed to remove On Duty role: ${e.message}`);
+      }
+    }
+
     return {
       success: true,
       duration: shift.duration,
@@ -117,6 +210,22 @@ class StaffSystem {
     if (user && user.staff) {
       user.staff.warnings = (user.staff.warnings || 0) + points;
       await user.save();
+    }
+
+    // --- Moderation Trophies Check (For the Moderator) ---
+    const moderator = await User.findOne({ userId: moderatorId });
+    if (moderator && moderator.staff) {
+      if (!moderator.staff.trophies) moderator.staff.trophies = [];
+
+      const modWarnings = await Warning.countDocuments({ moderatorId });
+
+      if (modWarnings === 1 && !moderator.staff.trophies.includes('First Warning Issued')) {
+        moderator.staff.trophies.push('First Warning Issued');
+        await moderator.save();
+      } else if (modWarnings === 50 && !moderator.staff.trophies.includes('Justice Hammer (50 Warns)')) {
+        moderator.staff.trophies.push('Justice Hammer (50 Warns)');
+        await moderator.save();
+      }
     }
 
     const guild = await Guild.findOne({ guildId });

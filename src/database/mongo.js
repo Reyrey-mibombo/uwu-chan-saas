@@ -30,6 +30,8 @@ const guildSchema = new mongoose.Schema({
     welcomeChannel: String,
     modChannel: String,
     promotionChannel: String,
+    // [Phase 3] Dynamic Role assigning for shifted staff
+    onDutyRole: { type: String, default: null },
     // New: activity alert settings
     alerts: {
       enabled: { type: Boolean, default: false },
@@ -150,6 +152,9 @@ const userSchema = new mongoose.Schema({
     consistency: { type: Number, default: 100 },
     reputation: { type: Number, default: 0 },
     achievements: [String],
+    // [Phase 3] Gamification
+    trophies: { type: [String], default: [] },
+    streak: { type: Number, default: 0 },
     promotionPending: { type: Boolean, default: false },
     lastPromotionCheck: Date,
     lastPromotionDate: Date

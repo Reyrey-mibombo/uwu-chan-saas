@@ -44,6 +44,10 @@ module.exports = {
       const row = new ActionRowBuilder()
         .addComponents(
           new ButtonBuilder()
+            .setCustomId(`pause_shift_${result.shiftId.toString()}`)
+            .setLabel('⏸️ Pause Shift')
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
             .setCustomId(`end_shift_${result.shiftId.toString()}`)
             .setLabel('⏹️ End Shift')
             .setStyle(ButtonStyle.Danger)

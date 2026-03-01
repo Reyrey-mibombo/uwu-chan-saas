@@ -105,8 +105,25 @@ class StaffSystem {
 
     if (!shift) return { success: false, message: 'No active shift found' };
 
+    // If currently paused, end the pause first
+    if (shift.status === 'paused') {
+      const lastPause = shift.pauses[shift.pauses.length - 1];
+      if (lastPause && !lastPause.endedAt) {
+        lastPause.endedAt = new Date();
+        lastPause.duration = (lastPause.endedAt - lastPause.startedAt) / 1000;
+      }
+    }
+
+    shift.status = 'ended';
     shift.endTime = new Date();
-    shift.duration = (shift.endTime - shift.startTime) / 1000;
+
+    // Calculate total paused time
+    const totalPausedTimeMs = shift.pauses.reduce((acc, p) => acc + (p.duration * 1000), 0);
+
+    // Formula: (EndTime - StartTime) - TotalPausedTime
+    const rawDurationMs = shift.endTime - shift.startTime;
+    shift.duration = Math.max(0, (rawDurationMs - totalPausedTimeMs) / 1000);
+
     await shift.save();
 
     let pointsEarned = 0;
@@ -190,6 +207,40 @@ class StaffSystem {
       minutes,
       pointsEarned
     };
+  }
+
+  async pauseShift(userId, guildId) {
+    const shift = await Shift.findOne({ guildId, userId, endTime: null, status: 'active' }).sort({ startTime: -1 });
+    if (!shift) return { success: false, message: 'No active shift to pause.' };
+
+    shift.status = 'paused';
+    shift.pauses.push({ startedAt: new Date() });
+    await shift.save();
+
+    await Activity.create({
+      guildId, userId, type: 'shift', data: { action: 'pause', shiftId: shift._id }
+    });
+
+    return { success: true };
+  }
+
+  async resumeShift(userId, guildId) {
+    const shift = await Shift.findOne({ guildId, userId, endTime: null, status: 'paused' }).sort({ startTime: -1 });
+    if (!shift) return { success: false, message: 'No paused shift to resume.' };
+
+    shift.status = 'active';
+    const currentPause = shift.pauses[shift.pauses.length - 1];
+    if (currentPause && !currentPause.endedAt) {
+      currentPause.endedAt = new Date();
+      currentPause.duration = (currentPause.endedAt - currentPause.startedAt) / 1000;
+    }
+    await shift.save();
+
+    await Activity.create({
+      guildId, userId, type: 'shift', data: { action: 'resume', shiftId: shift._id }
+    });
+
+    return { success: true };
   }
 
   async addWarning(userId, guildId, reason, moderatorId, severity = 'medium') {

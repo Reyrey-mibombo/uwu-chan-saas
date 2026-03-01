@@ -261,12 +261,30 @@ client.on('interactionCreate', async interaction => {
       await require('./commands/v1/staff_profile').handleExportStats(interaction, client);
       return;
     }
+    if (interaction.customId.startsWith('pause_shift_') || interaction.customId.startsWith('resume_shift_')) {
+      await require('./commands/v1/shift_end').handleButtonPauseShift(interaction, client);
+      return;
+    }
   }
 
   // --- Select Menu Interactions ---
   if (interaction.isStringSelectMenu()) {
     if (interaction.customId.startsWith('quick_action_')) {
       await require('./commands/v1/warn').handleQuickAction(interaction, client);
+      return;
+    }
+  }
+
+  if (interaction.isChannelSelectMenu()) {
+    if (interaction.customId.startsWith('config_')) {
+      await require('./commands/v1/setup_dashboard').handleChannelSelect(interaction, client);
+      return;
+    }
+  }
+
+  if (interaction.isRoleSelectMenu()) {
+    if (interaction.customId.startsWith('config_')) {
+      await require('./commands/v1/setup_dashboard').handleRoleSelect(interaction, client);
       return;
     }
   }

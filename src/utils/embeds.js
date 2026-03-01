@@ -25,6 +25,37 @@ const EMBED_COLORS = {
  * @param {Object} [options.branding] Custom branding overrides { color, footer, iconURL }
  * @returns {EmbedBuilder}
  */
+/**
+ * Asynchronously generates a branded embed by fetching guild settings
+ * @param {Object} interaction The discord interaction or message object
+ * @param {Object} options Options for the embed
+ * @returns {Promise<EmbedBuilder>}
+ */
+async function createCustomEmbed(interaction, options = {}) {
+    let guildBranding = {};
+
+    if (interaction && interaction.guildId) {
+        try {
+            const { Guild } = require('../database/mongo');
+            const guildData = await Guild.findOne({ guildId: interaction.guildId }).lean();
+            if (guildData?.customBranding) {
+                guildBranding = guildData.customBranding;
+            }
+        } catch (e) {
+            console.error('Failed to fetch guild branding for embeds', e);
+        }
+    }
+
+    if (!options.branding) options.branding = {};
+
+    // Server theme overrides default styling if present
+    if (guildBranding.color) options.branding.color = guildBranding.color;
+    if (guildBranding.footer) options.branding.footer = guildBranding.footer;
+    if (guildBranding.iconURL) options.branding.iconURL = guildBranding.iconURL;
+
+    return createCoolEmbed(options);
+}
+
 function createCoolEmbed(options = {}) {
     const embed = new EmbedBuilder();
 
@@ -117,6 +148,7 @@ function createEnterpriseEmbed(options = {}) {
 module.exports = {
     EMBED_COLORS,
     createCoolEmbed,
+    createCustomEmbed,
     createErrorEmbed,
     createSuccessEmbed,
     createPremiumEmbed,

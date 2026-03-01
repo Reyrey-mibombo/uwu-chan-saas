@@ -1,0 +1,68 @@
+const { SlashCommandBuilder } = require('discord.js');
+const { createCoolEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/embeds');
+const { Guild } = require('../../database/mongo');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('theme')
+        .setDescription('Customize the bot\'s embed colors for your server')
+        .setDefaultMemberPermissions(8) // Administrator only
+        .addStringOption(option =>
+            option.setName('hex_color')
+                .setDescription('The HEX color code (e.g., #FF5733) or "reset" to clear')
+                .setRequired(true)
+        ),
+
+    async execute(interaction) {
+        try {
+            await interaction.deferReply({ ephemeral: true });
+
+            const hexColor = interaction.options.getString('hex_color').trim();
+
+            // Handle resetting the theme
+            if (hexColor.toLowerCase() === 'reset') {
+                await Guild.findOneAndUpdate(
+                    { guildId: interaction.guildId },
+                    { $set: { 'customBranding.color': null } }
+                );
+                return interaction.editReply({
+                    embeds: [createSuccessEmbed('Theme Reset', 'The server theme has been reset to the default bot colors.')]
+                });
+            }
+
+            // Validate HEX Color
+            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+            if (!hexRegex.test(hexColor)) {
+                return interaction.editReply({
+                    embeds: [createErrorEmbed('Invalid HEX color. Please provide a valid code like `#FF5733` or `#ab2`.')]
+                });
+            }
+
+            // Save custom theme to DB
+            await Guild.findOneAndUpdate(
+                { guildId: interaction.guildId },
+                { $set: { 'customBranding.color': hexColor } },
+                { upsert: true }
+            );
+
+            // We explicitly construct a custom embed here to preview the exact color since 
+            // the embeds.js utility would require a second round-trip to DB or cache.
+            const previewEmbed = createCoolEmbed({
+                title: '🎨 Theme Updated',
+                description: `Successfully updated the server theme color to **${hexColor}**! All future bot embeds will adopt this primary color.`,
+                branding: { color: hexColor }
+            });
+
+            await interaction.editReply({ embeds: [previewEmbed] });
+
+        } catch (error) {
+            console.error('Theme Command Error:', error);
+            const errEmbed = createErrorEmbed('An error occurred while updating the server theme.');
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [errEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+            }
+        }
+    }
+};

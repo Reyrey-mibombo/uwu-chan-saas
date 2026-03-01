@@ -215,7 +215,13 @@ const shiftSchema = new mongoose.Schema({
   startTime: { type: Date, default: Date.now },
   endTime: Date,
   duration: Number,
-  notes: String
+  notes: String,
+  status: { type: String, enum: ['active', 'paused', 'ended'], default: 'active' },
+  pauses: [{
+    startedAt: Date,
+    endedAt: Date,
+    duration: { type: Number, default: 0 }
+  }]
 });
 
 const activitySchema = new mongoose.Schema({

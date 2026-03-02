@@ -14,7 +14,7 @@ module.exports = {
       const targetUser = interaction.options.getUser('user') || interaction.user;
       const guildId = interaction.guildId;
 
-      const userData = await User.findOne({ userId: targetUser.id, guildId: guildId }).lean();
+      const userData = await User.findOne({ userId: targetUser.id }).lean();
       const guild = await Guild.findOne({ guildId: guildId }).lean();
 
       if (!userData || !userData.staff) {

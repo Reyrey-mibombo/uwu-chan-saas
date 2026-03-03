@@ -28,6 +28,11 @@ function isValidDiscordId(id) {
   return /^\d{17,20}$/.test(String(id));
 }
 
+// Idempotency check helper
+async function checkExistingLicense(paymentId, provider) {
+  return await License.findOne({ paymentId, paymentProvider: provider });
+}
+
 /**
  * Validates PayPal webhook signature
  * @param {Object} req - Express request object
@@ -50,6 +55,14 @@ function verifyPayPalSignature(req) {
     return false;
   }
 
+  // Basic timestamp check (prevent replay attacks older than 5 minutes)
+  const eventTime = new Date(transmissionTime).getTime();
+  const now = Date.now();
+  if (now - eventTime > 5 * 60 * 1000) {
+    logger.warn('PayPal webhook timestamp too old');
+    return false;
+  }
+
   // Expected signature format
   const expectedSig = `${transmissionId}|${transmissionTime}|${process.env.PAYPAL_WEBHOOK_ID}|${crypto.createHash('sha256').update(JSON.stringify(req.body)).digest('hex')}`;
 
@@ -69,92 +82,109 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object;
-      const { userId, guildId, tier, planType } = session.metadata;
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const { userId, guildId, tier, planType } = session.metadata;
 
-      const duration = PLAN_DURATIONS[planType] || 30;
-
-      await License.create({
-        key: `STRIPE-${session.id.slice(0, 8).toUpperCase()}`,
-        userId,
-        guildId,
-        tier,
-        status: 'active',
-        activatedAt: new Date(),
-        expiresAt: new Date(Date.now() + duration * 24 * 60 * 60 * 1000),
-        paymentId: session.id,
-        paymentProvider: 'stripe'
-      });
-
-      await Guild.findOneAndUpdate(
-        { guildId },
-        {
-          $set: {
-            'premium.isActive': true,
-            'premium.tier': tier,
-            'premium.activatedAt': new Date(),
-            'premium.expiresAt': new Date(Date.now() + duration * 24 * 60 * 60 * 1000),
-            'premium.paymentProvider': 'stripe'
-          }
-        },
-        { upsert: true }
-      );
-
-      const guild = await global.client?.guilds?.cache?.get(guildId);
-      if (guild) {
-        const member = await guild.members.fetch(userId);
-        if (member) {
-          try {
-            await member.send(`✅ Your **${tier}** subscription is now active!`);
-          } catch (e) {}
+        if (!userId || !guildId || !tier) {
+          logger.error('Missing required metadata in Stripe session');
+          return res.status(400).json({ error: 'Missing metadata' });
         }
-      }
 
-      logger.info(`✅ Premium activated via Stripe for user ${userId}, guild ${guildId}, tier ${tier}`);
-      break;
-    }
+        // Idempotency check
+        const existingLicense = await checkExistingLicense(session.id, 'stripe');
+        if (existingLicense) {
+          logger.info(`Duplicate Stripe webhook received for session ${session.id}`);
+          return res.json({ received: true, duplicate: true });
+        }
 
-    case 'invoice.payment_failed': {
-      const invoice = event.data.object;
-      logger.warn(`⚠️ Payment failed for invoice: ${invoice.id}`);
-      break;
-    }
+        const duration = PLAN_DURATIONS[planType] || 30;
 
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object;
-      
-      await License.findOneAndUpdate(
-        { paymentId: subscription.id },
-        { status: 'expired' }
-      );
+        await License.create({
+          key: `STRIPE-${session.id.slice(0, 8).toUpperCase()}`,
+          userId,
+          guildId,
+          tier,
+          status: 'active',
+          activatedAt: new Date(),
+          expiresAt: new Date(Date.now() + duration * 24 * 60 * 60 * 1000),
+          paymentId: session.id,
+          paymentProvider: 'stripe'
+        });
 
-      const license = await License.findOne({ paymentId: subscription.id });
-      if (license?.guildId) {
         await Guild.findOneAndUpdate(
-          { guildId: license.guildId },
+          { guildId },
           {
             $set: {
-              'premium.isActive': false,
-              'premium.tier': 'free'
+              'premium.isActive': true,
+              'premium.tier': tier,
+              'premium.activatedAt': new Date(),
+              'premium.expiresAt': new Date(Date.now() + duration * 24 * 60 * 60 * 1000),
+              'premium.paymentProvider': 'stripe'
             }
-          }
+          },
+          { upsert: true }
         );
+
+        const guild = await global.client?.guilds?.cache?.get(guildId);
+        if (guild) {
+          try {
+            const member = await guild.members.fetch(userId);
+            if (member) {
+              await member.send(`✅ Your **${tier}** subscription is now active!`).catch(() => {});
+            }
+          } catch (e) {}
+        }
+
+        logger.info(`✅ Premium activated via Stripe for user ${userId}, guild ${guildId}, tier ${tier}`);
+        break;
       }
 
-      logger.info(`❌ Subscription cancelled: ${subscription.id}`);
-      break;
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        logger.warn(`⚠️ Payment failed for invoice: ${invoice.id}`);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object;
+        
+        await License.findOneAndUpdate(
+          { paymentId: subscription.id },
+          { status: 'expired' }
+        );
+
+        const license = await License.findOne({ paymentId: subscription.id });
+        if (license?.guildId) {
+          await Guild.findOneAndUpdate(
+            { guildId: license.guildId },
+            {
+              $set: {
+                'premium.isActive': false,
+                'premium.tier': 'free'
+              }
+            }
+          );
+        }
+
+        logger.info(`❌ Subscription cancelled: ${subscription.id}`);
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object;
+        logger.info(`💰 Payment received: ${invoice.id}`);
+        break;
+      }
     }
 
-    case 'invoice.paid': {
-      const invoice = event.data.object;
-      logger.info(`💰 Payment received: ${invoice.id}`);
-      break;
-    }
+    res.json({ received: true });
+  } catch (error) {
+    logger.error('Stripe webhook processing error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  res.json({ received: true });
 });
 
 router.post('/paypal', express.json(), async (req, res) => {
@@ -202,6 +232,13 @@ router.post('/paypal', express.json(), async (req, res) => {
         if (!VALID_TIERS.includes(tier)) {
           logger.error(`Invalid tier in PayPal webhook: ${tier}`);
           return res.status(400).json({ error: 'Invalid tier' });
+        }
+
+        // Idempotency check
+        const existingLicense = await checkExistingLicense(order.id, 'paypal');
+        if (existingLicense) {
+          logger.info(`Duplicate PayPal webhook received for order ${order.id}`);
+          return res.json({ received: true, duplicate: true });
         }
 
         const duration = PLAN_DURATIONS[planType] || 30;
@@ -271,7 +308,7 @@ router.post('/paypal', express.json(), async (req, res) => {
   }
 });
 
-router.post('/create-checkout-session', async (req, res) => {
+router.post('/create-checkout-session', express.json(), async (req, res) => {
   try {
     const { plan, guildId, userId } = req.body;
 
@@ -305,6 +342,12 @@ router.post('/create-checkout-session', async (req, res) => {
       return res.status(500).json({ error: 'Price configuration error' });
     }
 
+    const botUrl = process.env.BOT_URL;
+    if (!botUrl) {
+      logger.error('BOT_URL environment variable not set');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -312,8 +355,8 @@ router.post('/create-checkout-session', async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.BOT_URL || 'https://yourbot.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.BOT_URL || 'https://yourbot.com'}/canceled`,
+      success_url: `${botUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${botUrl}/canceled`,
       metadata: {
         userId: String(userId),
         guildId: String(guildId),

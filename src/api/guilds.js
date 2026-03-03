@@ -16,25 +16,48 @@ const guildRateLimiter = rateLimit({
   }
 });
 
+// Authentication middleware - verify API secret
+function verifySecret(req, res, next) {
+    const apiSecret = req.headers['x-api-secret'];
+    if (!apiSecret || apiSecret !== process.env.API_SECRET) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+}
+
 router.use(guildRateLimiter);
 router.use(validateNoSQLInjection);
+
+// Input sanitization helper
+function sanitizeInput(input) {
+    if (typeof input !== 'object' || input === null) return input;
+    const sanitized = {};
+    for (const key of Object.keys(input)) {
+        // Prevent prototype pollution
+        if (key.startsWith('__') || key === 'constructor' || key === 'prototype') continue;
+        // Only allow alphanumeric and underscore in keys
+        if (!/^[a-zA-Z0-9_]+$/.test(key)) continue;
+        sanitized[key] = sanitizeInput(input[key]);
+    }
+    return sanitized;
+}
 
 router.get('/:guildId/stats', validateGuildId, async (req, res) => {
   try {
     const guild = await Guild.findOne({ guildId: req.params.guildId });
     if (!guild) return res.status(404).json({ error: 'Guild not found' });
 
-    res.json({
-      guildId: guild.guildId,
-      name: guild.name,
-      stats: guild.stats,
-      premium: guild.premium,
-      memberCount: guild.memberCount || 0
-    });
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+        res.json({
+            guildId: guild.guildId,
+            name: guild.name,
+            stats: guild.stats,
+            premium: guild.premium,
+            memberCount: guild.memberCount || 0
+        });
+    } catch (error) {
+        logger.error('Error fetching guild stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 router.patch('/:guildId/settings', validateGuildId, async (req, res) => {
@@ -44,10 +67,29 @@ router.patch('/:guildId/settings', validateGuildId, async (req, res) => {
     if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
       return res.status(400).json({ error: 'Settings must be a valid object' });
     }
+    
+        // Sanitize input to prevent NoSQL injection
+        const sanitizedBody = sanitizeInput(req.body);
+        
+        // Validate and clean updates
+        const allowedFields = ['settings', 'premium', 'stats'];
+        const cleanUpdates = {};
+        
+        for (const field of allowedFields) {
+            if (sanitizedBody[field] !== undefined) {
+                cleanUpdates[field] = sanitizedBody[field];
+            }
+        }
+        
+        if (Object.keys(cleanUpdates).length === 0) {
+            return res.status(400).json({ error: 'No valid fields to update' });
+        }
+        
+        cleanUpdates.updatedAt = new Date();
     const guild = await Guild.findOneAndUpdate(
       { guildId: req.params.guildId },
-      { $set: { settings: updates, updatedAt: new Date() } },
-      { new: true }
+          { $set: cleanUpdates },
+          { new: true, upsert: false }
     );
 
     if (!guild) {
@@ -70,13 +112,17 @@ router.get('/', validatePagination, async (req, res) => {
     // Maximum limit to prevent resource exhaustion
     const effectiveLimit = Math.min(limit, 100);
 
-    const guilds = await Guild.find()
-      .skip(skip)
-      .limit(effectiveLimit)
-      .select('guildId name premium.tier stats')
-      .lean();
+        // Validate pagination params
+        if (page < 1 || effectiveLimit < 1) {
+            return res.status(400).json({ error: 'Invalid pagination parameters' });
+        }
 
-    const total = await Guild.countDocuments();
+    const guilds = await Guild.find()
+          .skip(skip)
+          .limit(effectiveLimit)
+          .select('guildId name premium.tier stats');
+
+        const total = await Guild.countDocuments();
 
     res.json({
       guilds,

@@ -18,16 +18,14 @@
 const { EmbedBuilder, AuditLogEvent } = require('discord.js');
 const { Guild } = require('./database/mongo');
 
+let logger = null; // Will be set in register function
+
 // ── In-memory spam tracker: { guildId:userId → [timestamps] }
 const spamTracker = new Map();
 const SPAM_WINDOW = 5000; // 5 seconds window for spam tracking
 const SPAM_CLEANUP_INTERVAL = 60000; // Cleanup old entries every minute
 
-// ── Settings cache (5-minute TTL to avoid DB hammering)
-const settingsCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000;
-
-// ── Periodic cleanup of old spam tracker entries to prevent memory leaks
+// Cleanup old spam tracker entries to prevent memory leaks
 setInterval(() => {
     const now = Date.now();
     let cleaned = 0;
@@ -41,10 +39,12 @@ setInterval(() => {
             spamTracker.set(key, recent);
         }
     }
-    if (cleaned > 0 && process.env.NODE_ENV === 'development') {
-        console.log(`[DashboardSystems] Cleaned up ${cleaned} stale spam tracker entries`);
-    }
+    if (cleaned > 0 && logger) logger.debug(`[DashboardSystems] Cleaned up ${cleaned} stale spam tracker entries`);
 }, SPAM_CLEANUP_INTERVAL);
+
+// ── Settings cache (5-minute TTL to avoid DB hammering)
+const settingsCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
 
 async function getModules(guildId) {
     const cached = settingsCache.get(guildId);
@@ -54,7 +54,10 @@ async function getModules(guildId) {
         const data = g?.settings?.modules || {};
         settingsCache.set(guildId, { data, ts: Date.now() });
         return data;
-    } catch { return {}; }
+    } catch (err) {
+        if (logger) logger.error(`[DashboardSystems] Failed to load modules for guild ${guildId}: ${err.message}`);
+        return {};
+    }
 }
 
 // Invalidate cache when dashboard saves settings
@@ -68,23 +71,27 @@ async function sendLog(guild, channelId, embed) {
     try {
         const ch = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
         if (ch?.isTextBased()) await ch.send({ embeds: [embed] });
-    } catch { /* channel may not exist */ }
+    } catch (err) {
+        // Channel may not exist or bot lacks permissions - log for debugging
+        if (logger) logger.debug(`[DashboardSystems] Failed to send log to channel ${channelId}: ${err.message}`);
+    }
 }
 
 // ── PROFANITY word list (basic defaults — expanded by dashboard settings)
 const DEFAULT_BANNED = ['nigger', 'faggot', 'retard'];
 
-// ── DISCORD INVITE regex
-const INVITE_REGEX = /discord\.(gg|com\/invite)\/[a-zA-Z0-9]+/i;
+// ── DISCORD INVITE regex (safe, bounded to prevent ReDoS)
+const INVITE_REGEX = /discord\.(gg|com\/invite)\/[a-zA-Z0-9-]{2,32}/i;
 
-// ── URL regex
-const URL_REGEX = /https?:\/\/[^\s]+/gi;
+// ── URL regex (safe, bounded to prevent ReDoS)
+const URL_REGEX = /https?:\/\/[a-zA-Z0-9][-a-zA-Z0-9]*[a-zA-Z0-9]\.[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](?:\/[-a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=]*)?/gi;
 
 /**
  * Register all dashboard-driven event listeners on the bot client.
  * Call once after the bot is ready.
  */
-function register(client, logger) {
+function register(client, loggerInstance) {
+    logger = loggerInstance;
 
     // ════════════════════════════════════════════════════════════════
     // MESSAGE CREATE — automod + antispam
@@ -109,7 +116,9 @@ function register(client, logger) {
 
             if (times.length > limit) {
                 spamTracker.delete(key);
-                try { await message.delete(); } catch { }
+                try { await message.delete(); } catch (err) {
+                    if (logger) logger.debug(`[Anti-Spam] Failed to delete spam message: ${err.message}`);
+                }
 
                 const action = spam.action || 'delete';
                 if (action === 'timeout' || action === 'kick' || action === 'ban') {
@@ -119,7 +128,9 @@ function register(client, logger) {
                         if (action === 'timeout') await member.timeout(5 * 60 * 1000, 'Anti-Spam: too many messages');
                         if (action === 'kick') await member.kick('Anti-Spam: too many messages');
                         if (action === 'ban') await message.guild.members.ban(message.author.id, { reason: 'Anti-Spam: too many messages' });
-                    } catch { }
+                    } catch (err) {
+                        if (logger) logger.debug(`[Anti-Spam] Failed to apply action ${action}: ${err.message}`);
+                    }
                 }
 
                 if (spam.logChannel) {
@@ -176,18 +187,26 @@ function register(client, logger) {
         if (!violated) return;
 
         // Delete the message
-        try { await message.delete(); } catch { }
+        try { await message.delete(); } catch (err) {
+            if (logger) logger.debug(`[AutoMod] Failed to delete message: ${err.message}`);
+        }
 
         // Notify in channel briefly
         try {
             const warn = await message.channel.send({ content: `⚠️ <@${message.author.id}> your message was removed: **${reason}**` });
-            setTimeout(() => warn.delete().catch(() => { }), 5000);
-        } catch { }
+            setTimeout(() => warn.delete().catch((e) => {
+                if (logger) logger.debug(`[AutoMod] Failed to delete warning message: ${e.message}`);
+            }), 5000);
+        } catch (err) {
+            if (logger) logger.debug(`[AutoMod] Failed to send warning: ${err.message}`);
+        }
 
         // Auto-timeout
         if (am.autoTimeout && message.member) {
             const dur = (am.timeoutDuration || 10) * 60 * 1000;
-            try { await message.member.timeout(dur, `AutoMod: ${reason}`); } catch { }
+            try { await message.member.timeout(dur, `AutoMod: ${reason}`); } catch (err) {
+                if (logger) logger.debug(`[AutoMod] Failed to timeout user: ${err.message}`);
+            }
         }
 
         // Log violation
@@ -234,7 +253,9 @@ function register(client, logger) {
                         .setTimestamp();
                     await ch.send({ embeds: [embed] });
                 }
-            } catch { }
+            } catch (err) {
+                if (logger) logger.debug(`[Welcome] Failed to send welcome message: ${err.message}`);
+            }
 
             // DM welcome
             if (wlc.dmEnabled && wlc.dmMessage) {
@@ -242,7 +263,9 @@ function register(client, logger) {
                     .replace('{user}', member.user.username)
                     .replace('{server}', member.guild.name)
                     .replace('{count}', member.guild.memberCount);
-                try { await member.send(dmMsg); } catch { }
+                try { await member.send(dmMsg); } catch (err) {
+                    // DM failed (user may have DMs disabled) - common, don't log unless debug
+                }
             }
         }
 
@@ -252,7 +275,9 @@ function register(client, logger) {
             try {
                 const role = member.guild.roles.cache.get(ar.joinRoleId);
                 if (role) await member.roles.add(role, 'Dashboard: Auto-Role on Join');
-            } catch { }
+            } catch (err) {
+                if (logger) logger.debug(`[AutoRole] Failed to add join role: ${err.message}`);
+            }
         }
 
         // Bot auto-role
@@ -260,7 +285,9 @@ function register(client, logger) {
             try {
                 const role = member.guild.roles.cache.get(ar.botRoleId);
                 if (role) await member.roles.add(role, 'Dashboard: Bot Auto-Role');
-            } catch { }
+            } catch (err) {
+                if (logger) logger.debug(`[AutoRole] Failed to add bot role: ${err.message}`);
+            }
         }
 
         // ── LOGGING (member join) ─────────────────────────────────

@@ -601,15 +601,46 @@ client.on('interactionCreate', async interaction => {
 
 const app = express();
 app.locals.client = client;
-app.use(express.json());
+
+// Security middleware - helmet should be first
 app.use(require('helmet')());
 app.use(require('cors')());
 
-const limiter = require('express-rate-limit')({
+// Raw body parsing for Stripe webhooks (must be before express.json)
+app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
+app.use(express.json());
+
+// Rate limiting configurations
+const rateLimit = require('express-rate-limit');
+
+// General API rate limiter
+const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' }
 });
 app.use('/api/', limiter);
+
+// Stricter rate limiter for webhook endpoints
+const webhookLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 50, // 50 webhook events per 5 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many webhook requests' }
+});
+app.use('/webhooks/', webhookLimiter);
+
+// Stricter rate limiter for payment checkout creation
+const checkoutLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // 5 checkout creations per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many checkout attempts, please try again later' }
+});
 
 app.get('/health', (req, res) => {
   res.json({
@@ -635,7 +666,12 @@ app.use('/api/guilds', require('./api/guilds'));
 app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/api/dashboard', require('./api/routes'));
-app.use('/webhooks', require('./webhook/paymentWebhook'));
+
+// Mount webhook routes with specific middleware
+const paymentWebhook = require('./webhook/paymentWebhook');
+app.use('/webhooks/stripe', paymentWebhook);
+app.use('/webhooks/paypal', paymentWebhook);
+app.use('/webhooks/create-checkout-session', checkoutLimiter, paymentWebhook);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

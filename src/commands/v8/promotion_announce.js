@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCustomEmbed, createEnterpriseEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 const { User, Guild, Activity } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
 const RANK_EMOJIS = { trial: '??', staff: '?', senior: '??', manager: '??', admin: '??' };
 

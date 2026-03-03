@@ -15,6 +15,7 @@ module.exports = {
                 return await interaction.editReply({ embeds: [license.embed], components: [license.components] });
             }
     const { Activity } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
     const guildId = interaction.guildId;
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
     const [weekActs, topStaff] = await Promise.all([

@@ -26,6 +26,7 @@ module.exports = {
       }
 
       const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
       const target = interaction.options.getUser('user') || interaction.user;
       const user = await User.findOne({ userId: target.id, 'guilds.guildId': interaction.guildId }).lean();
       const points = user?.staff?.points || 0;

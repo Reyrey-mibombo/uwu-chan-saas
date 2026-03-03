@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCustomEmbed, createErrorEmbed, createPremiumEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 const { Activity, User } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
 module.exports = {
   data: new SlashCommandBuilder()

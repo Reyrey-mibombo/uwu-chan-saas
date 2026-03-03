@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCustomEmbed, createEnterpriseEmbed, createErrorEmbed, createProgressBar, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 const { User, Guild, Shift, Warning } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
 const RANK_ORDER = ['member', 'trial', 'staff', 'senior', 'manager', 'admin'];
 const RANK_EMOJIS = { member: '??', trial: '??', staff: '?', senior: '??', manager: '??', admin: '??' };

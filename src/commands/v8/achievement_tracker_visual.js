@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createEnterpriseEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 const { User } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
 const ALL_ACHIEVEMENTS = ['?? First Shift', '? Point Collector', '?? Elite Member', '?? Consistent', '?? Top Performer', '? Power User'];
 

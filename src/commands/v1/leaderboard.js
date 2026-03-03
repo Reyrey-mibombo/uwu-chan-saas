@@ -4,7 +4,7 @@ const { createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('Zenith Hyper-Apex: Macroscopic Sector Activity Rankings'),
+    .setDescription('View the staff points leaderboard'),
 
   async execute(interaction, client) {
     try {
@@ -39,7 +39,7 @@ module.exports = {
       const sectorAvg = leaderboard?.length ? Math.round(totalPoints / leaderboard.length) : 0;
 
       if (!leaderboard || leaderboard.length === 0) {
-        return interaction.editReply({ embeds: [createErrorEmbed('No staff data available yet. Start engaging to record signals.')] });
+        return interaction.editReply({ embeds: [createErrorEmbed('No staff data available yet. Start a shift to earn points!')] });
       }
 
       const perPage = 10;
@@ -54,33 +54,34 @@ module.exports = {
           const globalIndex = start + index;
           const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
 
-          let medal = `\`[${(globalIndex + 1).toString().padStart(2, '0')}]\``;
-          if (globalIndex === 0) medal = '??';
-          else if (globalIndex === 1) medal = '??';
-          else if (globalIndex === 2) medal = '??';
+          let medal = `#${(globalIndex + 1).toString().padStart(2, '0')}`;
+          if (globalIndex === 0) medal = '🥇';
+          else if (globalIndex === 1) medal = '🥈';
+          else if (globalIndex === 2) medal = '🥉';
 
-          const progress = Math.min(15, Math.max(1, Math.round((entry.points / 1000) * 15)));
-          const ribbonString = '�'.repeat(progress) + '�'.repeat(15 - progress);
+          const progress = Math.min(10, Math.max(1, Math.round((entry.points / 1000) * 10)));
+          const ribbonString = '█'.repeat(progress) + '░'.repeat(10 - progress);
 
-          return `${medal} **${user?.username || 'Unknown'}**\n> \`[${ribbonString}]\` **${(entry.points || 0).toLocaleString()} pts**`;
+          return `${medal} **${user?.username || 'Unknown'}**\n> \`[${ribbonString}]\` **${(entry.points || 0).toLocaleString()}** pts`;
         }));
 
         return await createCustomEmbed(interaction, {
-          title: '?? Zenith Hyper-Apex: Elite Sector Rankings',
+          title: '🏆 Staff Leaderboard',
           thumbnail: interaction.guild.iconURL({ dynamic: true }),
-          description: `### ??? Macroscopic Merit Registry\nReal-time performance rankings for the **${interaction.guild.name}** sector. Current Sector Average: \`${sectorAvg.toLocaleString()}\` merit.\n\n**?? ZENITH HYPER-APEX EXCLUSIVE**`,
+          description: `**${interaction.guild.name}** - Top performers by points`,
           fields: [
-            { name: '?? Performance Feed', value: leaderboardText.join('\n') || 'No activity detected.', inline: false }
+            { name: '📊 Rankings', value: leaderboardText.join('\n') || 'No data', inline: false },
+            { name: '📈 Stats', value: `Total Staff: \`${leaderboard.length}\`\nAverage Points: \`${sectorAvg.toLocaleString()}\``, inline: true }
           ],
-          footer: `Page ${page} / ${totalPages} � Universal Merit Leaderboard � V1 Foundation Hyper-Apex`,
-          color: 'premium'
+          footer: `Page ${page}/${totalPages} • uwu-chan`,
+          color: 'primary'
         });
       };
 
       const getButtons = (page) => {
         return new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('lb_prev').setLabel('? Previous').setStyle(ButtonStyle.Primary).setDisabled(page === 1),
-          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ?').setStyle(ButtonStyle.Primary).setDisabled(page === totalPages)
+          new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Prev').setStyle(ButtonStyle.Primary).setDisabled(page === 1),
+          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Primary).setDisabled(page === totalPages)
         );
       };
 
@@ -98,7 +99,7 @@ module.exports = {
       });
 
       collector.on('collect', async (i) => {
-        if (i.user.id !== interaction.user.id) return i.reply({ content: '? Access Denied.', ephemeral: true });
+        if (i.user.id !== interaction.user.id) return i.reply({ content: '❌ Not your menu.', ephemeral: true });
         if (i.customId === 'lb_prev') currentPage--;
         if (i.customId === 'lb_next') currentPage++;
         const newEmbed = await generateEmbed(currentPage);
@@ -107,15 +108,15 @@ module.exports = {
 
       collector.on('end', () => {
         const disabledRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('lb_prev').setLabel('? Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
-          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ?').setStyle(ButtonStyle.Secondary).setDisabled(true)
+          new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Prev').setStyle(ButtonStyle.Secondary).setDisabled(true),
+          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(true)
         );
         interaction.editReply({ components: [disabledRow] }).catch(() => { });
       });
 
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ embeds: [createErrorEmbed('Leaderboard failure: Unable to synchronize sector merit rankings.')] });
+      await interaction.editReply({ embeds: [createErrorEmbed('Failed to load leaderboard.')] });
     }
   }
 };

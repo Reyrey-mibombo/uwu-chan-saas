@@ -5,60 +5,59 @@ const { User } = require('../../database/mongo');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mastery')
-        .setDescription('Zenith Hyper-Apex: macroscopic Module Proficiency & Hex-Mastery Profiling')
-        .addUserOption(opt => opt.setName('user').setDescription('Personnel to audit (Optional)')),
+        .setDescription('View command usage mastery stats')
+        .addUserOption(opt => opt.setName('user').setDescription('User to check (Optional)')),
 
     async execute(interaction) {
         try {
             await interaction.deferReply();
             const targetUser = interaction.options.getUser('user') || interaction.user;
 
-            const userData = await User.findOne({ userId: targetUser.id, guildId: interaction.guildId }).lean();
+            const userData = await User.findOne({ userId: targetUser.id, 'guilds.guildId': interaction.guildId }).lean();
 
             if (!userData || !userData.staff || !userData.staff.commandUsage) {
-                return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed(`No mastery calibration found for <@${targetUser.id}>.`)], components: [row] });
+                const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+                return await interaction.editReply({ embeds: [createErrorEmbed('No mastery data found for this user.')], components: [row] });
             }
 
             const mastery = userData.staff.commandUsage;
             const sortedKeys = Object.keys(mastery).sort((a, b) => mastery[b] - mastery[a]).slice(0, 6);
 
             if (sortedKeys.length === 0) {
-                return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed(`Search failed: <@${targetUser.id}> has no mastered modules.`)], components: [row] });
+                const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+                return await interaction.editReply({ embeds: [createErrorEmbed('No command usage data found.')], components: [row] });
             }
 
-            // 1. Hex-Module Profiling (ASCII categorization)
+            const totalUsage = Object.values(mastery).reduce((a, b) => a + b, 0);
+
             const expertiseLines = sortedKeys.map(key => {
                 const count = mastery[key];
                 const lvl = Math.floor(Math.sqrt(count)) + 1;
-                const barLength = 10;
-                const filled = '█'.repeat(Math.min(barLength, Math.round((count / (lvl * lvl * 5)) * barLength)));
+                const barLength = 8;
+                const filled = '█'.repeat(Math.min(barLength, Math.round((count / (lvl * 10)) * barLength)));
                 const empty = '░'.repeat(barLength - filled.length);
-                return `➔ **${key.toUpperCase()}** \`LVL ${lvl}\`\n\`[${filled}${empty}]\` \`${count} Ops\``;
+                return `**${key}** \`LV${lvl}\` \`[${filled}${empty}]\` ${count} uses`;
             });
 
             const embed = await createCustomEmbed(interaction, {
-                title: `🎖️ Zenith Hyper-Apex: Module Mastery`,
+                title: `🎖️ Command Mastery: ${targetUser.username}`,
                 thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
-                description: `### 🛡️ Macroscopic Hex-Proficiency Matrix\nMapping neural command proficiency and industrial-grade module mastery for **${targetUser.username}**.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+                description: `Command usage stats for **${targetUser.username}**`,
                 fields: [
-                    { name: '🔥 Module Expertise Ribbons', value: expertiseLines.join('\n'), inline: false },
-                    { name: '📊 Total Nodes', value: `\`${Object.keys(mastery).length}\` Mastered`, inline: true },
-                    { name: '✨ Mastery Velocity', value: '`OPTIMAL`', inline: true },
-                    { name: '🌐 Global Sync', value: '`CONNECTED`', inline: true }
+                    { name: '📊 Top Commands', value: expertiseLines.join('\n'), inline: false },
+                    { name: '📈 Total Uses', value: `\`${totalUsage}\` commands used`, inline: true },
+                    { name: '🔧 Commands Used', value: `\`${Object.keys(mastery).length}\``, inline: true }
                 ],
-                footer: 'Hex-Mastery Profiling • V2 Expansion Hyper-Apex Suite',
-                color: 'premium'
+                color: 'primary'
             });
 
-            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
             await interaction.editReply({ embeds: [embed], components: [row] });
 
         } catch (error) {
-            console.error('Zenith Mastery Error:', error);
-            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed('Mastery Registry failure: Unable to decode proficiency matrix.')], components: [row] });
+            console.error('Mastery Error:', error);
+            const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_mastery').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('Failed to load mastery data.')], components: [row] });
         }
     }
 };

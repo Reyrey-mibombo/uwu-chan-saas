@@ -5,7 +5,7 @@ const { User } = require('../../database/mongo');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('reputation')
-    .setDescription('Check your reputation standing within this server')
+    .setDescription('Check reputation standing')
     .addUserOption(opt => opt.setName('user').setDescription('User to check (Optional)').setRequired(false)),
 
   async execute(interaction) {
@@ -13,39 +13,44 @@ module.exports = {
       await interaction.deferReply();
       const targetUser = interaction.options.getUser('user') || interaction.user;
 
-      const user = await User.findOne({ userId: targetUser.id, guildId: interaction.guildId }).lean();
+      const user = await User.findOne({ userId: targetUser.id, 'guilds.guildId': interaction.guildId }).lean();
 
-      const rep = user?.staff?.reputation || 0;
-      const rank = user?.staff?.rank || 'member';
+      if (!user || !user.staff) {
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_reputation').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+        return await interaction.editReply({ embeds: [createErrorEmbed('No staff data found for this user.')], components: [row] });
+      }
 
-      // Reputation Tiers for "Cool Feature"
+      const rep = user.staff?.reputation || 0;
+      const rank = user.staff?.rank || 'member';
+
       let tier = 'Neutral';
-      if (rep >= 1000) tier = '?? Legendary';
-      else if (rep >= 500) tier = '?? Platinum';
-      else if (rep >= 250) tier = '?? Gold';
-      else if (rep >= 100) tier = '?? Silver';
-      else if (rep >= 50) tier = '?? Bronze';
+      let tierEmoji = '⚪';
+      if (rep >= 1000) { tier = 'Legendary'; tierEmoji = '👑'; }
+      else if (rep >= 500) { tier = 'Platinum'; tierEmoji = '💎'; }
+      else if (rep >= 250) { tier = 'Gold'; tierEmoji = '🥇'; }
+      else if (rep >= 100) { tier = 'Silver'; tierEmoji = '🥈'; }
+      else if (rep >= 50) { tier = 'Bronze'; tierEmoji = '🥉'; }
 
       const embed = await createCustomEmbed(interaction, {
-        title: `?? Personnel Reputation: ${targetUser.username}`,
+        title: `${tierEmoji} Reputation: ${targetUser.username}`,
         thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
-        description: `Official reputation standing for <@${targetUser.id}> in the **${interaction.guild.name}** network.`,
+        description: `Reputation in **${interaction.guild.name}**`,
         fields: [
-          { name: '? Reputation Points', value: `**${rep.toLocaleString()}**`, inline: true },
-          { name: '?? Reputation Tier', value: `\`${tier}\``, inline: true },
-          { name: '?? Official Rank', value: `\`${rank.toUpperCase()}\``, inline: true }
+          { name: '⭐ Reputation Points', value: `\`${rep.toLocaleString()}\``, inline: true },
+          { name: '🏆 Tier', value: `${tierEmoji} \`${tier}\``, inline: true },
+          { name: '⭐ Rank', value: `\`${rank.toUpperCase()}\``, inline: true }
         ],
-        color: rep >= 100 ? 'enterprise' : 'primary'
+        color: rep >= 100 ? 'premium' : 'primary'
       });
 
-      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_reputation').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [embed], components: [row] });
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_reputation').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+      await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error('Reputation Error:', error);
-      const errEmbed = createErrorEmbed('An error occurred while fetching reputation points.');
+      const errEmbed = createErrorEmbed('Failed to load reputation data.');
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_reputation').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
       if (interaction.deferred || interaction.replied) {
-        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_reputation').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [errEmbed], components: [row] });
+        await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }

@@ -5,9 +5,9 @@ const { Activity, Warning, Shift } = require('../../database/mongo');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('check_logs')
-    .setDescription('Check staff activity logs for this server')
+    .setDescription('Check staff activity logs')
     .addUserOption(opt => opt.setName('user').setDescription('Staff member (Optional)').setRequired(false))
-    .addIntegerOption(opt => opt.setName('days').setDescription('Number of days to search back').setRequired(false)),
+    .addIntegerOption(opt => opt.setName('days').setDescription('Number of days (default 7)').setRequired(false)),
 
   async execute(interaction) {
     try {
@@ -15,7 +15,6 @@ module.exports = {
       const targetUser = interaction.options.getUser('user');
       const days = interaction.options.getInteger('days') || 7;
 
-      // STRICT SCOPING
       const query = { guildId: interaction.guildId };
       if (targetUser) query.userId = targetUser.id;
 
@@ -25,33 +24,32 @@ module.exports = {
       const [activities, warnings, shifts] = await Promise.all([
         Activity.find(query).sort({ createdAt: -1 }).limit(20).lean(),
         Warning.find({ ...query, createdAt: { $gte: cutoff } }).lean(),
-        Shift.find({ ...query, createdAt: { $gte: cutoff } }).lean()
+        Shift.find({ userId: targetUser?.id, guildId: interaction.guildId, startTime: { $gte: cutoff }, endTime: { $ne: null } }).lean()
       ]);
 
-      const username = targetUser ? `<@${targetUser.id}>'s` : 'Server';
+      const username = targetUser ? targetUser.username : 'Server';
 
       const embed = await createCustomEmbed(interaction, {
-        title: `?? Operational Footprint: Last ${days} Days`,
-        description: `### ??? Transaction Log Snapshot\nRetrieved ${username} tactical footprint data from the **${interaction.guild.name}** operational ledger.`,
+        title: `📋 Activity Logs: ${username}`,
+        description: `Last **${days}** days in **${interaction.guild.name}**`,
         thumbnail: targetUser ? targetUser.displayAvatarURL({ dynamic: true }) : interaction.guild.iconURL({ dynamic: true }),
         fields: [
-          { name: '?? Total Transactions', value: `\`${activities.length.toLocaleString()}\` Events`, inline: true },
-          { name: '?? Risk Indicators', value: `\`${warnings.length.toLocaleString()}\` Warnings`, inline: true },
-          { name: '?? Service Patrols', value: `\`${shifts.length.toLocaleString()}\` Shifts`, inline: true }
+          { name: '📊 Activities', value: `\`${activities.length}\` events`, inline: true },
+          { name: '⚠️ Warnings', value: `\`${warnings.length}\``, inline: true },
+          { name: '⏱️ Shifts', value: `\`${shifts.length}\``, inline: true }
         ],
-        footer: 'Intelligence queried securely via high-performance MongoDB aggregations.',
-        color: 'premium'
+        color: 'primary'
       });
 
-      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_check_logs').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [embed], components: [row] });
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_check_logs').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+      await interaction.editReply({ embeds: [embed], components: [row] });
 
     } catch (error) {
       console.error('Check Logs Error:', error);
-      const errEmbed = createErrorEmbed('A database error occurred while querying the server transaction logs.');
+      const errEmbed = createErrorEmbed('Failed to load activity logs.');
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_check_logs').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
       if (interaction.deferred || interaction.replied) {
-        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_check_logs').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [errEmbed], components: [row] });
+        await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }

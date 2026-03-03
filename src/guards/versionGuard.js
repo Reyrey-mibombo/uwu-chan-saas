@@ -11,7 +11,9 @@ const VERSION_TIER_MAP = {
   v5: 'premium',
   v6: 'enterprise',
   v7: 'enterprise',
-  v8: 'enterprise'
+  v8: 'enterprise',
+  enterprise: 'enterprise',  // For consolidated enterprise commands
+  v1_context: 'free'
 };
 
 const VERSION_NAMES = {

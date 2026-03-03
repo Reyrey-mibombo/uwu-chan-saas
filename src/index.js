@@ -70,27 +70,175 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8'];
-  const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+  let loadedCount = 0;
 
-  for (const version of versions) {
-    const versionPath = path.join(commandsPath, version.trim());
-    if (!fs.existsSync(versionPath)) continue;
+  // Essential v1 commands (core functionality) - max 20
+  const essentialV1 = [
+    'help.js', 'setup.js', 'rank.js', 'stats.js', 'profile.js',
+    'warn.js', 'kick.js', 'ban.js', 'mute.js', 'unmute.js',
+    'shift_start.js', 'shift_end.js', 'add_points.js', 'remove_points.js',
+    'ticketSetup.js', 'promo_setup.js', 'config_server.js',
+    'auto_rank_up.js', 'staff_profile.js', 'view_warns.js'
+  ];
 
-    const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
-    for (const file of commandFiles) {
+  const v1Path = path.join(commandsPath, 'v1');
+  if (fs.existsSync(v1Path)) {
+    for (const file of essentialV1) {
       try {
-        delete require.cache[require.resolve(path.join(versionPath, file))];
-        const command = require(path.join(versionPath, file));
+        const filePath = path.join(v1Path, file);
+        if (!fs.existsSync(filePath)) continue;
+        delete require.cache[require.resolve(filePath)];
+        const command = require(filePath);
         if ('data' in command && 'execute' in command) {
-          command.requiredVersion = version;
+          command.requiredVersion = 'v1';
           client.commands.set(command.data.name, command);
+          loadedCount++;
         }
+      } catch (e) {
+        logger.error(`Error loading v1 command ${file}: ${e.message}`);
+      }
+    }
+  }
+
+  // Essential v2 commands (staff tools) - max 15
+  const essentialV2 = [
+    'points.js', 'profile_card.js', 'commend.js', 'promo_progress.js',
+    'nextPromotion.js', 'burnout_check.js', 'badges.js', 'mastery.js',
+    'bonus_points.js', 'addReputation.js', 'checkRequirements.js',
+    'progress_report.js', 'activity_alert.js', 'promo_list.js', 'apply_setup.js'
+  ];
+
+  const v2Path = path.join(commandsPath, 'v2');
+  if (fs.existsSync(v2Path)) {
+    for (const file of essentialV2) {
+      try {
+        const filePath = path.join(v2Path, file);
+        if (!fs.existsSync(filePath)) continue;
+        delete require.cache[require.resolve(filePath)];
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = 'v2';
+          client.commands.set(command.data.name, command);
+          loadedCount++;
+        }
+      } catch (e) {
+        logger.error(`Error loading v2 command ${file}: ${e.message}`);
+      }
+    }
+  }
+
+  // Essential v3 commands (premium analytics) - max 10
+  const essentialV3 = [
+    'leaderboards.js', 'performance_score.js', 'detailed_profile.js',
+    'promotion_predictor.js', 'attendance_summary.js', 'efficiency_chart.js',
+    'achievement_tracker.js', 'auto_remind.js', 'priority_alerts.js'
+  ];
+
+  const v3Path = path.join(commandsPath, 'v3');
+  if (fs.existsSync(v3Path)) {
+    for (const file of essentialV3) {
+      try {
+        const filePath = path.join(v3Path, file);
+        if (!fs.existsSync(filePath)) continue;
+        delete require.cache[require.resolve(filePath)];
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = 'v3';
+          client.commands.set(command.data.name, command);
+          loadedCount++;
+        }
+      } catch (e) {
+        logger.error(`Error loading v3 command ${file}: ${e.message}`);
+      }
+    }
+  }
+
+  // Load v1_context (context menus) - usually 2 commands
+  const v1ContextPath = path.join(commandsPath, 'v1_context');
+  if (fs.existsSync(v1ContextPath)) {
+    const contextFiles = fs.readdirSync(v1ContextPath).filter(f => f.endsWith('.js'));
+    for (const file of contextFiles.slice(0, 2)) {
+      try {
+        const filePath = path.join(v1ContextPath, file);
+        delete require.cache[require.resolve(filePath)];
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = 'v1_context';
+          client.commands.set(command.data.name, command);
+          loadedCount++;
+        }
+      } catch (e) {
+        logger.error(`Error loading context command ${file}: ${e.message}`);
+      }
+    }
+  }
+
+  // Load buying commands (all 3)
+  const buyingPath = path.join(commandsPath, 'buying');
+  if (fs.existsSync(buyingPath)) {
+    const buyingFiles = fs.readdirSync(buyingPath).filter(f => f.endsWith('.js'));
+    for (const file of buyingFiles) {
+      try {
+        const filePath = path.join(buyingPath, file);
+        delete require.cache[require.resolve(filePath)];
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = 'free';
+          client.commands.set(command.data.name, command);
+          loadedCount++;
+        }
+      } catch (e) {
+        logger.error(`Error loading buying command ${file}: ${e.message}`);
+      }
+    }
+  }
+
+  // Load consolidated commands (replaces v6/v7/v8) - 7 commands
+  const consolidatedPath = path.join(commandsPath, 'consolidated');
+  if (fs.existsSync(consolidatedPath)) {
+    const consolidatedFiles = fs.readdirSync(consolidatedPath).filter(f => f.endsWith('.js'));
+    for (const file of consolidatedFiles) {
+      try {
+        const filePath = path.join(consolidatedPath, file);
+        delete require.cache[require.resolve(filePath)];
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = 'enterprise';
+          client.commands.set(command.data.name, command);
+          loadedCount++;
+        }
+      } catch (e) {
+        logger.error(`Error loading consolidated command ${file}: ${e.message}`);
+      }
+    }
+  }
+
+  logger.info(`Loaded ${client.commands.size} commands (target: <=100)`);
+}
       } catch (e) {
         logger.error(`Error loading command ${file}: ${e.message}`);
       }
     }
   }
+
+  // Load consolidated commands (replaces v6/v7/v8)
+  const consolidatedPath = path.join(commandsPath, 'consolidated');
+  if (fs.existsSync(consolidatedPath)) {
+    const consolidatedFiles = fs.readdirSync(consolidatedPath).filter(f => f.endsWith('.js'));
+    for (const file of consolidatedFiles) {
+      try {
+        delete require.cache[require.resolve(path.join(consolidatedPath, file))];
+        const command = require(path.join(consolidatedPath, file));
+        if ('data' in command && 'execute' in command) {
+          command.requiredVersion = 'enterprise'; // v6/v7/v8 consolidated
+          client.commands.set(command.data.name, command);
+        }
+      } catch (e) {
+        logger.error(`Error loading consolidated command ${file}: ${e.message}`);
+      }
+    }
+  }
+
   logger.info(`Loaded ${client.commands.size} commands`);
 }
 

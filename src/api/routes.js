@@ -166,6 +166,84 @@ router.patch('/guild/:guildId/promotion-requirements', auth, guildAuth, async (r
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/dashboard/guild/:guildId/alerts
+router.get('/guild/:guildId/alerts', auth, guildAuth, async (req, res) => {
+    try {
+        const guildDb = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(guildDb?.settings?.alerts || { enabled: false, channelId: null, roleId: null, threshold: 50 });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/alerts
+router.patch('/guild/:guildId/alerts', auth, guildAuth, async (req, res) => {
+    try {
+        const { guildId } = req.params;
+        const { enabled, channelId, roleId, threshold } = req.body;
+        const update = {
+            'settings.alerts.enabled': !!enabled,
+            'settings.alerts.channelId': channelId || null,
+            'settings.alerts.roleId': roleId || null,
+            'settings.alerts.threshold': parseInt(threshold) || 50
+        };
+        await Guild.findOneAndUpdate({ guildId }, { $set: update });
+        invalidateCache(guildId);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/applications
+router.get('/guild/:guildId/applications', auth, guildAuth, async (req, res) => {
+    try {
+        let config = await ApplicationConfig.findOne({ guildId: req.params.guildId }).lean();
+        if (!config) {
+            config = { enabled: false, applyChannelId: null, reviewChannelId: null, reviewerRoleId: null, panelTitle: 'Server Application', questions: ["Why do you want to join our team?", "What experience do you have?", "How active can you be?"] };
+        }
+        res.json(config);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/applications
+router.patch('/guild/:guildId/applications', auth, guildAuth, async (req, res) => {
+    try {
+        const { guildId } = req.params;
+        const update = { ...req.body, updatedAt: Date.now() };
+        await ApplicationConfig.findOneAndUpdate({ guildId }, { $set: update }, { upsert: true });
+        invalidateCache(guildId);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/branding
+router.get('/guild/:guildId/branding', auth, guildAuth, async (req, res) => {
+    try {
+        const guildDb = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(guildDb?.customBranding || { color: null, footer: null, iconURL: null });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/branding
+router.patch('/guild/:guildId/branding', auth, guildAuth, async (req, res) => {
+    try {
+        const { guildId } = req.params;
+        // Check tier authorization safely
+        const guildDb = await Guild.findOne({ guildId }).lean();
+        const tier = guildDb?.premium?.tier || 'free';
+        if (tier !== 'enterprise' && tier !== 'v6') {
+            return res.status(403).json({ error: 'Custom branding requires the Enterprise tier.' });
+        }
+
+        const { color, footer, iconURL } = req.body;
+        const update = {
+            'customBranding.color': color || null,
+            'customBranding.footer': footer || null,
+            'customBranding.iconURL': iconURL || null
+        };
+        await Guild.findOneAndUpdate({ guildId }, { $set: update });
+        invalidateCache(guildId);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET /api/dashboard/guild/:guildId/staff — staff list
 router.get('/guild/:guildId/staff', auth, guildAuth, async (req, res) => {
     try {

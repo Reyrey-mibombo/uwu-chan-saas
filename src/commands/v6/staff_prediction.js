@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createEnterpriseEmbed } = require('../../utils/enhancedEmbeds');
 const { User } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
 const RANK_THRESHOLDS = {
   trial: 0, staff: 100, senior: 300, manager: 600, admin: 1000, owner: 2000

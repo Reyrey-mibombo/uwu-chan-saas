@@ -1,11 +1,12 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 const { createEnterpriseEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 const { Activity, Guild, User } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('analytics_dashboard')
-    .setDescription('Full analytics dashboard with all key metrics'),
+    .setName('enterprise_analytics')
+    .setDescription('Enterprise analytics dashboard with all key metrics'),
 
   async execute(interaction, client) {
     await interaction.deferReply();

@@ -5,8 +5,8 @@ const { Activity } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('engagement_chart')
-    .setDescription('Visual engagement chart comparing 4 weeks of activity'),
+    .setName('enterprise_engagement')
+    .setDescription('Enterprise engagement chart comparing 4 weeks of activity'),
 
   async execute(interaction, client) {
     await interaction.deferReply();

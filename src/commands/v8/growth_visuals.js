@@ -15,6 +15,7 @@ module.exports = {
             }
     const guildId = interaction.guildId;
     const { Guild, Activity } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
     const [guild, acts] = await Promise.all([
       Guild.findOne({ guildId }).lean(),
       Activity.find({ guildId, createdAt: { $gte: new Date(Date.now() - 30 * 86400000) } }).lean()

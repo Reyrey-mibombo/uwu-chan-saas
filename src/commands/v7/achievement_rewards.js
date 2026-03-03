@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createEnterpriseEmbed } = require('../../utils/enhancedEmbeds');
 const { User } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
 const AVAILABLE_ACHIEVEMENTS = [
   { name: '?? First Shift', desc: 'Complete your first shift', req: 'Complete 1 shift' },

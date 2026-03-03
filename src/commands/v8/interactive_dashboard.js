@@ -50,6 +50,7 @@ module.exports = {
 
         if (tab === 'moderation') {
           const { Warning } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
           const [weekWarnings, totalWarnings] = await Promise.all([
             Warning.find({ guildId, createdAt: { $gte: sevenDaysAgo } }).lean(),
             Warning.find({ guildId }).lean()

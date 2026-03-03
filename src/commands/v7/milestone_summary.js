@@ -23,6 +23,7 @@ module.exports = {
             }
     const guildId = interaction.guildId;
     const { Guild } = require('../../database/mongo');
+const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 
     const [guild, discordGuild] = await Promise.all([
       Guild.findOne({ guildId }).lean(),

@@ -3,8 +3,8 @@ const { createCustomEmbed } = require('../../utils/enhancedEmbeds');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('setup_promo')
-        .setDescription('Configure the auto-promotion system')
+        .setName('promo_config')
+        .setDescription('Configure the auto-promotion system (Enhanced)')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addSubcommand(sub => sub
             .setName('role')

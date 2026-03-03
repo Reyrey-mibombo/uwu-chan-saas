@@ -5,7 +5,7 @@ const { Shift } = require('../../database/mongo');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('shift_stats')
-    .setDescription('[Premium] View authentic shift statistics mapped within this server')
+    .setDescription('View shift statistics')
     .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(false)),
 
   async execute(interaction) {
@@ -15,8 +15,8 @@ module.exports = {
       const shifts = await Shift.find({ userId: targetUser.id, guildId: interaction.guildId }).lean();
 
       if (shifts.length === 0) {
-        return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_shiftStats').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed(`No shift history records exist for <@${targetUser.id}> inside this server.`)], components: [row] });
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_shiftStats').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+        return await interaction.editReply({ embeds: [createErrorEmbed('No shift history found for this user.')], components: [row] });
       }
 
       const totalShifts = shifts.length;
@@ -24,35 +24,34 @@ module.exports = {
       const hours = Math.floor(totalTime / 3600);
       const minutes = Math.floor((totalTime % 3600) / 60);
 
-      const completedShifts = shifts.filter(s => s.endTime !== null && s.endTime !== undefined).length;
+      const completedShifts = shifts.filter(s => s.endTime != null).length;
       const avgDuration = completedShifts > 0 ? Math.round(totalTime / completedShifts) : 0;
 
-      const activeShifts = shifts.filter(s => s.endTime == null && s.status !== 'ended').length;
+      const activeShifts = shifts.filter(s => s.endTime == null).length;
 
       const embed = await createCustomEmbed(interaction, {
-        title: `?? Patrol Analytics: ${targetUser.username}`,
-        description: `### ??? Operational Record Breakdown\nA comprehensive statistical analysis of all service patrols recorded for <@${targetUser.id}> within the **${interaction.guild.name}** sector.`,
+        title: `⏱️ Shift Stats: ${targetUser.username}`,
         thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `Shift statistics in **${interaction.guild.name}**`,
         fields: [
-          { name: '?? Patrols Executed', value: `\`${totalShifts.toLocaleString()}\` Logged`, inline: true },
-          { name: '?? Total Service Time', value: `\`${hours}h ${minutes}m\``, inline: true },
-          { name: '?? Avg. Deployment', value: `\`${Math.floor(avgDuration / 60)}m\``, inline: true },
-          { name: '? Validated Records', value: `\`${completedShifts.toLocaleString()}\` Completed`, inline: true },
-          { name: '?? Deployment Status', value: activeShifts > 0 ? '`ON ACTIVE PATROL`' : '`Standby`', inline: true }
+          { name: '📋 Total Shifts', value: `\`${totalShifts}\``, inline: true },
+          { name: '⏱️ Total Time', value: `\`${hours}h ${minutes}m\``, inline: true },
+          { name: '📊 Avg Duration', value: `\`${Math.floor(avgDuration / 60)}m\``, inline: true },
+          { name: '✅ Completed', value: `\`${completedShifts}\``, inline: true },
+          { name: '🔴 Active', value: `\`${activeShifts}\``, inline: true }
         ],
-        footer: 'Statistics are localized to the current server environment.',
-        color: 'premium'
+        color: 'primary'
       });
 
-      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_shiftStats').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [embed], components: [row] });
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_shiftStats').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+      await interaction.editReply({ embeds: [embed], components: [row] });
 
     } catch (error) {
       console.error('Shift Stats Error:', error);
-      const errEmbed = createErrorEmbed('An error occurred while attempting to aggregate shift metrics.');
+      const errEmbed = createErrorEmbed('Failed to load shift statistics.');
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_shiftStats').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
       if (interaction.deferred || interaction.replied) {
-        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_shiftStats').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [errEmbed], components: [row] });
+        await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }

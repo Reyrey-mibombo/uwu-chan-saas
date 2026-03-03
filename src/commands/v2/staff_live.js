@@ -5,21 +5,20 @@ const { Shift } = require('../../database/mongo');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('staff_live')
-        .setDescription('📡 View a real-time operations board of active staff personnel'),
+        .setDescription('View currently active staff on duty'),
 
     async execute(interaction) {
         try {
             await interaction.deferReply();
             const guildId = interaction.guildId;
 
-            // Find all active shifts in this guild
             const activeShifts = await Shift.find({ guildId, endTime: null, status: 'active' }).lean();
 
             if (activeShifts.length === 0) {
                 return interaction.editReply({
                     embeds: [createCustomEmbed(interaction, {
-                        title: '📡 Operations Board: STANDBY',
-                        description: '### 🛡️ No Active Duty Detected\nCurrently, no personnel are engaged in active sector patrols. Monitoring standby.',
+                        title: '📡 No Staff On Duty',
+                        description: 'Currently no staff members are on duty.',
                         color: 'info'
                     })]
                 });
@@ -29,29 +28,29 @@ module.exports = {
                 const user = await interaction.client.users.fetch(s.userId).catch(() => null);
                 const name = user ? user.username : 'Unknown';
                 const start = new Date(s.startTime);
-                const duration = Math.floor((Date.now() - start) / 60000); // Minutes
+                const duration = Math.floor((Date.now() - start) / 60000);
 
-                return `🟢 **${name}** — \`${duration}m Active\`\n> Current Objective: *Monitoring Sector...*`;
+                return `🟢 **${name}** — \`${duration}m active\``;
             }));
 
             const embed = await createCustomEmbed(interaction, {
-                title: '📡 Real-Time Operations Board',
+                title: '📡 Staff On Duty',
                 thumbnail: interaction.guild.iconURL({ dynamic: true }),
-                description: `### 🛡️ Sector Activity Matrix: ${interaction.guild.name}\nAuthorized visualization of active duty personnel currently engaged in operational patrols.`,
+                description: `Active staff in **${interaction.guild.name}**`,
                 fields: [
-                    { name: '🟢 On Duty Personnel', value: boardLines.join('\n\n') || '*Loading telemetry...*', inline: false }
+                    { name: '🟢 On Duty', value: boardLines.join('\n') || 'None', inline: false }
                 ],
-                footer: `Real-time data • ${activeShifts.length} Active Personnel Logged`,
+                footer: `${activeShifts.length} staff on duty`,
                 color: 'success'
             });
 
-            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_staff_live').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_staff_live').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
             await interaction.editReply({ embeds: [embed], components: [row] });
 
         } catch (error) {
             console.error('Staff Live Error:', error);
-            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_staff_live').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed('Failed to query the real-time operations matrix.')], components: [row] });
+            const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_btn_staff_live').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('Failed to load staff on duty.')], components: [row] });
         }
     }
 };

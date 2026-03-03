@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require('discord.js');
+const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder } = require('discord.js');
 const { createCustomEmbed, createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
 const os = require('os');
 
@@ -109,7 +109,7 @@ function generateStatsEmbed(client, message, interaction, isRefresh = false) {
   const guildCount = client.guilds.cache.size;
 
   // --- 4. Build Embed ---
-  return new ()
+  return new EmbedBuilder()
     .setTitle('📡 System Telemetry & Diagnostics')
     .setDescription('Real-time performance metrics and connection status.')
     .setColor(color)

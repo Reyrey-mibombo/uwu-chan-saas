@@ -11,7 +11,8 @@ const {
     PermissionsBitField,
     ModalBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    EmbedBuilder
 } = require('discord.js');
 const { createCustomEmbed, createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
 
@@ -50,7 +51,7 @@ module.exports = {
         // Initial Presence Check
         const presence = member.presence;
         if (!presence || presence.status === 'offline') {
-            const offlineEmbed = new ()
+                        const offlineEmbed = new EmbedBuilder()
                 .setTitle(`🔭 Target Lost: ${targetUser.username}`)
                 .setDescription('🔒 This user is **Offline**, **Invisible**, or has privacy settings enabled.')
                 .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
@@ -147,7 +148,7 @@ module.exports = {
                     const freshPresence = freshMember.presence;
 
                     if (!freshPresence || freshPresence.status === 'offline') {
-                        const offlineEmbed = new ()
+            const offlineEmbed = new EmbedBuilder()
                             .setDescription('🔴 **Target went offline.**')
                             .setColor('Red');
                         await message.edit({ embeds: [offlineEmbed], components: [] });
@@ -193,7 +194,7 @@ module.exports = {
             else if (action === 'join_position') {
                 await i.deferReply({ ephemeral: true });
                 const pos = getJoinPosition(interaction.guild, member);
-                const posEmbed = new ()
+                const posEmbed = new EmbedBuilder()
                     .setTitle(`🚪 Join Position: ${targetUser.username}`)
                     .setDescription(`They were the **#${pos}** member to join this server.`)
                     .setColor('primary');
@@ -206,7 +207,7 @@ module.exports = {
                 let list = mutuals.map(g => `• ${g.name}`).slice(0, 10).join('\n');
                 if (count > 10) list += `\n...and ${count - 10} more.`;
                 
-                const mutualEmbed = new ()
+                const mutualEmbed = new EmbedBuilder()
                     .setTitle(`🤝 Mutual Servers`)
                     .setDescription(`I share **${count}** servers with ${targetUser.username}.\n\n${list || 'None'}`)
                     .setColor('primary');
@@ -225,7 +226,7 @@ module.exports = {
             else if (action === 'history') {
                 await i.deferReply({ ephemeral: true });
                 const hist = activityHistory.get(targetUser.id) || [];
-                const histEmbed = new ()
+                const histEmbed = new EmbedBuilder()
                     .setTitle(`📜 Activity Timeline: ${targetUser.username}`)
                     .setDescription(buildTimelineText(hist))
                     .setColor('primary');
@@ -236,7 +237,7 @@ module.exports = {
                 const u = await interaction.client.users.fetch(member.id, { force: true });
                 const banner = u.bannerURL({ size: 1024 });
                 const avatar = u.displayAvatarURL({ size: 1024 });
-                const mediaEmbed = new ()
+                const mediaEmbed = new EmbedBuilder()
                     .setTitle(`🖼️ Media for ${u.username}`)
                     .setImage(banner || avatar)
                     .setDescription(`[Avatar URL](${avatar})\n[Banner URL](${banner || 'None'})`);
@@ -325,7 +326,7 @@ function buildTrustEmbed(user, member) {
     if (score > 70) color = 0x57F287;
     else if (score < 40) color = 0xED4245;
 
-    return new ()
+    return new EmbedBuilder()
         .setTitle(`🛡️ Trust Analysis: ${user.username}`)
         .setDescription(`**Trust Score: ${score}/100**`)
         .addFields({ name: 'Factors', value: reasons.join('\n') })
@@ -414,7 +415,7 @@ function buildPermissionsEmbed(interaction, member) {
         fields.push({ name: '📜 Standard Permissions', value: 'None', inline: false });
     }
 
-    return new ()
+    return new EmbedBuilder()
         .setColor('Red')
         .setTitle(`🔑 Permissions: ${member.user.username}`)
         .addFields(fields)
@@ -441,7 +442,7 @@ async function buildSmartEmbed(interaction, targetUser, member, presence, activi
         const permCount = member.permissions.toArray().length;
         const ageDays = Math.floor((Date.now() - targetUser.createdTimestamp) / (1000 * 60 * 60 * 24));
         
-        return new ()
+        return new EmbedBuilder()
             .setTitle(`🔬 Deep Scan: ${targetUser.username}`)
             .setColor(color)
             .setThumbnail(thumbnail)
@@ -523,7 +524,7 @@ async function buildSmartEmbed(interaction, targetUser, member, presence, activi
         while (fields.length > 2) fields.pop();
     }
 
-    const embed = new ()
+    const embed = new EmbedBuilder()
         .setTitle(`🛰️ Telemetry: ${targetUser.username}`)
         .setURL(`https://discord.com/users/${targetUser.id}`)
         .setColor(color)

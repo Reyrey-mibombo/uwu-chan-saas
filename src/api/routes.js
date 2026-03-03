@@ -45,7 +45,7 @@ async function guildAuth(req, res, next) {
 router.get('/stats', async (req, res) => {
     try {
         const [staffCount, totalShifts] = await Promise.all([
-            User.countDocuments({ 'staff.points': { $gt: 0 } }),
+            User.countDocuments({ 'guilds.staff.points': { $gt: 0 } }),
             Shift.countDocuments({ endTime: { $ne: null } })
         ]);
         res.json({ staffCount, totalShifts, commandCount: 271 });
@@ -100,7 +100,7 @@ router.get('/guild/:guildId', auth, guildAuth, async (req, res) => {
         const { guildId } = req.params;
         const [guildDb, staffCount, shiftCount, warnCount, activityCount] = await Promise.all([
             Guild.findOne({ guildId }).lean(),
-            User.countDocuments({ userId: { $exists: true }, 'staff.points': { $gt: 0 } }),
+            User.countDocuments({ 'guilds': { $elemMatch: { guildId, 'staff.points': { $gt: 0 } } } }),
             Shift.countDocuments({ guildId, endTime: { $ne: null } }),
             Warning.countDocuments({ guildId }),
             Activity.countDocuments({ guildId, createdAt: { $gte: new Date(Date.now() - 7 * 86400000) } })
@@ -168,15 +168,27 @@ router.patch('/guild/:guildId/promotion-requirements', auth, guildAuth, async (r
 router.get('/guild/:guildId/staff', auth, guildAuth, async (req, res) => {
     try {
         const { guildId } = req.params;
-        const users = await User.find({ 'staff.rank': { $exists: true } }).sort({ 'staff.points': -1 }).limit(50).lean();
+        const users = await User.find({ 'guilds': { $elemMatch: { guildId, 'staff.rank': { $exists: true } } } }).limit(50).lean();
         const enriched = await Promise.all(users.map(async u => {
+            const guildEntry = u.guilds.find(g => g.guildId === guildId);
+            const staff = guildEntry?.staff || {};
             const [shifts, warns] = await Promise.all([
                 Shift.countDocuments({ userId: u.userId, guildId, endTime: { $ne: null } }),
                 Warning.countDocuments({ userId: u.userId, guildId })
             ]);
-            return { userId: u.userId, username: u.username || 'Unknown', avatar: u.avatar, rank: u.staff?.rank || 'member', points: u.staff?.points || 0, consistency: u.staff?.consistency || 0, streak: u.staff?.streak || 0, shifts, warnings: warns };
+            return {
+                userId: u.userId,
+                username: u.username || 'Unknown',
+                avatar: u.avatar,
+                rank: staff.rank || 'member',
+                points: staff.points || 0,
+                consistency: staff.consistency || 0,
+                streak: staff.streak || 0,
+                shifts,
+                warnings: warns
+            };
         }));
-        res.json(enriched);
+        res.json(enriched.sort((a, b) => b.points - a.points));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -186,8 +198,12 @@ router.patch('/guild/:guildId/staff/:userId', auth, guildAuth, async (req, res) 
         const { guildId, userId } = req.params;
         const allowed = ['rank', 'points'];
         const update = {};
-        for (const f of allowed) if (req.body[f] !== undefined) update[`staff.${f}`] = req.body[f];
-        await User.findOneAndUpdate({ userId }, { $set: update }, { upsert: false });
+        for (const f of allowed) if (req.body[f] !== undefined) update[`guilds.$.staff.${f}`] = req.body[f];
+        await User.findOneAndUpdate(
+            { userId, 'guilds.guildId': guildId },
+            { $set: update },
+            { upsert: false }
+        );
         // Log the action
         await Activity.create({ guildId, userId: req.discordUser.id, type: 'admin_action', meta: `Updated staff ${userId}: ${JSON.stringify(req.body)}`, createdAt: new Date() }).catch(() => { });
         res.json({ success: true });
@@ -239,9 +255,11 @@ router.get('/guild/:guildId/promotion-status', auth, guildAuth, async (req, res)
             admin: { points: 1000, shifts: 30, consistency: 85, maxWarnings: 0 },
             ...(guildDb?.promotionRequirements || {})
         };
-        const users = await User.find({ 'staff.rank': { $exists: true } }).limit(50).lean();
+        const users = await User.find({ 'guilds': { $elemMatch: { guildId, 'staff.rank': { $exists: true } } } }).limit(50).lean();
         const result = await Promise.all(users.map(async u => {
-            const rank = u.staff?.rank || 'member';
+            const guildEntry = u.guilds.find(g => g.guildId === guildId);
+            const staff = guildEntry?.staff || {};
+            const rank = staff.rank || 'member';
             const currentIdx = RANK_ORDER.indexOf(rank);
             const nextRank = RANK_ORDER[currentIdx + 1];
             const req2 = REQS[nextRank] || null;
@@ -249,10 +267,162 @@ router.get('/guild/:guildId/promotion-status', auth, guildAuth, async (req, res)
                 Shift.countDocuments({ userId: u.userId, guildId }),
                 Warning.countDocuments({ userId: u.userId, guildId })
             ]);
-            const eligible = req2 && (u.staff?.points || 0) >= req2.points && shifts >= req2.shifts && (u.staff?.consistency || 0) >= req2.consistency && warns <= req2.maxWarnings;
-            return { userId: u.userId, username: u.username || 'Unknown', rank, nextRank, points: u.staff?.points || 0, consistency: u.staff?.consistency || 0, shifts, warnings: warns, eligible, req: req2 };
+            const eligible = req2 && (staff.points || 0) >= req2.points && shifts >= req2.shifts && (staff.consistency || 0) >= req2.consistency && warns <= req2.maxWarnings;
+            return { userId: u.userId, username: u.username || 'Unknown', rank, nextRank, points: staff.points || 0, consistency: staff.consistency || 0, shifts, warnings: warns, eligible, req: req2 };
         }));
         res.json(result);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/leaderboard — staff sorted by points
+router.get('/guild/:guildId/leaderboard', auth, guildAuth, async (req, res) => {
+    try {
+        const { guildId } = req.params;
+        const users = await User.find({ 'guilds': { $elemMatch: { guildId, 'staff.points': { $gt: 0 } } } }).limit(25).lean();
+        const list = users.map(u => {
+            const guildEntry = u.guilds.find(g => g.guildId === guildId);
+            const staff = guildEntry?.staff || {};
+            return {
+                id: u.userId, username: u.username || 'Unknown',
+                avatar: u.avatar, points: staff.points || 0,
+                rank: staff.rank || 'member', consistency: staff.consistency || 0,
+                activity: staff.consistency || 0
+            };
+        });
+        res.json(list.sort((a, b) => b.points - a.points));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ══════════════════════════════════════════
+   SYSTEM SETTINGS (Auto-working systems)
+══════════════════════════════════════════ */
+
+// GET /api/dashboard/guild/:guildId/systems/automod
+router.get('/guild/:guildId/systems/automod', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(g?.settings?.modules?.automod || {});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/systems/automod
+router.patch('/guild/:guildId/systems/automod', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            { $set: { 'settings.modules.automod': req.body } },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/systems/welcome
+router.get('/guild/:guildId/systems/welcome', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(g?.settings?.modules?.welcome || {});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/systems/welcome
+router.patch('/guild/:guildId/systems/welcome', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            { $set: { 'settings.modules.welcome': req.body } },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/systems/autorole
+router.get('/guild/:guildId/systems/autorole', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(g?.settings?.modules?.autorole || {});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/systems/autorole
+router.patch('/guild/:guildId/systems/autorole', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            { $set: { 'settings.modules.autorole': req.body } },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/systems/logging
+router.get('/guild/:guildId/systems/logging', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(g?.settings?.modules?.logging || {});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/systems/logging
+router.patch('/guild/:guildId/systems/logging', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            { $set: { 'settings.modules.logging': req.body } },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/systems/antispam
+router.get('/guild/:guildId/systems/antispam', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(g?.settings?.modules?.antispam || {});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/systems/antispam
+router.patch('/guild/:guildId/systems/antispam', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            { $set: { 'settings.modules.antispam': req.body } },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/dashboard/guild/:guildId/systems/tickets
+router.get('/guild/:guildId/systems/tickets', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).lean();
+        res.json(g?.settings?.modules?.tickets || {
+            enabled: !!g?.settings?.ticketEnabled,
+            panelChannelId: g?.settings?.ticketChannel || null
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/systems/tickets
+router.patch('/guild/:guildId/systems/tickets', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            {
+                $set: {
+                    'settings.modules.tickets': req.body,
+                    'settings.ticketEnabled': req.body.enabled,
+                    'settings.ticketChannel': req.body.panelChannelId
+                }
+            },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

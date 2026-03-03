@@ -1,6 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { User, Guild, Shift, Warning, Activity } = require('../database/mongo');
+const { User, Guild, Shift, Warning, Activity, ApplicationConfig } = require('../database/mongo');
+
+// Input sanitization helper to prevent NoSQL injection and prototype pollution
+function sanitizeInput(input) {
+    if (typeof input !== 'object' || input === null) return input;
+    const sanitized = {};
+    for (const key of Object.keys(input)) {
+        // Prevent prototype pollution by filtering out dangerous keys
+        if (key.startsWith('__') || key === 'constructor' || key === 'prototype') continue;
+        // Only allow alphanumeric and underscore in keys
+        if (!/^[a-zA-Z0-9_]+$/.test(key)) continue;
+        sanitized[key] = sanitizeInput(input[key]);
+    }
+    return sanitized;
+}
+
+// Validate ObjectId format
+function isValidObjectId(id) {
+    return /^[0-9a-fA-F]{24}$/.test(id);
+}
 const { invalidateCache } = require('../dashboardSystems');
 
 const MANAGE_GUILD = 0x20; // Discord permission bit
@@ -128,13 +147,27 @@ router.patch('/guild/:guildId/settings', auth, guildAuth, async (req, res) => {
         const { guildId } = req.params;
         const allowed = ['modChannelId', 'staffChannelId', 'logChannelId', 'autoPromotion', 'ticketEnabled', 'alertsEnabled', 'shiftTrackingEnabled'];
         const update = {};
+        const sanitizedBody = sanitizeInput(req.body);
         for (const key of allowed) {
-            if (req.body[key] !== undefined) update[`settings.${key}`] = req.body[key];
+            if (sanitizedBody[key] !== undefined) {
+                // Validate channel IDs are numeric strings
+                if (key.endsWith('ChannelId') && sanitizedBody[key] !== null) {
+                    if (!/^\d{17,20}$/.test(String(sanitizedBody[key]))) {
+                        return res.status(400).json({ error: `Invalid ${key} format` });
+                    }
+                }
+                // Validate boolean fields
+                if (['autoPromotion', 'ticketEnabled', 'alertsEnabled', 'shiftTrackingEnabled'].includes(key)) {
+                    update[`settings.${key}`] = !!sanitizedBody[key];
+                } else {
+                    update[`settings.${key}`] = sanitizedBody[key];
+                }
+            }
         }
         const result = await Guild.findOneAndUpdate({ guildId }, { $set: update }, { upsert: true, new: true });
         invalidateCache(guildId);
         res.json({ success: true, settings: result.settings });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/promotion-requirements
@@ -163,24 +196,53 @@ router.patch('/guild/:guildId/promotion-requirements', auth, guildAuth, async (r
         const { guildId } = req.params;
         const validRanks = ['trial', 'staff', 'senior', 'manager', 'admin'];
         const update = {};
+        const sanitizedBody = sanitizeInput(req.body);
 
-        if (req.body.requirements) {
+        // Helper to validate numeric range
+        const validateNumber = (val, min, max, name) => {
+            const num = Number(val);
+            if (isNaN(num) || num < min || num > max) {
+                throw new Error(`${name} must be between ${min} and ${max}`);
+            }
+            return num;
+        };
+
+        if (sanitizedBody.requirements) {
             for (const rank of validRanks) {
-                if (req.body.requirements[rank]) update[`promotionRequirements.${rank}`] = req.body.requirements[rank];
+                if (sanitizedBody.requirements[rank]) {
+                    const reqData = sanitizedBody.requirements[rank];
+                    const cleanReq = {};
+                    if (reqData.points !== undefined) cleanReq.points = validateNumber(reqData.points, 0, 10000, 'points');
+                    if (reqData.shifts !== undefined) cleanReq.shifts = validateNumber(reqData.shifts, 0, 1000, 'shifts');
+                    if (reqData.consistency !== undefined) cleanReq.consistency = validateNumber(reqData.consistency, 0, 100, 'consistency');
+                    if (reqData.maxWarnings !== undefined) cleanReq.maxWarnings = validateNumber(reqData.maxWarnings, 0, 99, 'maxWarnings');
+                    update[`promotionRequirements.${rank}`] = cleanReq;
+                }
             }
         }
-        if (req.body.rankRoles) {
+        if (sanitizedBody.rankRoles) {
             for (const rank of validRanks) {
-                if (req.body.rankRoles[rank] !== undefined) update[`rankRoles.${rank}`] = req.body.rankRoles[rank];
+                if (sanitizedBody.rankRoles[rank] !== undefined) {
+                    const roleId = sanitizedBody.rankRoles[rank];
+                    // Validate role ID format
+                    if (roleId !== null && !/^\d{17,20}$/.test(String(roleId))) {
+                        return res.status(400).json({ error: `Invalid role ID for ${rank}` });
+                    }
+                    update[`rankRoles.${rank}`] = roleId;
+                }
             }
         }
-        if (req.body.promotionChannel !== undefined) {
-            update['settings.promotionChannel'] = req.body.promotionChannel || null;
+        if (sanitizedBody.promotionChannel !== undefined) {
+            const channelId = sanitizedBody.promotionChannel;
+            if (channelId !== null && !/^\d{17,20}$/.test(String(channelId))) {
+                return res.status(400).json({ error: 'Invalid channel ID format' });
+            }
+            update['settings.promotionChannel'] = channelId || null;
         }
 
         await Guild.findOneAndUpdate({ guildId }, { $set: update }, { upsert: true });
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(400).json({ error: e.message || 'Invalid input' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/alerts
@@ -223,11 +285,33 @@ router.get('/guild/:guildId/applications', auth, guildAuth, async (req, res) => 
 router.patch('/guild/:guildId/applications', auth, guildAuth, async (req, res) => {
     try {
         const { guildId } = req.params;
-        const update = { ...req.body, updatedAt: Date.now() };
+        const sanitizedBody = sanitizeInput(req.body);
+        
+        // Validate allowed fields
+        const allowedFields = ['enabled', 'applyChannelId', 'reviewChannelId', 'reviewerRoleId', 'panelTitle', 'questions'];
+        const update = { updatedAt: Date.now() };
+        
+        for (const field of allowedFields) {
+            if (sanitizedBody[field] !== undefined) {
+                // Validate channel/role IDs
+                if ((field.endsWith('ChannelId') || field.endsWith('RoleId')) && sanitizedBody[field] !== null) {
+                    if (!/^\d{17,20}$/.test(String(sanitizedBody[field]))) {
+                        return res.status(400).json({ error: `Invalid ${field} format` });
+                    }
+                }
+                // Validate questions array
+                if (field === 'questions' && Array.isArray(sanitizedBody[field])) {
+                    update[field] = sanitizedBody[field].filter(q => typeof q === 'string' && q.length <= 500).slice(0, 10);
+                } else {
+                    update[field] = sanitizedBody[field];
+                }
+            }
+        }
+        
         await ApplicationConfig.findOneAndUpdate({ guildId }, { $set: update }, { upsert: true });
         invalidateCache(guildId);
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/branding
@@ -318,9 +402,13 @@ router.get('/guild/:guildId/warnings', auth, guildAuth, async (req, res) => {
 // DELETE /api/dashboard/guild/:guildId/warnings/:warnId — remove warning
 router.delete('/guild/:guildId/warnings/:warnId', auth, guildAuth, async (req, res) => {
     try {
-        await Warning.findByIdAndDelete(req.params.warnId);
+        const { warnId } = req.params;
+        if (!isValidObjectId(warnId)) {
+            return res.status(400).json({ error: 'Invalid warning ID format' });
+        }
+        await Warning.findByIdAndDelete(warnId);
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/shifts — recent shifts
@@ -489,14 +577,15 @@ router.get('/guild/:guildId/systems/automod', auth, guildAuth, async (req, res) 
 // PATCH /api/dashboard/guild/:guildId/systems/automod
 router.patch('/guild/:guildId/systems/automod', auth, guildAuth, async (req, res) => {
     try {
+        const sanitizedBody = sanitizeInput(req.body);
         await Guild.findOneAndUpdate(
             { guildId: req.params.guildId },
-            { $set: { 'settings.modules.automod': req.body } },
+            { $set: { 'settings.modules.automod': sanitizedBody } },
             { upsert: true, new: true }
         );
         invalidateCache(req.params.guildId);
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/systems/welcome
@@ -510,13 +599,14 @@ router.get('/guild/:guildId/systems/welcome', auth, guildAuth, async (req, res) 
 // PATCH /api/dashboard/guild/:guildId/systems/welcome
 router.patch('/guild/:guildId/systems/welcome', auth, guildAuth, async (req, res) => {
     try {
+        const sanitizedBody = sanitizeInput(req.body);
         await Guild.findOneAndUpdate(
             { guildId: req.params.guildId },
-            { $set: { 'settings.modules.welcome': req.body } },
+            { $set: { 'settings.modules.welcome': sanitizedBody } },
             { upsert: true, new: true }
         );
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/systems/autorole
@@ -530,13 +620,14 @@ router.get('/guild/:guildId/systems/autorole', auth, guildAuth, async (req, res)
 // PATCH /api/dashboard/guild/:guildId/systems/autorole
 router.patch('/guild/:guildId/systems/autorole', auth, guildAuth, async (req, res) => {
     try {
+        const sanitizedBody = sanitizeInput(req.body);
         await Guild.findOneAndUpdate(
             { guildId: req.params.guildId },
-            { $set: { 'settings.modules.autorole': req.body } },
+            { $set: { 'settings.modules.autorole': sanitizedBody } },
             { upsert: true, new: true }
         );
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/systems/logging
@@ -550,13 +641,14 @@ router.get('/guild/:guildId/systems/logging', auth, guildAuth, async (req, res) 
 // PATCH /api/dashboard/guild/:guildId/systems/logging
 router.patch('/guild/:guildId/systems/logging', auth, guildAuth, async (req, res) => {
     try {
+        const sanitizedBody = sanitizeInput(req.body);
         await Guild.findOneAndUpdate(
             { guildId: req.params.guildId },
-            { $set: { 'settings.modules.logging': req.body } },
+            { $set: { 'settings.modules.logging': sanitizedBody } },
             { upsert: true, new: true }
         );
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/systems/antispam
@@ -570,13 +662,14 @@ router.get('/guild/:guildId/systems/antispam', auth, guildAuth, async (req, res)
 // PATCH /api/dashboard/guild/:guildId/systems/antispam
 router.patch('/guild/:guildId/systems/antispam', auth, guildAuth, async (req, res) => {
     try {
+        const sanitizedBody = sanitizeInput(req.body);
         await Guild.findOneAndUpdate(
             { guildId: req.params.guildId },
-            { $set: { 'settings.modules.antispam': req.body } },
+            { $set: { 'settings.modules.antispam': sanitizedBody } },
             { upsert: true, new: true }
         );
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/dashboard/guild/:guildId/systems/tickets
@@ -593,19 +686,20 @@ router.get('/guild/:guildId/systems/tickets', auth, guildAuth, async (req, res) 
 // PATCH /api/dashboard/guild/:guildId/systems/tickets
 router.patch('/guild/:guildId/systems/tickets', auth, guildAuth, async (req, res) => {
     try {
+        const sanitizedBody = sanitizeInput(req.body);
         await Guild.findOneAndUpdate(
             { guildId: req.params.guildId },
             {
                 $set: {
-                    'settings.modules.tickets': req.body,
-                    'settings.ticketEnabled': req.body.enabled,
-                    'settings.ticketChannel': req.body.panelChannelId
+                    'settings.modules.tickets': sanitizedBody,
+                    'settings.ticketEnabled': !!sanitizedBody.enabled,
+                    'settings.ticketChannel': sanitizedBody.panelChannelId || null
                 }
             },
             { upsert: true, new: true }
         );
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 module.exports = router;

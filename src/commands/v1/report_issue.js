@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createSuccessEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
@@ -28,15 +28,18 @@ module.exports = {
         description: `Your feedback has been successfully logged. Our development team will review this shortly.\n\n**Log Entry:**\n*"${issue}"*`,
         color: 'success'
       });
-      await interaction.editReply({ embeds: [embed] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_report_issue').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while reporting the issue. Please try again later.');
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
+        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_report_issue').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
 };
+

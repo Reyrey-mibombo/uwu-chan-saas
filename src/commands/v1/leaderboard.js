@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const { createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 
 module.exports = {
@@ -55,32 +55,32 @@ module.exports = {
           const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
 
           let medal = `\`[${(globalIndex + 1).toString().padStart(2, '0')}]\``;
-          if (globalIndex === 0) medal = '🥇';
-          else if (globalIndex === 1) medal = '🥈';
-          else if (globalIndex === 2) medal = '🥉';
+          if (globalIndex === 0) medal = '??';
+          else if (globalIndex === 1) medal = '??';
+          else if (globalIndex === 2) medal = '??';
 
           const progress = Math.min(15, Math.max(1, Math.round((entry.points / 1000) * 15)));
-          const ribbonString = '█'.repeat(progress) + '░'.repeat(15 - progress);
+          const ribbonString = '�'.repeat(progress) + '�'.repeat(15 - progress);
 
           return `${medal} **${user?.username || 'Unknown'}**\n> \`[${ribbonString}]\` **${(entry.points || 0).toLocaleString()} pts**`;
         }));
 
         return await createCustomEmbed(interaction, {
-          title: '🏆 Zenith Hyper-Apex: Elite Sector Rankings',
+          title: '?? Zenith Hyper-Apex: Elite Sector Rankings',
           thumbnail: interaction.guild.iconURL({ dynamic: true }),
-          description: `### 🛡️ Macroscopic Merit Registry\nReal-time performance rankings for the **${interaction.guild.name}** sector. Current Sector Average: \`${sectorAvg.toLocaleString()}\` merit.\n\n**💎 ZENITH HYPER-APEX EXCLUSIVE**`,
+          description: `### ??? Macroscopic Merit Registry\nReal-time performance rankings for the **${interaction.guild.name}** sector. Current Sector Average: \`${sectorAvg.toLocaleString()}\` merit.\n\n**?? ZENITH HYPER-APEX EXCLUSIVE**`,
           fields: [
-            { name: '📜 Performance Feed', value: leaderboardText.join('\n') || 'No activity detected.', inline: false }
+            { name: '?? Performance Feed', value: leaderboardText.join('\n') || 'No activity detected.', inline: false }
           ],
-          footer: `Page ${page} / ${totalPages} • Universal Merit Leaderboard • V1 Foundation Hyper-Apex`,
+          footer: `Page ${page} / ${totalPages} � Universal Merit Leaderboard � V1 Foundation Hyper-Apex`,
           color: 'premium'
         });
       };
 
       const getButtons = (page) => {
         return new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Primary).setDisabled(page === 1),
-          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Primary).setDisabled(page === totalPages)
+          new ButtonBuilder().setCustomId('lb_prev').setLabel('? Previous').setStyle(ButtonStyle.Primary).setDisabled(page === 1),
+          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ?').setStyle(ButtonStyle.Primary).setDisabled(page === totalPages)
         );
       };
 
@@ -98,7 +98,7 @@ module.exports = {
       });
 
       collector.on('collect', async (i) => {
-        if (i.user.id !== interaction.user.id) return i.reply({ content: '❌ Access Denied.', ephemeral: true });
+        if (i.user.id !== interaction.user.id) return i.reply({ content: '? Access Denied.', ephemeral: true });
         if (i.customId === 'lb_prev') currentPage--;
         if (i.customId === 'lb_next') currentPage++;
         const newEmbed = await generateEmbed(currentPage);
@@ -107,8 +107,8 @@ module.exports = {
 
       collector.on('end', () => {
         const disabledRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
-          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(true)
+          new ButtonBuilder().setCustomId('lb_prev').setLabel('? Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
+          new ButtonBuilder().setCustomId('lb_next').setLabel('Next ?').setStyle(ButtonStyle.Secondary).setDisabled(true)
         );
         interaction.editReply({ components: [disabledRow] }).catch(() => { });
       });
@@ -119,3 +119,4 @@ module.exports = {
     }
   }
 };
+

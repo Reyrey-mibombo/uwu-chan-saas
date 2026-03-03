@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { Ticket } = require('../../database/mongo');
 
@@ -51,7 +51,8 @@ module.exports = {
         .lean();
 
       if (!tickets.length) {
-        return interaction.editReply({ embeds: [createErrorEmbed('No tickets found matching your query.')] });
+        return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_ticketLogs').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('No tickets found matching your query.')], components: [row] });
       }
 
       const pendingTickets = tickets.filter(t => t.status === 'open');
@@ -113,10 +114,12 @@ module.exports = {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while fetching ticket logs.');
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
+        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_ticketLogs').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
 };
+

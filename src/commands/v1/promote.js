@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createSuccessEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { User, Guild } = require('../../database/mongo');
 
@@ -38,40 +38,43 @@ module.exports = {
       const guild = await Guild.findOne({ guildId });
       const rankRole = guild?.rankRoles?.[newRank];
 
-      let roleStatus = '⚠️ No rank role configured in settings.';
+      let roleStatus = '?? No rank role configured in settings.';
       if (rankRole) {
         const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
         if (member) {
           try {
             await member.roles.add(rankRole, `Promoted by ${interaction.user.tag}`);
-            roleStatus = '✅ Rank role assigned successfully.';
+            roleStatus = '? Rank role assigned successfully.';
           } catch (e) {
-            roleStatus = '❌ Failed to assign role (Permission/Hierarchy issue).';
+            roleStatus = '? Failed to assign role (Permission/Hierarchy issue).';
           }
         }
       }
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📈 Staff Promotion Executed',
+        title: '?? Staff Promotion Executed',
         description: `Successfully promoted ${targetUser} within the hierarchical structure.`,
         color: 'success',
         fields: [
-          { name: '👤 Target', value: `${targetUser.tag}`, inline: true },
-          { name: '🎖️ New Rank', value: `\`${newRank.toUpperCase()}\``, inline: true },
-          { name: '🔄 Progression', value: `\`${oldRank.toUpperCase()}\` ➔ \`${newRank.toUpperCase()}\``, inline: false },
-          { name: '📡 Discord Sync', value: roleStatus, inline: false }
+          { name: '?? Target', value: `${targetUser.tag}`, inline: true },
+          { name: '??? New Rank', value: `\`${newRank.toUpperCase()}\``, inline: true },
+          { name: '?? Progression', value: `\`${oldRank.toUpperCase()}\` ? \`${newRank.toUpperCase()}\``, inline: false },
+          { name: '?? Discord Sync', value: roleStatus, inline: false }
         ]
       });
 
-      await interaction.editReply({ embeds: [embed] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while promoting the user.');
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
+        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
 };
+

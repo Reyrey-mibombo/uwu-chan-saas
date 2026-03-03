@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
@@ -42,13 +42,13 @@ module.exports = {
         const list = staffPage.map((u, i) => {
           const rank = u.staff?.rank || 'trial';
           const points = u.staff?.points || 0;
-          return `\`${String(start + i + 1).padStart(2)}.\` **${u.username || 'Unknown'}** • \`${rank.toUpperCase()}\` • ${points} pts`;
+          return `\`${String(start + i + 1).padStart(2)}.\` **${u.username || 'Unknown'}** � \`${rank.toUpperCase()}\` � ${points} pts`;
         }).join('\n');
 
         return await createCustomEmbed(interaction, {
-          title: `👥 Server Staff Index (${users.length} Records)`,
+          title: `?? Server Staff Index (${users.length} Records)`,
           description: list || 'No staff identified within this sector.',
-          footer: `Page ${page} / ${totalPages} • Real-time database dump`
+          footer: `Page ${page} / ${totalPages} � Real-time database dump`
         });
       };
 
@@ -56,12 +56,12 @@ module.exports = {
         return new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId('prev_page')
-            .setLabel('◀ Previous')
+            .setLabel('? Previous')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(page === 1),
           new ButtonBuilder()
             .setCustomId('next_page')
-            .setLabel('Next ▶')
+            .setLabel('Next ?')
             .setStyle(ButtonStyle.Primary)
             .setDisabled(page === totalPages)
         );
@@ -81,7 +81,7 @@ module.exports = {
 
       collector.on('collect', async (i) => {
         if (i.user.id !== interaction.user.id) {
-          return i.reply({ content: '❌ You cannot use these buttons.', ephemeral: true });
+          return i.reply({ content: '? You cannot use these buttons.', ephemeral: true });
         }
 
         if (i.customId === 'prev_page') currentPage--;
@@ -95,8 +95,8 @@ module.exports = {
 
       collector.on('end', () => {
         const disabledRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('prev_page').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
-          new ButtonBuilder().setCustomId('next_page').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(true)
+          new ButtonBuilder().setCustomId('prev_page').setLabel('? Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
+          new ButtonBuilder().setCustomId('next_page').setLabel('Next ?').setStyle(ButtonStyle.Secondary).setDisabled(true)
         );
         interaction.editReply({ components: [disabledRow] }).catch(() => { });
       });
@@ -112,3 +112,4 @@ module.exports = {
     }
   }
 };
+

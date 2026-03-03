@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const QuickChart = require('quickchart-js');
 const { Activity } = require('../../database/mongo');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
@@ -92,10 +92,13 @@ module.exports = {
                 color: 'premium'
             });
 
-            await interaction.editReply({ embeds: [embed] });
+            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_activity_chart').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
         } catch (error) {
             console.error('Zenith Activity Chart Error:', error);
-            await interaction.editReply({ embeds: [createErrorEmbed('Engagement Analytics failure: Unable to synchronize signal intensity.')] });
+            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_activity_chart').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('Engagement Analytics failure: Unable to synchronize signal intensity.')], components: [row] });
         }
     }
 };
+

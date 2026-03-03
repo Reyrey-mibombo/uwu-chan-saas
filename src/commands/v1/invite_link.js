@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const QRCode = require('qrcode');
 
@@ -34,15 +34,18 @@ module.exports = {
         image: 'attachment://invite-qr.png'
       });
 
-      await interaction.editReply({ embeds: [embed], files: [attachment] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_invite_link').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while generating the invite link and QR code.');
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
+        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_invite_link').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
 };
+

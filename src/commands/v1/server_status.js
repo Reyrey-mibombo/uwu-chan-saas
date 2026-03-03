@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 
 module.exports = {
@@ -61,16 +61,19 @@ module.exports = {
                 { name: 'üõ†Ô∏è Metadata', value: `Roles: **${rolesCount}**\nEmojis: **${emojisCount}**`, inline: true }
             );
 
-            await interaction.editReply({ embeds: [embed] });
+            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_server_status').setLabel('üÑ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
 
         } catch (error) {
             console.error('Server Status Error:', error);
             const errEmbed = createErrorEmbed('An error occurred while analyzing the server cache.');
             if (interaction.deferred || interaction.replied) {
-                await interaction.editReply({ embeds: [errEmbed] });
+                await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_server_status').setLabel('üÑ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
             } else {
                 await interaction.reply({ embeds: [errEmbed], ephemeral: true });
             }
         }
     }
 };
+

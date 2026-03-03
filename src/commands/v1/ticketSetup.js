@@ -12,6 +12,7 @@ module.exports = {
 
   async execute(interaction, client) {
     try {
+            await interaction.deferReply({ fetchReply: true });
       const channel = interaction.options.getChannel('channel');
       const titleText = interaction.options.getString('title') || '🎫 Operational Support Interface';
 
@@ -51,14 +52,14 @@ module.exports = {
         color: 'success'
       });
 
-      await interaction.reply({ embeds: [successEmbed], ephemeral: true });
+      await interaction.editReply({ embeds: [successEmbed], ephemeral: true });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred during deployment. Verify bot permissions.');
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ embeds: [errEmbed] });
       } else {
-        await interaction.reply({ embeds: [errEmbed], ephemeral: true });
+        await interaction.editReply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
@@ -128,6 +129,7 @@ module.exports.handleFeedback = async (interaction, client) => {
 
 module.exports.handleReportSubmit = async (interaction, client) => {
   try {
+            await interaction.deferReply({ fetchReply: true });
     const staffName = interaction.fields.getTextInputValue('report_staff_name');
     const reason = interaction.fields.getTextInputValue('report_reason');
     const evidence = interaction.fields.getTextInputValue('report_evidence') || 'No additional telemetry.';
@@ -136,12 +138,12 @@ module.exports.handleReportSubmit = async (interaction, client) => {
     const ticketChannelId = guild?.settings?.ticketChannel;
 
     if (!ticketChannelId) {
-      return interaction.reply({ embeds: [createErrorEmbed('Administrative channel not found. Deployment required.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Administrative channel not found. Deployment required.')], ephemeral: true });
     }
 
     const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
     if (!ticketChannel) {
-      return interaction.reply({ embeds: [createErrorEmbed('Target operational channel lost. Re-deployment required.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Target operational channel lost. Re-deployment required.')], ephemeral: true });
     }
 
     const ticketNum = Date.now().toString(36).toUpperCase();
@@ -200,15 +202,16 @@ module.exports.handleReportSubmit = async (interaction, client) => {
       color: 'success'
     });
 
-    await interaction.reply({ embeds: [confirmEmbed], ephemeral: true });
+    await interaction.editReply({ embeds: [confirmEmbed], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('An error occurred during transmission.')], ephemeral: true });
+    await interaction.editReply({ embeds: [createErrorEmbed('An error occurred during transmission.')], ephemeral: true });
   }
 };
 
 module.exports.handleFeedbackSubmit = async (interaction, client) => {
   try {
+            await interaction.deferReply({ fetchReply: true });
     const feedback = interaction.fields.getTextInputValue('feedback_content');
     const imageUrl = interaction.fields.getTextInputValue('feedback_image');
 
@@ -216,12 +219,12 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
     const ticketChannelId = guild?.settings?.ticketChannel;
 
     if (!ticketChannelId) {
-      return interaction.reply({ embeds: [createErrorEmbed('Administrative channel not found. Deployment required.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Administrative channel not found. Deployment required.')], ephemeral: true });
     }
 
     const ticketChannel = interaction.guild.channels.cache.get(ticketChannelId);
     if (!ticketChannel) {
-      return interaction.reply({ embeds: [createErrorEmbed('Target operational channel lost. Re-deployment required.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Target operational channel lost. Re-deployment required.')], ephemeral: true });
     }
 
     const ticketNum = Date.now().toString(36).toUpperCase();
@@ -272,18 +275,19 @@ module.exports.handleFeedbackSubmit = async (interaction, client) => {
       color: 'success'
     });
 
-    await interaction.reply({ embeds: [confirmEmbed], ephemeral: true });
+    await interaction.editReply({ embeds: [confirmEmbed], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('An error occurred during transmission.')], ephemeral: true });
+    await interaction.editReply({ embeds: [createErrorEmbed('An error occurred during transmission.')], ephemeral: true });
   }
 };
 
 module.exports.handleClaimTicket = async (interaction, client) => {
   try {
+            await interaction.deferReply({ fetchReply: true });
     const isMod = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || (client.isOwner && client.isOwner(interaction.user));
     if (!isMod) {
-      return interaction.reply({ embeds: [createErrorEmbed('Strictly restricted to **Administrative** personnel.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Strictly restricted to **Administrative** personnel.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -292,7 +296,7 @@ module.exports.handleClaimTicket = async (interaction, client) => {
     const ticket = await Ticket.findOne({ guildId: interaction.guildId, status: 'open', messageId: interaction.message.id });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Dossier unavailable or already intercepted.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Dossier unavailable or already intercepted.')], ephemeral: true });
     }
 
     const reporter = await client.users.fetch(ticket.userId).catch(() => null);
@@ -341,6 +345,7 @@ module.exports.handleClaimTicket = async (interaction, client) => {
 
     if (reporter) {
       try {
+            await interaction.deferReply({ fetchReply: true });
         const dmEmbed = await createCustomEmbed(interaction, {
           title: '👋 Communication Link Established',
           description: `Your report **#${ticketNum}** has been intercepted by **${claimer.username}**. Expect contact shortly.`,
@@ -359,17 +364,18 @@ module.exports.handleClaimTicket = async (interaction, client) => {
       color: 'success'
     });
 
-    await interaction.reply({ embeds: [claimConfirm], ephemeral: true });
+    await interaction.editReply({ embeds: [claimConfirm], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to intercept dossier.')], ephemeral: true });
+    await interaction.editReply({ embeds: [createErrorEmbed('Failed to intercept dossier.')], ephemeral: true });
   }
 };
 
 module.exports.handleTicketDM = async (interaction, client) => {
   try {
+            await interaction.deferReply({ fetchReply: true });
     if (!client.isOwner(interaction.user)) {
-      return interaction.reply({ embeds: [createErrorEmbed('Access denied. Executive clearance required.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Access denied. Executive clearance required.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -382,7 +388,7 @@ module.exports.handleTicketDM = async (interaction, client) => {
     });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Dossier sync error.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Dossier sync error.')], ephemeral: true });
     }
 
     const modal = new ModalBuilder()
@@ -401,12 +407,13 @@ module.exports.handleTicketDM = async (interaction, client) => {
     await interaction.showModal(modal);
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to initialize communication modal.')], ephemeral: true });
+    await interaction.editReply({ embeds: [createErrorEmbed('Failed to initialize communication modal.')], ephemeral: true });
   }
 };
 
 module.exports.handleDMReply = async (interaction, client) => {
   try {
+            await interaction.deferReply({ fetchReply: true });
     const message = interaction.fields.getTextInputValue('dm_message');
     const customId = interaction.customId;
     const ticketNum = customId.replace('modal_dm_reply_', '');
@@ -418,13 +425,14 @@ module.exports.handleDMReply = async (interaction, client) => {
     });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Communication link lost or unauthorized access.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Communication link lost or unauthorized access.')], ephemeral: true });
     }
 
     const reporter = await client.users.fetch(ticket.userId).catch(() => null);
 
     if (reporter) {
       try {
+            await interaction.deferReply({ fetchReply: true });
         const dmEmbed = await createCustomEmbed(interaction, {
           title: '💬 Incoming Operational Message',
           description: `**Log:** ${message}\n\n👤 **Personnel:** ${interaction.user.username}\n🎫 **Session ID:** #${ticketNum}`
@@ -436,24 +444,25 @@ module.exports.handleDMReply = async (interaction, client) => {
           description: `Telemetry successfully delivered to **${ticket.username}**.`,
           color: 'success'
         });
-        await interaction.reply({ embeds: [okEmbed], ephemeral: true });
+        await interaction.editReply({ embeds: [okEmbed], ephemeral: true });
       } catch (e) {
-        await interaction.reply({ embeds: [createErrorEmbed('Target node incommunicado (DMs disabled).')], ephemeral: true });
+        await interaction.editReply({ embeds: [createErrorEmbed('Target node incommunicado (DMs disabled).')], ephemeral: true });
       }
     } else {
-      await interaction.reply({ embeds: [createErrorEmbed('Target personnel node lost (left server).')], ephemeral: true });
+      await interaction.editReply({ embeds: [createErrorEmbed('Target personnel node lost (left server).')], ephemeral: true });
     }
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Operational transmission failure.')], ephemeral: true });
+    await interaction.editReply({ embeds: [createErrorEmbed('Operational transmission failure.')], ephemeral: true });
   }
 };
 
 module.exports.handleCloseTicket = async (interaction, client) => {
   try {
+            await interaction.deferReply({ fetchReply: true });
     const isMod = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || (client.isOwner && client.isOwner(interaction.user));
     if (!isMod) {
-      return interaction.reply({ embeds: [createErrorEmbed('Access denied. Administrative oversight required.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Access denied. Administrative oversight required.')], ephemeral: true });
     }
 
     const customId = interaction.customId;
@@ -466,7 +475,7 @@ module.exports.handleCloseTicket = async (interaction, client) => {
     });
 
     if (!ticket) {
-      return interaction.reply({ embeds: [createErrorEmbed('Dossier synchronization failure.')], ephemeral: true });
+      return interaction.editReply({ embeds: [createErrorEmbed('Dossier synchronization failure.')], ephemeral: true });
     }
 
     ticket.status = 'closed';
@@ -479,6 +488,7 @@ module.exports.handleCloseTicket = async (interaction, client) => {
 
     if (reporter) {
       try {
+            await interaction.deferReply({ fetchReply: true });
         const dmEmbed = await createCustomEmbed(interaction, {
           title: '🔒 Operational Session Finalized',
           description: `Your ticket **#${ticketNum}** has been closed by **${interaction.user.username}**. All logs archived.`,
@@ -521,6 +531,7 @@ module.exports.handleCloseTicket = async (interaction, client) => {
 
     if (reporter) {
       try {
+            await interaction.deferReply({ fetchReply: true });
         await reporter.send({ content: 'Operational Transcript Archived:', files: [attachment] });
       } catch (e) { }
     }
@@ -531,9 +542,10 @@ module.exports.handleCloseTicket = async (interaction, client) => {
       color: 'success'
     });
 
-    await interaction.reply({ embeds: [closeOk], ephemeral: true });
+    await interaction.editReply({ embeds: [closeOk], ephemeral: true });
   } catch (err) {
     console.error(err);
-    await interaction.reply({ embeds: [createErrorEmbed('Failed to finalize session.')], ephemeral: true });
+    await interaction.editReply({ embeds: [createErrorEmbed('Failed to finalize session.')], ephemeral: true });
   }
 };
+

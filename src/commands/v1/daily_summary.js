@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { Guild, Shift, Warning } = require('../../database/mongo');
 
@@ -33,25 +33,28 @@ module.exports = {
       warningsToday = todayWarnings.length;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📊 Terminal Operational Summary (Daily)',
+        title: '?? Terminal Operational Summary (Daily)',
         description: `High-fidelity activity report for **${interaction.guild.name}** over the last 24-hour cycle.`,
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
         fields: [
-          { name: '👥 Active Personnel', value: `\`${activeStaff}\` members`, inline: true },
-          { name: '⏱️ Total Active Time', value: `\`${Math.round(totalMinutes / 60)}h ${Math.round(totalMinutes % 60)}m\``, inline: true },
-          { name: '⚠️ Recorded Incidents', value: `\`${warningsToday}\``, inline: true }
+          { name: '?? Active Personnel', value: `\`${activeStaff}\` members`, inline: true },
+          { name: '?? Total Active Time', value: `\`${Math.round(totalMinutes / 60)}h ${Math.round(totalMinutes % 60)}m\``, inline: true },
+          { name: '?? Recorded Incidents', value: `\`${warningsToday}\``, inline: true }
         ]
       });
 
-      await interaction.editReply({ embeds: [embed] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_daily_summary').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while fetching the daily summary.');
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ embeds: [errEmbed] });
+        await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_daily_summary').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });
       }
     }
   }
 };
+

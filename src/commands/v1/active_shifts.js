@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Shift } = require('../../database/mongo');
 
@@ -18,7 +18,8 @@ module.exports = {
             }).sort({ startTime: 1 }).lean();
 
             if (!activeShifts || activeShifts.length === 0) {
-                return interaction.editReply({ embeds: [createErrorEmbed('There are currently no staff members on duty.')] });
+                return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_active_shifts').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('There are currently no staff members on duty.')], components: [row] });
             }
 
             const shiftLines = await Promise.all(activeShifts.map(async (shift) => {
@@ -42,16 +43,19 @@ module.exports = {
                 footer: `Status: ${activeShifts.length} node(s) currently transmitting`
             });
 
-            await interaction.editReply({ embeds: [embed] });
+            await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_active_shifts').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
 
         } catch (error) {
             console.error('Active Shifts Error:', error);
             const errEmbed = createErrorEmbed('An error occurred while fetching the active shifts dashboard.');
             if (interaction.deferred || interaction.replied) {
-                await interaction.editReply({ embeds: [errEmbed] });
+                await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_active_shifts').setLabel('ðŸ„ Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
             } else {
                 await interaction.reply({ embeds: [errEmbed], ephemeral: true });
             }
         }
     }
 };
+

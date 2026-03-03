@@ -1,11 +1,11 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { createSuccessEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
+const { createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { User, Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('promote')
-    .setDescription('Manually promote a staff member')
+    .setDescription('Promote a staff member to a higher rank')
     .addUserOption(opt => opt.setName('user').setDescription('User to promote').setRequired(true))
     .addStringOption(opt => opt.setName('rank').setDescription('Rank to promote to').setRequired(true)
       .addChoices(
@@ -24,6 +24,12 @@ module.exports = {
       const newRank = interaction.options.getString('rank');
       const guildId = interaction.guildId;
 
+      const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+      if (!member) {
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+        return await interaction.editReply({ embeds: [createErrorEmbed('User not found in this server.')], components: [row] });
+      }
+
       const staffSystem = interaction.client.systems.staff;
       await staffSystem.getOrCreateUser(targetUser.id, guildId, targetUser.username);
 
@@ -31,6 +37,12 @@ module.exports = {
 
       if (!user.staff) user.staff = {};
       const oldRank = user.staff.rank || 'trial';
+      
+      if (oldRank === newRank) {
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+        return await interaction.editReply({ embeds: [createErrorEmbed(`User is already at **${newRank.toUpperCase()}** rank.`)], components: [row] });
+      }
+
       user.staff.rank = newRank;
       user.staff.lastPromotionDate = new Date();
       await user.save();
@@ -38,38 +50,49 @@ module.exports = {
       const guild = await Guild.findOne({ guildId });
       const rankRole = guild?.rankRoles?.[newRank];
 
-      let roleStatus = '?? No rank role configured in settings.';
+      let roleStatus = '⚪ No role configured';
       if (rankRole) {
-        const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-        if (member) {
-          try {
-            await member.roles.add(rankRole, `Promoted by ${interaction.user.tag}`);
-            roleStatus = '? Rank role assigned successfully.';
-          } catch (e) {
-            roleStatus = '? Failed to assign role (Permission/Hierarchy issue).';
-          }
+        try {
+          await member.roles.add(rankRole, `Promoted by ${interaction.user.tag}`);
+          roleStatus = '🟢 Role assigned successfully';
+        } catch (e) {
+          roleStatus = '🔴 Role assignment failed';
         }
       }
 
+      const rankEmojis = { trial: '🌱', staff: '⭐', senior: '🌟', manager: '💫', admin: '🔮', owner: '👑' };
+
       const embed = await createCustomEmbed(interaction, {
-        title: '✅ Staff Promotion Executed',
-        description: `Successfully promoted ${targetUser} within the hierarchical structure.`,
+        title: '🎉 Staff Promoted!',
+        thumbnail: targetUser.displayAvatarURL({ dynamic: true }),
+        description: `**${targetUser.username}** has been promoted!`,
         color: 'success',
         fields: [
-          { name: '🎯 Target', value: `${targetUser.tag}`, inline: true },
-          { name: '🚀 New Rank', value: `\`${newRank.toUpperCase()}\``, inline: true },
-          { name: '📈 Progression', value: `\`${oldRank.toUpperCase()}\` ➡ \`${newRank.toUpperCase()}\``, inline: false },
-          { name: '🔗 Discord Sync', value: roleStatus, inline: false }
+          { name: '👤 User', value: `${targetUser}`, inline: true },
+          { name: '📊 Old Rank', value: `${rankEmojis[oldRank] || '🌱'} \`${oldRank.toUpperCase()}\``, inline: true },
+          { name: '⭐ New Rank', value: `${rankEmojis[newRank] || '👑'} \`${newRank.toUpperCase()}\``, inline: true },
+          { name: '🎖️ Role Sync', value: roleStatus, inline: false },
+          { name: '👮 Promoted By', value: `${interaction.user}`, inline: true },
+          { name: '📅 Date', value: `<t:${Math.floor(Date.now()/1000)}:D>`, inline: true }
         ]
       });
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
       await interaction.editReply({ embeds: [embed], components: [row] });
+
+      try {
+        const dmEmbed = await createCustomEmbed(interaction, {
+          title: '🎉 Congratulations!',
+          description: `You've been promoted to **${newRank.toUpperCase()}** in **${interaction.guild.name}**!`,
+          color: 'success'
+        });
+        await targetUser.send({ embeds: [dmEmbed] });
+      } catch (e) {}
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while promoting the user.');
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
       if (interaction.deferred || interaction.replied) {
-        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_promote').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
         await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });

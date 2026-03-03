@@ -68,7 +68,10 @@ module.exports = {
             console.error('Server Status Error:', error);
             const errEmbed = createErrorEmbed('An error occurred while analyzing the server cache.');
             if (interaction.deferred || interaction.replied) {
-                const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_server_status').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('auto_v1_server_status').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setLabel('📈 Analytics').setStyle(ButtonStyle.Primary).setCustomId('analytics_btn')
+            );
                 await interaction.editReply({ embeds: [errEmbed], components: [row] });
             } else {
                 await interaction.reply({ embeds: [errEmbed], ephemeral: true });

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { createCoolEmbed, createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
+const { createErrorEmbed, createCustomEmbed } = require('../../utils/embeds');
 const { User } = require('../../database/mongo');
 
 const RANK_THRESHOLDS = { trial: 0, staff: 100, senior: 300, manager: 600, admin: 1000, owner: 2000 };
@@ -17,9 +17,9 @@ module.exports = {
       const target = interaction.options.getUser('user') || interaction.user;
       const user = await User.findOne({ userId: target.id, 'guilds.guildId': interaction.guildId }).lean();
 
-      if (!user) {
-        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
-        return await interaction.editReply({ embeds: [createErrorEmbed(`No local data found for **${target.username}**. Database entry missing for this sector.`)], components: [row] });
+      if (!user || !user.staff) {
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+        return await interaction.editReply({ embeds: [createErrorEmbed(`No staff data found for **${target.username}**. They need to start a shift first!`)], components: [row] });
       }
 
       const points = user.staff?.points || 0;
@@ -30,16 +30,17 @@ module.exports = {
 
       if (!nextRank) {
         const embed = await createCustomEmbed(interaction, {
-          title: `?? Progression Limit Reached � ${target.username}`,
+          title: `🏆 MAXIMUM RANK REACHED: ${target.username}`,
           thumbnail: target.displayAvatarURL({ dynamic: true }),
-          description: '?? **Apex Status Achieved.** You have reached the maximum rank within the current hierarchical structure.',
+          description: `🎉 **Congratulations!** You have reached the highest rank in this server!`,
           fields: [
-            { name: '??? Current Tier', value: `\`${rank.toUpperCase()}\``, inline: true },
-            { name: '? Lifetime Points', value: `\`${points.toLocaleString()}\``, inline: true }
+            { name: '👑 Current Rank', value: `\`${rank.toUpperCase()}\``, inline: true },
+            { name: '💰 Lifetime Points', value: `\`${points.toLocaleString()}\``, inline: true },
+            { name: '⭐ Achievements', value: `\`${user.staff?.achievements?.length || 0}\` badges earned`, inline: true }
           ],
-          color: 'enterprise'
+          color: 'premium'
         });
-        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
         return await interaction.editReply({ embeds: [embed], components: [row] });
       }
 
@@ -48,28 +49,36 @@ module.exports = {
       const progress = Math.min(100, Math.round(((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100));
       const needed = Math.max(0, nextThreshold - points);
       const barFilled = Math.min(10, Math.round(progress / 10));
-      const bar = '�'.repeat(barFilled) + '�'.repeat(10 - barFilled);
+      const bar = '█'.repeat(barFilled) + '░'.repeat(10 - barFilled);
+
+      const daysEstimate = Math.ceil(needed / 10);
+      const hoursEstimate = Math.ceil(needed / 2);
 
       const embed = await createCustomEmbed(interaction, {
-        title: `?? Progression Telemetry � ${target.username}`,
+        title: `📈 Rank Progress: ${target.username}`,
         thumbnail: target.displayAvatarURL({ dynamic: true }),
+        description: `**Current:** \`${rank.toUpperCase()}\` → **Next:** \`${nextRank.toUpperCase()}\``,
         fields: [
-          { name: '??? Current Tier', value: `\`${rank.toUpperCase()}\``, inline: true },
-          { name: '?? Next Objective', value: `\`${nextRank.toUpperCase()}\``, inline: true },
-          { name: '? Points Delta', value: `\`${points.toLocaleString()}\` / \`${nextThreshold.toLocaleString()}\``, inline: true },
-          { name: '?? Efficiency Bar', value: `\`${bar}\` **${progress}%**\nNeed **${needed.toLocaleString()}** additional points to finalize rank-up.`, inline: false },
-          { name: '?? Reliability', value: `\`${consistency}%\``, inline: true },
-          { name: '?? Merits', value: `\`${user.staff?.achievements?.length || 0}\``, inline: true }
-        ]
+          { name: '📊 Progress Bar', value: `\`${bar}\` **${progress}%**`, inline: false },
+          { name: '💰 Points', value: `\`${points.toLocaleString()}\` / \`${nextThreshold.toLocaleString()}\``, inline: true },
+          { name: '🎯 Points Needed', value: `\`${needed.toLocaleString()}\` more`, inline: true },
+          { name: '⚡ Consistency', value: `\`${consistency}%\``, inline: true },
+          { name: '🏅 Achievements', value: `\`${user.staff?.achievements?.length || 0}\``, inline: true },
+          { name: '⏱️ Est. Time', value: needed <= 0 ? '✅ Ready!' : `~${daysEstimate} days or ~${hoursEstimate} hours`, inline: true }
+        ],
+        color: progress >= 75 ? 'success' : progress >= 50 ? 'warning' : 'primary'
       });
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setLabel('🎯 Start Shift').setStyle(ButtonStyle.Success).setCustomId('shift_start_btn')
+      );
       await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while tracking progress.');
+      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Retry').setStyle(ButtonStyle.Secondary));
       if (interaction.deferred || interaction.replied) {
-        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_progress_tracker').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
         await interaction.editReply({ embeds: [errEmbed], components: [row] });
       } else {
         await interaction.reply({ embeds: [errEmbed], ephemeral: true });

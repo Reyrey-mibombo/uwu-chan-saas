@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Warning } = require('../../database/mongo');
 
@@ -16,23 +16,25 @@ module.exports = {
       .lean();
 
     if (!warnings.length) {
-      return interaction.reply({ content: '✅ No warnings found!', ephemeral: true });
+      return interaction.editReply({ content: '? No warnings found!', ephemeral: true });
     }
 
     const list = warnings.map(w => {
-      const emoji = w.severity === 'high' ? '🔴' : w.severity === 'medium' ? '🟡' : '🟢';
+      const emoji = w.severity === 'high' ? '??' : w.severity === 'medium' ? '??' : '??';
       return `${emoji} **${w.reason}** - <t:${Math.floor(new Date(w.createdAt).getTime()/1000)}:R>`;
     }).join('\n');
 
     const embed = createPremiumEmbed()
-      .setTitle(`⚠️ Warnings - ${user.username}`)
+      .setTitle(`?? Warnings - ${user.username}`)
       .setDescription(list)
       
       ;
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_warnings').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

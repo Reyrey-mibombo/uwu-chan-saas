@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -50,7 +50,7 @@ module.exports = {
     });
 
     const embed = createPremiumEmbed()
-      .setTitle('⚠️ Rule Violation Reported')
+      .setTitle('?? Rule Violation Reported')
       
       .addFields(
         { name: 'User', value: target.tag, inline: true },
@@ -69,9 +69,10 @@ module.exports = {
       await modChannel.send({ embeds: [embed] });
     }
 
-    await interaction.reply({ content: 'Rule violation has been recorded!', ephemeral: true });
+    await interaction.editReply({ content: 'Rule violation has been recorded!', ephemeral: true });
   }
 };
+
 
 
 

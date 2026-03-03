@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -25,7 +25,7 @@ module.exports = {
     .limit(limit);
 
     if (logs.length === 0) {
-      return interaction.reply({ content: 'No moderation logs found.', ephemeral: true });
+      return interaction.editReply({ content: 'No moderation logs found.', ephemeral: true });
     }
 
     const formatLog = (log) => {
@@ -38,15 +38,17 @@ module.exports = {
     };
 
     const embed = createPremiumEmbed()
-      .setTitle('📋 Moderation Logs')
+      .setTitle('?? Moderation Logs')
       
       .setDescription(logs.map(formatLog).join('\n'))
       
       ;
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_moderation_logs').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

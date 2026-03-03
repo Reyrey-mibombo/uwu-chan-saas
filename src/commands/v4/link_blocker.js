@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
@@ -39,7 +39,7 @@ module.exports = {
     await guild.save();
 
     const embed = createPremiumEmbed()
-      .setTitle('🔗 Link Blocker Settings')
+      .setTitle('?? Link Blocker Settings')
       
       .addFields(
         { name: 'Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
@@ -51,9 +51,11 @@ module.exports = {
       embed.addFields({ name: 'Allowed Links', value: links, inline: false });
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_link_blocker').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

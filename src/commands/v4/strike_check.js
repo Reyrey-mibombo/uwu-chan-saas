@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -22,7 +22,7 @@ module.exports = {
     }).sort({ createdAt: -1 });
 
     const embed = createPremiumEmbed()
-      .setTitle(`⚡ Strike Check: ${target.username}`)
+      .setTitle(`? Strike Check: ${target.username}`)
       
       .addFields(
         { name: 'Total Strikes', value: strikes.length.toString(), inline: true }
@@ -35,9 +35,11 @@ module.exports = {
       embed.addFields({ name: 'Recent Strikes', value: recent, inline: false });
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_strike_check').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

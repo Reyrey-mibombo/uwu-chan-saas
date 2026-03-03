@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Guild } = require('../../database/mongo');
 
@@ -26,13 +26,15 @@ module.exports = {
     await guild.save();
 
     const embed = createPremiumEmbed()
-      .setTitle('⚙️ Moderation Settings')
+      .setTitle('?? Moderation Settings')
       
       .setDescription(`Moderation is now ${enabled ? 'enabled' : 'disabled'}`);
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_mod_settings').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

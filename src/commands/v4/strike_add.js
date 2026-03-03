@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { User, Activity } = require('../../database/mongo');
 
@@ -37,7 +37,7 @@ module.exports = {
     });
 
     const embed = createPremiumEmbed()
-      .setTitle('⚡ Strike Added')
+      .setTitle('? Strike Added')
       
       .addFields(
         { name: 'User', value: target.tag, inline: true },
@@ -47,9 +47,11 @@ module.exports = {
       
       ;
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_strike_add').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -66,7 +66,7 @@ module.exports = {
     const total = Object.values(stats).reduce((a, b) => a + b, 0);
 
     const embed = createPremiumEmbed()
-      .setTitle(`📊 Punishment Summary${user ? `: ${user.username}` : ''}`)
+      .setTitle(`?? Punishment Summary${user ? `: ${user.username}` : ''}`)
       
       .addFields(
         { name: 'Total', value: total.toString(), inline: true },
@@ -79,9 +79,11 @@ module.exports = {
       
       ;
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_punishment_summary').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

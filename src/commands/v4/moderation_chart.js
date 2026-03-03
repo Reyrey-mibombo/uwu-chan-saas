@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { createPremiumEmbed, createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { validatePremiumLicense } = require('../../utils/premium_guard');
 const { Activity } = require('../../database/mongo');
@@ -72,30 +73,33 @@ module.exports = {
       // 1. Generate Macroscopic Threat Curve (ASCII-style pulse)
       const pulseSegments = 10;
       const threatDensity = Math.min(pulseSegments, Math.ceil((total / (period === 'today' ? 10 : 50)) * pulseSegments));
-      const pulse = '█'.repeat(threatDensity) + '░'.repeat(pulseSegments - threatDensity);
-      const threatCurve = `\`[${pulse}]\` **${total > 20 ? '🔥 HIGH PULSE' : '🟢 STABLE'}**`;
+      const pulse = '�'.repeat(threatDensity) + '�'.repeat(pulseSegments - threatDensity);
+      const threatCurve = `\`[${pulse}]\` **${total > 20 ? '?? HIGH PULSE' : '?? STABLE'}**`;
 
       const embed = await createCustomEmbed(interaction, {
-        title: '📊 Zenith Guardian: Macroscopic Threat Curves',
+        title: '?? Zenith Guardian: Macroscopic Threat Curves',
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🛡️ Sector Incident Intelligence\nHigh-fidelity trace of security interventions and system events for **${interaction.guild.name}**. Monitoring metabolic threat vectors.\n\n**💎 ZENITH APEX EXCLUSIVE**`,
+        description: `### ??? Sector Incident Intelligence\nHigh-fidelity trace of security interventions and system events for **${interaction.guild.name}**. Monitoring metabolic threat vectors.\n\n**?? ZENITH APEX EXCLUSIVE**`,
         fields: [
-          { name: '🛰️ Macroscopic Threat Pulse', value: threatCurve, inline: false },
-          { name: '⚠️ Disciplinary (Warn)', value: `\`${stats.warn}\``, inline: true },
-          { name: '🚫 Neutralization (Ban)', value: `\`${stats.ban}\``, inline: true },
-          { name: '👢 Extraction (Kick)', value: `\`${stats.kick}\``, inline: true },
-          { name: '🔇 Silencing (Mute)', value: `\`${stats.mute}\``, inline: true },
-          { name: '⚖️ Infractions', value: `\`${stats.strike}\``, inline: true },
-          { name: '🛡️ Shield Status', value: '`ACTIVE`', inline: true }
+          { name: '??? Macroscopic Threat Pulse', value: threatCurve, inline: false },
+          { name: '?? Disciplinary (Warn)', value: `\`${stats.warn}\``, inline: true },
+          { name: '?? Neutralization (Ban)', value: `\`${stats.ban}\``, inline: true },
+          { name: '?? Extraction (Kick)', value: `\`${stats.kick}\``, inline: true },
+          { name: '?? Silencing (Mute)', value: `\`${stats.mute}\``, inline: true },
+          { name: '?? Infractions', value: `\`${stats.strike}\``, inline: true },
+          { name: '??? Shield Status', value: '`ACTIVE`', inline: true }
         ],
-        footer: 'Guardian Intelligence Pulse • V4 Guardian Apex Suite',
+        footer: 'Guardian Intelligence Pulse � V4 Guardian Apex Suite',
         color: total > 10 ? 'premium' : 'success'
       });
 
-      await interaction.editReply({ embeds: [embed] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_moderation_chart').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error('Zenith Moderation Chart Error:', error);
-      await interaction.editReply({ embeds: [createErrorEmbed('Guardian Analytics failure: Unable to establish macroscopic threat curves.')] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_moderation_chart').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('Guardian Analytics failure: Unable to establish macroscopic threat curves.')], components: [row] });
     }
   }
 };
+

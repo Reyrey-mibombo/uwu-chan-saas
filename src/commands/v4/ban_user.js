@@ -1,11 +1,12 @@
-﻿const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { createPremiumEmbed, createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { Activity, Warning } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ban_user')
-    .setDescription('🔨 Ban a member from this server with reason, DM, and audit log')
+    .setDescription('?? Ban a member from this server with reason, DM, and audit log')
     .addUserOption(opt => opt.setName('user').setDescription('User to ban').setRequired(true))
     .addStringOption(opt => opt.setName('reason').setDescription('Reason for the ban').setRequired(false))
     .addIntegerOption(opt =>
@@ -24,7 +25,8 @@ module.exports = {
       const deleteDays = interaction.options.getInteger('delete_days') ?? 0;
 
       if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
-        return interaction.editReply({ embeds: [createErrorEmbed('You lack the `Ban Members` permission.')] });
+        return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_ban_user').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed('You lack the `Ban Members` permission.')], components: [row] });
       }
 
       const member = await interaction.guild.members.fetch(target.id).catch(() => null);
@@ -34,20 +36,22 @@ module.exports = {
         try {
           await interaction.guild.bans.create(target.id, { reason: `${reason} | By: ${interaction.user.tag}`, deleteMessageDays: deleteDays });
         } catch (e) {
-          return interaction.editReply({ embeds: [createErrorEmbed(`Could not ban **${target.username}**. They may not be in the server or I lack permissions.`)] });
+          return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_ban_user').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed(`Could not ban **${target.username}**. They may not be in the server or I lack permissions.`)], components: [row] });
         }
       } else {
         if (!member.bannable) {
-          return interaction.editReply({ embeds: [createErrorEmbed(`I cannot ban **${target.username}**. Their role is higher than mine.`)] });
+          return const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_ban_user').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [createErrorEmbed(`I cannot ban **${target.username}**. Their role is higher than mine.`)], components: [row] });
         }
 
         // DM the user before banning
-        let dmStatus = '✅ DM Sent';
+        let dmStatus = '? DM Sent';
         try {
           const dmEmbed = createErrorEmbed(`You have been **banned** from **${interaction.guild.name}**.\n**Reason:** ${reason}\n**Moderator:** ${interaction.user.tag}`);
-          dmEmbed.setTitle('🔨 You were banned');
+          dmEmbed.setTitle('?? You were banned');
           await target.send({ embeds: [dmEmbed] });
-        } catch { dmStatus = '❌ Could not DM (DMs closed)'; }
+        } catch { dmStatus = '? Could not DM (DMs closed)'; }
 
         await member.ban({ reason: `${reason} | By: ${interaction.user.tag}`, deleteMessageDays: deleteDays });
       }
@@ -68,11 +72,11 @@ module.exports = {
         const logChannel = interaction.guild.channels.cache.get(guildData.settings.logChannel);
         if (logChannel) {
           const logEmbed = createCustomEmbed(interaction, {
-            title: '🔨 Member Banned',
+            title: '?? Member Banned',
             fields: [
-              { name: '👤 Banned User', value: `**${target.username}** (\`${target.id}\`)`, inline: true },
-              { name: '🛡️ Moderator', value: `**${interaction.user.username}**`, inline: true },
-              { name: '📝 Reason', value: reason, inline: false }
+              { name: '?? Banned User', value: `**${target.username}** (\`${target.id}\`)`, inline: true },
+              { name: '??? Moderator', value: `**${interaction.user.username}**`, inline: true },
+              { name: '?? Reason', value: reason, inline: false }
             ],
             color: 'error'
           });
@@ -81,26 +85,29 @@ module.exports = {
       }
 
       const embed = await createCustomEmbed(interaction, {
-        title: '🔨 User Banned',
+        title: '?? User Banned',
         thumbnail: target.displayAvatarURL({ dynamic: true }),
         description: `**${target.username}** has been permanently banned from **${interaction.guild.name}**.`,
         fields: [
-          { name: '👤 Banned User', value: `**${target.username}** (\`${target.id}\`)`, inline: true },
-          { name: '🛡️ Moderator', value: `**${interaction.user.username}**`, inline: true },
-          { name: '📝 Reason', value: reason, inline: false },
-          { name: '🗑️ Messages Deleted', value: `\`${deleteDays}\` day(s)`, inline: true },
-          { name: '📬 DM Status', value: `\`${dmStatus || '✅'}\``, inline: true }
+          { name: '?? Banned User', value: `**${target.username}** (\`${target.id}\`)`, inline: true },
+          { name: '??? Moderator', value: `**${interaction.user.username}**`, inline: true },
+          { name: '?? Reason', value: reason, inline: false },
+          { name: '??? Messages Deleted', value: `\`${deleteDays}\` day(s)`, inline: true },
+          { name: '?? DM Status', value: `\`${dmStatus || '?'}\``, inline: true }
         ],
         color: 'error',
-        footer: 'uwu-chan • Moderation Log'
+        footer: 'uwu-chan � Moderation Log'
       });
 
-      await interaction.editReply({ embeds: [embed] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_ban_user').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error('[ban_user] Error:', error);
       const errEmbed = createErrorEmbed('Failed to execute ban. Check bot permissions.');
-      if (interaction.deferred || interaction.replied) await interaction.editReply({ embeds: [errEmbed] });
+      if (interaction.deferred || interaction.replied) await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_ban_user').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [errEmbed], components: [row] });
       else await interaction.reply({ embeds: [errEmbed], ephemeral: true });
     }
   }
 };
+

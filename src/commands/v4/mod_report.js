@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -39,7 +39,7 @@ module.exports = {
     });
 
     const embed = createPremiumEmbed()
-      .setTitle('📨 Report Submitted')
+      .setTitle('?? Report Submitted')
       
       .addFields(
         { name: 'Reported User', value: target.tag, inline: true },
@@ -60,9 +60,10 @@ module.exports = {
       await modChannel.send({ embeds: [embed] });
     }
 
-    await interaction.reply({ content: 'Report submitted successfully!', ephemeral: true });
+    await interaction.editReply({ content: 'Report submitted successfully!', ephemeral: true });
   }
 };
+
 
 
 

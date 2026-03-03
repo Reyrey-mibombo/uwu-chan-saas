@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -36,7 +36,7 @@ module.exports = {
       .limit(limit);
 
     if (reports.length === 0) {
-      return interaction.reply({ content: `No ${status} reports found.`, ephemeral: true });
+      return interaction.editReply({ content: `No ${status} reports found.`, ephemeral: true });
     }
 
     const formatReport = (r) => {
@@ -44,19 +44,21 @@ module.exports = {
       const reporter = r.data?.reportedBy ? `<@${r.data.reportedBy}>` : 'Unknown';
       const reason = r.data?.reason || 'No reason';
       const time = r.createdAt.toLocaleString();
-      return `**${user}** reported by ${reporter}\n📋 ${reason}\n🕐 ${time}`;
+      return `**${user}** reported by ${reporter}\n?? ${reason}\n?? ${time}`;
     };
 
     const embed = createPremiumEmbed()
-      .setTitle(`📨 Reports (${status})`)
+      .setTitle(`?? Reports (${status})`)
       
       .setDescription(reports.map(formatReport).join('\n\n'))
       
       ;
 
-    await interaction.reply({ embeds: [embed] });
+    await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_report_check').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
+
 
 
 

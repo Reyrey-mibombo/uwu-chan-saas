@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createPremiumEmbed } = require('../../utils/embeds');
 const { Activity } = require('../../database/mongo');
 
@@ -33,7 +33,7 @@ module.exports = {
     });
 
     const embed = createPremiumEmbed()
-      .setTitle('🚨 Moderator Alert')
+      .setTitle('?? Moderator Alert')
       
       .addFields(
         { name: 'Alerted By', value: interaction.user.tag, inline: true },
@@ -51,12 +51,14 @@ module.exports = {
 
     if (modChannel) {
       await modChannel.send({ embeds: [embed] });
-      await interaction.reply({ content: 'Moderators have been alerted!', ephemeral: true });
+      await interaction.editReply({ content: 'Moderators have been alerted!', ephemeral: true });
     } else {
-      await interaction.reply({ embeds: [embed] });
+      await const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_alert_mod').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
+            await interaction.editReply({ embeds: [embed], components: [row] });
     }
   }
 };
+
 
 
 

@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { createPremiumEmbed, createSuccessEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { createCustomEmbed, createErrorEmbed } = require('../../utils/embeds');
 const { validatePremiumLicense } = require('../../utils/premium_guard');
 const { User } = require('../../database/mongo');
@@ -27,22 +28,22 @@ module.exports = {
       const dispatchId = Math.random().toString(36).substring(2, 8).toUpperCase();
 
       const embed = await createCustomEmbed(interaction, {
-        title: `🛰️ Zenith Dispatch Terminal [${dispatchId}]`,
+        title: `??? Zenith Dispatch Terminal [${dispatchId}]`,
         thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### 🚨 Critical Sector Alert\nA macroscopic signal has been broadcast to all high-tier responders in the **${interaction.guild.name}** sector. Emergency response protocol initiated.\n\n**💎 ZENITH DISPATCH EXCLUSIVE**`,
+        description: `### ?? Critical Sector Alert\nA macroscopic signal has been broadcast to all high-tier responders in the **${interaction.guild.name}** sector. Emergency response protocol initiated.\n\n**?? ZENITH DISPATCH EXCLUSIVE**`,
         fields: [
-          { name: '📡 Dispatch ID', value: `\`${dispatchId}\``, inline: true },
-          { name: '👥 Responders Pinned', value: `\`${mods.length}\` Nodes`, inline: true },
-          { name: '🔥 Alert Severity', value: '`MAXIMUM`', inline: true },
-          { name: '⚖️ Action Terminal', value: 'Authorized via Zenith Console', inline: false }
+          { name: '?? Dispatch ID', value: `\`${dispatchId}\``, inline: true },
+          { name: '?? Responders Pinned', value: `\`${mods.length}\` Nodes`, inline: true },
+          { name: '?? Alert Severity', value: '`MAXIMUM`', inline: true },
+          { name: '?? Action Terminal', value: 'Authorized via Zenith Console', inline: false }
         ],
-        footer: 'Emergency Dispatch Active • V4 Guard Suite',
+        footer: 'Emergency Dispatch Active � V4 Guard Suite',
         color: 'premium'
       });
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('mod_accept').setLabel('Accept Dispatch').setStyle(ButtonStyle.Success).setEmoji('✅'),
-        new ButtonBuilder().setCustomId('mod_quarantine').setLabel('Quarantine Sector').setStyle(ButtonStyle.Danger).setEmoji('🛡️')
+        new ButtonBuilder().setCustomId('mod_accept').setLabel('Accept Dispatch').setStyle(ButtonStyle.Success).setEmoji('?'),
+        new ButtonBuilder().setCustomId('mod_quarantine').setLabel('Quarantine Sector').setStyle(ButtonStyle.Danger).setEmoji('???')
       );
 
       // In a real scenario, this would send to a mod log channel. Using interaction for demo.
@@ -54,3 +55,4 @@ module.exports = {
     }
   }
 };
+

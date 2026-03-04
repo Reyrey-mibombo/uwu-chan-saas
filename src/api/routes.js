@@ -165,6 +165,7 @@ router.patch('/guild/:guildId/settings', auth, guildAuth, async (req, res) => {
                 // Validate boolean fields
                 if (['autoPromotion', 'ticketEnabled', 'alertsEnabled', 'shiftTrackingEnabled'].includes(key)) {
                     update[`settings.${key}`] = !!sanitizedBody[key];
+                    if (key === 'autoPromotion') update['settings.modules.automation'] = !!sanitizedBody[key];
                 } else {
                     update[`settings.${key}`] = sanitizedBody[key];
                 }
@@ -222,6 +223,12 @@ router.patch('/guild/:guildId/promotion-requirements', auth, guildAuth, async (r
                     if (reqData.shifts !== undefined) cleanReq.shifts = validateNumber(reqData.shifts, 0, 1000, 'shifts');
                     if (reqData.consistency !== undefined) cleanReq.consistency = validateNumber(reqData.consistency, 0, 100, 'consistency');
                     if (reqData.maxWarnings !== undefined) cleanReq.maxWarnings = validateNumber(reqData.maxWarnings, 0, 99, 'maxWarnings');
+                    if (reqData.shiftHours !== undefined) cleanReq.shiftHours = validateNumber(reqData.shiftHours, 0, 10000, 'shiftHours');
+                    if (reqData.achievements !== undefined) cleanReq.achievements = validateNumber(reqData.achievements, 0, 100, 'achievements');
+                    if (reqData.reputation !== undefined) cleanReq.reputation = validateNumber(reqData.reputation, 0, 10000, 'reputation');
+                    if (reqData.daysInServer !== undefined) cleanReq.daysInServer = validateNumber(reqData.daysInServer, 0, 3650, 'daysInServer');
+                    if (reqData.cleanRecordDays !== undefined) cleanReq.cleanRecordDays = validateNumber(reqData.cleanRecordDays, 0, 3650, 'cleanRecordDays');
+                    if (reqData.customNote !== undefined) cleanReq.customNote = String(reqData.customNote).substring(0, 500);
                     update[`promotionRequirements.${rank}`] = cleanReq;
                 }
             }
@@ -292,11 +299,11 @@ router.patch('/guild/:guildId/applications', auth, guildAuth, async (req, res) =
     try {
         const { guildId } = req.params;
         const sanitizedBody = sanitizeInput(req.body);
-        
+
         // Validate allowed fields
         const allowedFields = ['enabled', 'applyChannelId', 'reviewChannelId', 'reviewerRoleId', 'panelTitle', 'questions'];
         const update = { updatedAt: Date.now() };
-        
+
         for (const field of allowedFields) {
             if (sanitizedBody[field] !== undefined) {
                 // Validate channel/role IDs
@@ -313,7 +320,7 @@ router.patch('/guild/:guildId/applications', auth, guildAuth, async (req, res) =
                 }
             }
         }
-        
+
         await ApplicationConfig.findOneAndUpdate({ guildId }, { $set: update }, { upsert: true });
         invalidateCache(guildId);
         res.json({ success: true });

@@ -71,8 +71,13 @@ class PromotionSystem {
         const meetsConsistency = stats.consistency >= (nextReq.consistency || 0);
         const meetsWarnings = stats.warnings <= (nextReq.maxWarnings ?? 3);
         const meetsHours = stats.shiftHours >= (nextReq.shiftHours || 0);
+        const meetsAchievements = stats.achievements >= (nextReq.achievements || 0);
+        const meetsReputation = stats.reputation >= (nextReq.reputation || 0);
+        const meetsDays = stats.daysInServer >= (nextReq.daysInServer || 0);
+        const meetsCleanRecord = stats.cleanRecordDays >= (nextReq.cleanRecordDays || 0);
 
-        if (meetsPoints && meetsShifts && meetsConsistency && meetsWarnings && meetsHours) {
+        if (meetsPoints && meetsShifts && meetsConsistency && meetsWarnings && meetsHours &&
+            meetsAchievements && meetsReputation && meetsDays && meetsCleanRecord) {
             return await this.executePromotion(userId, guildId, nextReq.rank, stats, guildData, client);
         }
 
@@ -139,13 +144,29 @@ class PromotionSystem {
         const totalDuration = allShifts.reduce((acc, s) => acc + (s.duration || 0), 0);
         const shiftHours = Math.round(totalDuration / 3600);
 
+        // Calculate days in server
+        const guildProfile = user?.guilds?.find(g => g.guildId === guildId);
+        const joinedAt = guildProfile?.joinedAt || user?.createdAt || new Date();
+        const daysInServer = Math.floor((Date.now() - new Date(joinedAt).getTime()) / (24 * 60 * 60 * 1000));
+
+        // Calculate clean record (days since last warning)
+        const lastWarning = await Warning.findOne({ guildId, userId }).sort({ createdAt: -1 });
+        const cleanRecordDays = lastWarning
+            ? Math.floor((Date.now() - new Date(lastWarning.createdAt).getTime()) / (24 * 60 * 60 * 1000))
+            : daysInServer;
+
         return {
-            points: user?.staff?.points || 0,
+            points: guildProfile?.staff?.points || 0,
             shifts: shiftCount,
             warnings: warningCount,
-            consistency: user?.staff?.consistency || 100,
+            consistency: guildProfile?.staff?.consistency || 100,
             shiftHours: shiftHours,
-            username: user?.username || 'Unknown'
+            achievements: guildProfile?.staff?.achievements?.length || 0,
+            reputation: guildProfile?.staff?.reputation || 0,
+            daysInServer: daysInServer,
+            cleanRecordDays: cleanRecordDays,
+            username: user?.username || 'Unknown',
+            rank: guildProfile?.staff?.rank || 'member'
         };
     }
 

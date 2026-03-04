@@ -16,7 +16,10 @@ const AnalyticsSystem = require('./systems/analyticsSystem');
 const AutomationSystem = require('./systems/automationSystem');
 const AutoPromotionSystem = require('./systems/autoPromotionSystem');
 const LevelingSystem = require('./systems/levelingSystem');
+const EconomySystem = require('./systems/economySystem');
 const TicketSystem = require('./systems/ticketSystem');
+const JobScheduler = require('./systems/jobScheduler');
+const WebhookManager = require('./systems/webhookManager');
 const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 const dashboardSystems = require('./dashboardSystems');
@@ -81,8 +84,16 @@ async function initializeSystems() {
   client.systems.leveling = new LevelingSystem(client);
   await client.systems.leveling.initialize();
 
+  client.systems.economy = new EconomySystem(client);
+  await client.systems.economy.initialize();
+
   client.systems.tickets = new TicketSystem(client);
   await client.systems.tickets.initialize();
+
+  client.systems.scheduler = new JobScheduler(client);
+  await client.systems.scheduler.initialize();
+
+  client.systems.webhooks = new WebhookManager(client);
 }
 
 async function loadCommands() {
@@ -798,6 +809,14 @@ const paymentWebhook = require('./webhook/paymentWebhook');
 app.use('/webhooks/stripe', paymentWebhook);
 app.use('/webhooks/paypal', paymentWebhook);
 app.use('/webhooks/create-checkout-session', checkoutLimiter, paymentWebhook);
+
+// Mount new webhook manager routes (initialized in systems)
+app.use('/webhooks', (req, res, next) => {
+  if (client.systems.webhooks) {
+    return client.systems.webhooks.getRouter()(req, res, next);
+  }
+  next();
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

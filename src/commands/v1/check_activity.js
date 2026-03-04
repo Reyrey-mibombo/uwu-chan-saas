@@ -3,6 +3,8 @@
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
     ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
     ComponentType,
     ActivityType,
     PermissionsBitField,

@@ -440,4 +440,145 @@ router.get('/guilds/:guildId/export', validateGuildAccess, async (req, res) => {
   }
 });
 
+// Advanced analytics endpoints
+router.get('/guilds/:guildId/analytics/overview', validateGuildAccess, async (req, res) => {
+  try {
+    const { guildId } = req.params;
+    const { days = 30 } = req.query;
+
+    const AnalyticsAggregator = require('../systems/analyticsAggregator');
+    const aggregator = new AnalyticsAggregator(req.app.locals.client);
+
+    const data = await aggregator.getGuildOverview(guildId, parseInt(days));
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/guilds/:guildId/analytics/comparison', validateGuildAccess, async (req, res) => {
+  try {
+    const { guildId } = req.params;
+    const { metric = 'points', days = 30 } = req.query;
+
+    const AnalyticsAggregator = require('../systems/analyticsAggregator');
+    const aggregator = new AnalyticsAggregator(req.app.locals.client);
+
+    const data = await aggregator.getComparisonData(guildId, metric, parseInt(days));
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/guilds/:guildId/analytics/report', validateGuildAccess, async (req, res) => {
+  try {
+    const { guildId } = req.params;
+    const { format = 'json', days = 30 } = req.query;
+
+    const AnalyticsAggregator = require('../systems/analyticsAggregator');
+    const aggregator = new AnalyticsAggregator(req.app.locals.client);
+
+    const report = await aggregator.exportReport(guildId, format, parseInt(days));
+
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${guildId}_report_${Date.now()}.csv"`);
+    }
+
+    res.send(report);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Economy endpoints
+router.get('/guilds/:guildId/economy/leaderboard', validateGuildAccess, async (req, res) => {
+  try {
+    const { guildId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const leaderboard = await req.app.locals.client.systems.economy?.getLeaderboard(
+      guildId,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    res.json({ leaderboard });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/guilds/:guildId/economy/wealth', validateGuildAccess, async (req, res) => {
+  try {
+    const { guildId } = req.params;
+
+    const wealth = await req.app.locals.client.systems.economy?.getGlobalWealth(guildId);
+
+    res.json(wealth);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Cache management endpoints (owner only)
+router.post('/admin/cache/clear', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'];
+    if (!userId || userId !== process.env.OWNER_ID) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const cacheManager = require('../utils/cacheManager');
+    await cacheManager.flush();
+
+    res.json({ message: 'Cache cleared successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/admin/cache/stats', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'];
+    if (!userId || userId !== process.env.OWNER_ID) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const cacheManager = require('../utils/cacheManager');
+    const stats = cacheManager.getStats();
+
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Job scheduler status (owner only)
+router.get('/admin/jobs/status', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'];
+    if (!userId || userId !== process.env.OWNER_ID) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const status = req.app.locals.client.systems.scheduler?.getJobStatus();
+
+    res.json({ jobs: status });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Health check
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '8.1.0'
+  });
+});
+
 module.exports = router;

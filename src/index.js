@@ -13,6 +13,7 @@ const StaffManagementSystem = require('./systems/staffManagementSystem');
 const ModerationSystem = require('./systems/moderationSystem');
 const EnhancedModerationSystem = require('./systems/enhancedModerationSystem');
 const AnalyticsSystem = require('./systems/analyticsSystem');
+const AnalyticsAggregator = require('./systems/analyticsAggregator');
 const AutomationSystem = require('./systems/automationSystem');
 const AutoPromotionSystem = require('./systems/autoPromotionSystem');
 const LevelingSystem = require('./systems/levelingSystem');
@@ -20,6 +21,7 @@ const EconomySystem = require('./systems/economySystem');
 const TicketSystem = require('./systems/ticketSystem');
 const JobScheduler = require('./systems/jobScheduler');
 const WebhookManager = require('./systems/webhookManager');
+const cacheManager = require('./utils/cacheManager');
 const commandHandler = require('./handlers/commandHandler');
 const { Guild } = require('./database/mongo');
 const dashboardSystems = require('./dashboardSystems');
@@ -94,6 +96,12 @@ async function initializeSystems() {
   await client.systems.scheduler.initialize();
 
   client.systems.webhooks = new WebhookManager(client);
+
+  client.systems.analyticsAggregator = new AnalyticsAggregator(client);
+  await client.systems.analyticsAggregator.initialize();
+
+  // Initialize cache manager
+  await cacheManager.connect();
 }
 
 async function loadCommands() {

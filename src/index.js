@@ -295,11 +295,11 @@ client.on('interactionCreate', async interaction => {
     // Ticket system buttons
     const ticketSetup = require('./commands/v1/ticketSetup');
     if (interaction.customId === 'ticket_report_staff') {
-      await ticketSetup.handleReportStaff(interaction, client);
+      await ticketSetup.handleCreateTicketChannel(interaction, 'report_staff', client);
       return;
     }
     if (interaction.customId === 'ticket_feedback') {
-      await ticketSetup.handleFeedback(interaction, client);
+      await ticketSetup.handleCreateTicketChannel(interaction, 'feedback', client);
       return;
     }
     if (interaction.customId.startsWith('ticket_claim_')) {

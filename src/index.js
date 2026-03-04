@@ -70,28 +70,63 @@ async function initializeSystems() {
 
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
-  const defaultVersions = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8'];
+  // FIXED: Now includes all command folders consistently with commandHandler.js
+  const defaultVersions = ['v1', 'v1_context', 'buying', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'premium'];
   const versions = process.env.ENABLED_TIERS ? process.env.ENABLED_TIERS.split(',') : defaultVersions;
+
+  // Ensure v1_context is always included if v1 is present (for context menu commands)
+  if (versions.includes('v1') && !versions.includes('v1_context')) {
+    versions.push('v1_context');
+    logger.info('[Commands] Auto-injected v1_context for context menu support');
+  }
 
   for (const version of versions) {
     const versionPath = path.join(commandsPath, version.trim());
     if (!fs.existsSync(versionPath)) continue;
 
     const commandFiles = fs.readdirSync(versionPath).filter(f => f.endsWith('.js'));
+    logger.info(`[Commands] Loading ${commandFiles.length} commands from ${version}...`);
+
     for (const file of commandFiles) {
       try {
         delete require.cache[require.resolve(path.join(versionPath, file))];
         const command = require(path.join(versionPath, file));
-        if ('data' in command && 'execute' in command) {
-          command.requiredVersion = version;
-          client.commands.set(command.data.name, command);
+
+        if (!('data' in command)) {
+          logger.warn(`[Commands] ${version}/${file}: Missing 'data' property - skipping`);
+          continue;
         }
+        if (!('execute' in command)) {
+          logger.warn(`[Commands] ${version}/${file}: Missing 'execute' function - skipping`);
+          continue;
+        }
+        if (!command.data.name) {
+          logger.warn(`[Commands] ${version}/${file}: Missing command name - skipping`);
+          continue;
+        }
+
+        // Check for duplicate command names
+        if (client.commands.has(command.data.name)) {
+          logger.warn(`[Commands] ${version}/${file}: Command '${command.data.name}' already exists from another version - overwriting`);
+        }
+
+        command.requiredVersion = version;
+        client.commands.set(command.data.name, command);
+        logger.info(`[Commands] ✓ Loaded ${version}/${file}: /${command.data.name}`);
       } catch (e) {
-        logger.error(`Error loading command ${file}: ${e.message}`);
+        logger.error(`[Commands] ✗ Error loading ${version}/${file}: ${e.message}`);
       }
     }
   }
-  logger.info(`Loaded ${client.commands.size} commands`);
+  logger.info(`[Commands] Total loaded: ${client.commands.size} commands`);
+
+  // Log command counts by version
+  const versionCounts = {};
+  client.commands.forEach(cmd => {
+    const ver = cmd.requiredVersion || 'unknown';
+    versionCounts[ver] = (versionCounts[ver] || 0) + 1;
+  });
+  logger.info('[Commands] Breakdown by version:', versionCounts);
 }
 
 /**
@@ -574,21 +609,38 @@ client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand() && !interaction.isUserContextMenuCommand() && !interaction.isMessageContextMenuCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
-  if (!command) return;
+  if (!command) {
+    logger.warn(`[Command] Received unknown command: ${interaction.commandName}`);
+    return interaction.reply({
+      content: '❌ This command is not available. It may still be deploying or has been removed.',
+      ephemeral: true
+    });
+  }
 
-  logger.info(`${interaction.commandName} called by ${interaction.user.id} (${interaction.user.tag})`);
+  logger.info(`[Command] /${interaction.commandName} called by ${interaction.user.tag} (${interaction.user.id}) in guild ${interaction.guildId}`);
+  logger.info(`[Command] Command version tier: ${command.requiredVersion || 'unknown'}`);
 
-  const hasAccess = await versionGuard.checkAccess(
-    interaction.guildId,
-    interaction.user.id,
-    command.requiredVersion || 'v1_context'
-  );
+  let hasAccess;
+  try {
+    hasAccess = await versionGuard.checkAccess(
+      interaction.guildId,
+      interaction.user.id,
+      command.requiredVersion || 'v1'
+    );
+  } catch (guardError) {
+    logger.error(`[Command] Version guard error for /${interaction.commandName}:`, guardError);
+    return interaction.reply({
+      content: '❌ An error occurred while checking permissions. Please try again.',
+      ephemeral: true
+    });
+  }
 
-  logger.info(`Access result: ${JSON.stringify(hasAccess)}`);
+  logger.info(`[Command] Access check result: allowed=${hasAccess.allowed}`);
 
   if (!hasAccess.allowed) {
+    logger.info(`[Command] Access denied for ${interaction.user.tag}: ${hasAccess.message}`);
     return interaction.reply({
-      content: '💎 **Premium Required**\n\nThis bot requires **Premium** or **Enterprise** access.\n\n✅ **Premium unlocks:** v3, v4, v5 commands (this bot)\n🌟 **Enterprise unlocks:** v6, v7, v8 commands (all bots)\n\nUse `/buy` or `/premium` in the **Strata1 Bot** to upgrade!',
+      content: hasAccess.message || '💎 **Premium Required**\n\nThis command requires a higher tier. Use `/buy` to upgrade!',
       ephemeral: true
     });
   }
@@ -623,15 +675,26 @@ client.on('interactionCreate', async interaction => {
     const { handleCommandXP } = require('./utils/xpSystem');
     await handleCommandXP(interaction);
   } catch (error) {
-    logger.error('Command execution error', error);
+    logger.error(`[Command] Execution error in /${interaction.commandName}:`, error);
+    logger.error(`[Command] Error stack: ${error.stack}`);
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? `❌ Command Error: \`${error.message}\``
+      : '❌ There was an error executing this command!';
+
     const reply = {
-      content: 'There was an error executing this command!',
+      content: errorMessage,
       ephemeral: true
     };
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(reply);
-    } else {
-      await interaction.reply(reply);
+
+    try {
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(reply);
+      } else {
+        await interaction.reply(reply);
+      }
+    } catch (replyError) {
+      logger.error(`[Command] Failed to send error reply:`, replyError);
     }
   }
 });

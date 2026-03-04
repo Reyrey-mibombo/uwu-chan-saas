@@ -9,14 +9,17 @@ module.exports = {
 
     async execute(interaction, client) {
         try {
+            // FIXED: Must defer reply first before using editReply
+            await interaction.deferReply({ ephemeral: true });
+
             if (!interaction.member.permissions.has('ModerateMembers') && !interaction.member.permissions.has('ManageGuild')) {
-                return interaction.editReply({ embeds: [createErrorEmbed('You do not have permission to warn users.')], ephemeral: true });
+                return interaction.editReply({ embeds: [createErrorEmbed('You do not have permission to warn users.')] });
             }
 
             const targetUser = interaction.targetUser;
 
             if (targetUser.id === interaction.user.id) {
-                return interaction.editReply({ embeds: [createErrorEmbed('You cannot warn yourself.')], ephemeral: true });
+                return interaction.editReply({ embeds: [createErrorEmbed('You cannot warn yourself.')] });
             }
 
             const modal = new ModalBuilder()

@@ -39,7 +39,7 @@ module.exports = {
             // Must enforce premium limit bypass checking so normal instances don't exploit the architecture
             if (!guildData.premium?.isActive && !guildData.premium?.tier) {
                 const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v3_set_requirements_premium').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed('You do not have the required backend access to write advanced algorithmic requirement vectors.\nPlease ask the owner to bypass limits and support UWU Chan development.')], components: [row] });
+                return await interaction.editReply({ embeds: [createErrorEmbed('You do not have the required backend access to write advanced algorithmic requirement vectors.\nPlease ask the owner to bypass limits and support UWU Chan development.')], components: [row] });
             }
 
             if (!guildData.promotionRequirements) guildData.promotionRequirements = {};
@@ -74,7 +74,7 @@ module.exports = {
             const errEmbed = createErrorEmbed('A database backend error occurred mapping custom advanced vector targets.');
             if (interaction.deferred || interaction.replied) {
                 const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v3_set_requirements_premium').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            return await interaction.editReply({ embeds: [errEmbed], components: [row] });
+                return await interaction.editReply({ embeds: [errEmbed], components: [row] });
             } else {
                 await interaction.editReply({ embeds: [errEmbed], ephemeral: true });
             }

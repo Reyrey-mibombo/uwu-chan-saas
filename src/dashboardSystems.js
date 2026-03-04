@@ -611,6 +611,22 @@ function register(client, loggerInstance) {
             const cmd = client.commands.get('punishment_summary');
             if (cmd) await cmd.handlePunishButtons(interaction, client);
         }
+        else if (customId.startsWith('report_')) {
+            const cmd = client.commands.get('mod_report');
+            if (cmd) await cmd.handleReportButtons(interaction, client);
+        }
+        else if (customId.startsWith('audit_')) {
+            const cmd = client.commands.get('audit_logs');
+            if (cmd) await cmd.handleAuditButtons(interaction, client);
+        }
+        else if (customId.startsWith('filter_toggle_')) {
+            const cmd = client.commands.get('message_filter');
+            if (cmd) await cmd.handleFilterButtons(interaction, client);
+        }
+        else if (customId.startsWith('violation_')) {
+            const cmd = client.commands.get('rule_violation');
+            if (cmd) await cmd.handleViolationButtons(interaction, client);
+        }
         else if (customId.startsWith('auto_v4_')) {
             const cmdName = customId.replace('auto_v4_', '');
             const cmd = client.commands.get(cmdName);

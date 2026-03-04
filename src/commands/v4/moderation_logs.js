@@ -13,16 +13,17 @@ module.exports = {
         .setMaxValue(50)
         .setRequired(false)),
 
-  async execute(interaction) {
+  async execute(interaction, client) {
+    if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
     const guildId = interaction.guildId;
     const limit = interaction.options.getInteger('limit') || 10;
 
-    const logs = await Activity.find({ 
-      guildId, 
-      type: 'warning' 
+    const logs = await Activity.find({
+      guildId,
+      type: 'warning'
     })
-    .sort({ createdAt: -1 })
-    .limit(limit);
+      .sort({ createdAt: -1 })
+      .limit(limit);
 
     if (logs.length === 0) {
       return interaction.editReply({ content: 'No moderation logs found.', ephemeral: true });
@@ -39,13 +40,13 @@ module.exports = {
 
     const embed = createPremiumEmbed()
       .setTitle('?? Moderation Logs')
-      
+
       .setDescription(logs.map(formatLog).join('\n'))
-      
+
       ;
 
     const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_moderation_logs').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [embed], components: [row] });
+    await interaction.editReply({ embeds: [embed], components: [row] });
   }
 };
 

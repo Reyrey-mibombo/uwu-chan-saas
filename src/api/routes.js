@@ -300,6 +300,25 @@ router.patch('/guild/:guildId/staff-rewards', auth, guildAuth, async (req, res) 
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/dashboard/guild/:guildId/welcome
+router.get('/guild/:guildId/welcome', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).select('welcomeConfig').lean();
+        res.json(g?.welcomeConfig || { enabled: false });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/welcome
+router.patch('/guild/:guildId/welcome', auth, guildAuth, async (req, res) => {
+    try {
+        await Guild.findOneAndUpdate(
+            { guildId: req.params.guildId },
+            { $set: { welcomeConfig: req.body } }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET /api/dashboard/guild/:guildId/alerts
 router.get('/guild/:guildId/alerts', auth, guildAuth, async (req, res) => {
     try {
@@ -755,6 +774,32 @@ router.patch('/guild/:guildId/systems/tickets', auth, guildAuth, async (req, res
         );
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
+});
+
+// GET /api/dashboard/guild/:guildId/autochat
+router.get('/guild/:guildId/autochat', auth, guildAuth, async (req, res) => {
+    try {
+        const g = await Guild.findOne({ guildId: req.params.guildId }).select('autoChatConfig').lean();
+        res.json(g?.autoChatConfig || { enabled: false, channelId: null, interval: 60, messages: [] });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/dashboard/guild/:guildId/autochat
+router.patch('/guild/:guildId/autochat', auth, guildAuth, async (req, res) => {
+    try {
+        const { guildId } = req.params;
+        const sanitizedBody = sanitizeInput(req.body);
+
+        const update = {
+            'autoChatConfig.enabled': !!sanitizedBody.enabled,
+            'autoChatConfig.channelId': sanitizedBody.channelId || null,
+            'autoChatConfig.interval': parseInt(sanitizedBody.interval) || 60,
+            'autoChatConfig.messages': Array.isArray(sanitizedBody.messages) ? sanitizedBody.messages.filter(m => typeof m === 'string' && m.length > 0) : []
+        };
+
+        const result = await Guild.findOneAndUpdate({ guildId }, { $set: update }, { new: true });
+        res.json({ success: true, config: result.autoChatConfig });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;

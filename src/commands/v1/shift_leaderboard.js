@@ -95,6 +95,10 @@ module.exports = {
                         .setStyle(ButtonStyle.Primary)
                         .setDisabled(page === 1),
                     new ButtonBuilder()
+                        .setCustomId('slb_my_standing')
+                        .setLabel('⏳ My Standing')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
                         .setCustomId('slb_next')
                         .setLabel('Next ▶')
                         .setStyle(ButtonStyle.Primary)
@@ -146,6 +150,41 @@ module.exports = {
             } else {
                 await interaction.editReply({ embeds: [errEmbed], ephemeral: true });
             }
+        }
+    },
+
+    async handleStandingButton(interaction, client) {
+        const { customId, guildId, user } = interaction;
+        if (customId === 'slb_my_standing') {
+            await interaction.deferReply({ ephemeral: true });
+
+            // Re-aggregate specifically for this user's rank
+            const shifts = await Shift.find({ guildId }).lean();
+            const userHoursMap = new Map();
+            shifts.forEach(shift => {
+                if (!shift.duration) return;
+                userHoursMap.set(shift.userId, (userHoursMap.get(shift.userId) || 0) + shift.duration);
+            });
+
+            const sorted = Array.from(userHoursMap.entries()).sort((a, b) => b[1] - a[1]);
+            const rankIndex = sorted.findIndex(e => e[0] === user.id);
+
+            if (rankIndex === -1) return interaction.editReply({ content: 'You have no recorded shift hours in this sector.' });
+
+            const durationSecs = sorted[rankIndex][1];
+            const hours = Math.floor(durationSecs / 3600);
+            const minutes = Math.floor((durationSecs % 3600) / 60);
+
+            const embed = await createCustomEmbed(interaction, {
+                title: '⏳ Personal Shift Volume',
+                description: `You are currently ranked **#${rankIndex + 1}** in total duty hours.`,
+                fields: [
+                    { name: '⏱️ Total Time', value: `\`${hours}h ${minutes}m\``, inline: true },
+                    { name: '📊 percentile', value: `\`${Math.round((1 - (rankIndex / sorted.length)) * 100)}%\``, inline: true }
+                ],
+                color: 'info'
+            });
+            await interaction.editReply({ embeds: [embed] });
         }
     }
 };

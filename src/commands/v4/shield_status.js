@@ -7,9 +7,9 @@ module.exports = {
         .setName('shield_status')
         .setDescription('Enterprise Hyper-Apex: Macroscopic Security Layer Audit & Armor Density'),
 
-    async execute(interaction) {
+    async execute(interaction, client) {
         try {
-            await interaction.deferReply();
+            if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
 
             // Enterprise Hyper-Apex License Guard
             const license = await validatePremiumLicense(interaction, 'premium');

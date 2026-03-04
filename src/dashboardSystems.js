@@ -262,8 +262,10 @@ function register(client, loggerInstance) {
         const guildId = member.guild.id;
         const mods = await getModules(guildId);
 
-        // ── WELCOME ────────────────────────────────────────────────
-        const wlc = mods.welcome || {};
+        // ── WELCOME (Advanced) ─────────────────────────────────────
+        const guildData = await Guild.findOne({ guildId }).select('welcomeConfig').lean();
+        const wlc = guildData?.welcomeConfig || {};
+
         if (wlc.enabled && wlc.channelId) {
             const count = member.guild.memberCount;
             const msg = (wlc.message || 'Welcome {user} to {server}! You are member #{count}.')
@@ -272,30 +274,34 @@ function register(client, loggerInstance) {
                 .replace('{count}', count.toLocaleString());
 
             try {
-                const ch = member.guild.channels.cache.get(wlc.channelId);
+                const ch = member.guild.channels.cache.get(wlc.channelId) || await member.guild.channels.fetch(wlc.channelId).catch(() => null);
                 if (ch?.isTextBased()) {
                     const embed = new EmbedBuilder()
-                        .setColor('#6c63ff')
-                        .setTitle(`👋 Welcome to ${member.guild.name}!`)
+                        .setColor(member.guild.members.me?.displayHexColor || '#6c63ff')
+                        .setTitle(wlc.title.replace('{server}', member.guild.name))
                         .setDescription(msg)
                         .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
                         .setFooter({ text: `Member #${count.toLocaleString()}` })
                         .setTimestamp();
-                    await ch.send({ embeds: [embed] });
+
+                    if (wlc.imageURL) embed.setImage(wlc.imageURL);
+
+                    const buttons = [];
+                    if (wlc.buttons?.rules?.enabled) {
+                        buttons.push(new ButtonBuilder().setCustomId('welcome_rules').setLabel(wlc.buttons.rules.label).setStyle(ButtonStyle.Secondary).setEmoji('📜'));
+                    }
+                    if (wlc.buttons?.roles?.enabled) {
+                        buttons.push(new ButtonBuilder().setCustomId('welcome_roles').setLabel(wlc.buttons.roles.label).setStyle(ButtonStyle.Primary).setEmoji('🎭'));
+                    }
+                    if (wlc.buttons?.apply?.enabled) {
+                        buttons.push(new ButtonBuilder().setCustomId('welcome_apply').setLabel(wlc.buttons.apply.label).setStyle(ButtonStyle.Success).setEmoji('📝'));
+                    }
+
+                    const row = buttons.length > 0 ? new ActionRowBuilder().addComponents(buttons) : null;
+                    await ch.send({ content: `<@${member.id}>`, embeds: [embed], components: row ? [row] : [] });
                 }
             } catch (err) {
-                if (logger) logger.debug(`[Welcome] Failed to send welcome message: ${err.message}`);
-            }
-
-            // DM welcome
-            if (wlc.dmEnabled && wlc.dmMessage) {
-                const dmMsg = wlc.dmMessage
-                    .replace('{user}', member.user.username)
-                    .replace('{server}', member.guild.name)
-                    .replace('{count}', member.guild.memberCount);
-                try { await member.send(dmMsg); } catch (err) {
-                    // DM failed (user may have DMs disabled) - common, don't log unless debug
-                }
+                if (logger) logger.debug(`[Welcome] Failed to send advanced welcome: ${err.message}`);
             }
         }
 
@@ -486,7 +492,157 @@ function register(client, loggerInstance) {
         );
     });
 
-    if (logger) logger.info('[DashboardSystems] ✅ All auto-working systems registered (automod, antispam, welcome, autorole, logging)');
+    // ════════════════════════════════════════════════════════════════
+    // INTERACTION CREATE — Buttons for Terminal/Welcome
+    // ════════════════════════════════════════════════════════════════
+    client.on('interactionCreate', async (interaction) => {
+        if (!interaction.isButton()) return;
+
+        const { customId, guildId, user } = interaction;
+
+        // ── STAFF TERMINAL HANDLERS ────────────────────────────────
+        if (customId.startsWith('terminal_')) {
+            const staffSystem = client.systems.staff;
+            const terminalCmd = client.commands.get('staff_terminal');
+            if (!staffSystem || !terminalCmd) return interaction.reply({ content: 'System offline.', ephemeral: true });
+
+            try {
+                if (customId === 'terminal_start') await staffSystem.startShift(user.id, guildId);
+                else if (customId.startsWith('terminal_pause_')) await staffSystem.pauseShift(user.id, guildId);
+                else if (customId.startsWith('terminal_resume_')) await staffSystem.resumeShift(user.id, guildId);
+                else if (customId.startsWith('terminal_end_')) await staffSystem.endShift(user.id, guildId);
+                else if (customId === 'terminal_achievements') {
+                    const achCmd = client.commands.get('achievement_tracker');
+                    if (achCmd) return await achCmd.execute(interaction);
+                }
+
+                // Refresh terminal for all except achievements (which handles its own response)
+                if (customId !== 'terminal_achievements') {
+                    await terminalCmd.renderTerminal(interaction, client);
+                }
+            } catch (e) {
+                interaction.reply({ content: `Terminal error: ${e.message}`, ephemeral: true });
+            }
+        }
+
+        // ── ENHANCED COMMAND HANDLERS ──────────────────────────────
+        if (customId.includes('profile_') || customId.includes('export_stats_')) {
+            const cmd = client.commands.get('staff_profile');
+            if (cmd) {
+                if (customId.startsWith('export_stats_')) await cmd.handleExportStats(interaction, client);
+                else await cmd.handleProfileButtons(interaction, client);
+            }
+        }
+        else if (customId === 'lb_my_rank') {
+            const cmd = client.commands.get('leaderboard');
+            if (cmd) await cmd.handleLeaderboardButtons(interaction, client);
+        }
+        else if (customId.startsWith('warn_')) {
+            const cmd = client.commands.get('warn');
+            if (cmd) await cmd.handleHistoryButton(interaction, client);
+        }
+        else if (customId.startsWith('status_')) {
+            const cmd = client.commands.get('server_status');
+            if (cmd) await cmd.handleStatusButtons(interaction, client);
+        }
+        else if (customId.startsWith('case_')) {
+            const cmd = client.commands.get('case_file');
+            if (cmd) await cmd.handleCaseButtons(interaction, client);
+        }
+        else if (customId.startsWith('activity_filter_')) {
+            const cmd = client.commands.get('activity_log');
+            if (cmd) await cmd.handleActivityFilters(interaction, client);
+        }
+        else if (customId.startsWith('activity_ping_')) {
+            const cmd = client.commands.get('check_activity');
+            if (cmd) await cmd.execute(interaction, client); // Handled inside execute collector usually, but good for persistence
+        }
+        else if (customId.startsWith('stats_')) {
+            const cmd = client.commands.get('staff_stats');
+            if (cmd) await cmd.handleStatsButtons(interaction, client);
+        }
+        else if (customId === 'slb_my_standing') {
+            const cmd = client.commands.get('shift_leaderboard');
+            if (cmd) await cmd.handleStandingButton(interaction, client);
+        }
+
+        // ── V4 MODERATION SUITE HANDLERS ──────────────────────────
+        else if (customId.startsWith('ban_')) {
+            const cmd = client.commands.get('ban_user');
+            if (cmd) await cmd.handleBanButtons(interaction, client);
+        }
+        else if (customId.startsWith('mute_')) {
+            const cmd = client.commands.get('mute_user');
+            if (cmd) await cmd.handleMuteButtons(interaction, client);
+        }
+        else if (customId.startsWith('history_')) {
+            const cmd = client.commands.get('history_lookup');
+            if (cmd) await cmd.handleHistoryButtons(interaction, client);
+        }
+        else if (customId.startsWith('strike_')) {
+            const cmd = client.commands.get('strike_check');
+            if (cmd) await cmd.handleStrikeButtons(interaction, client);
+        }
+        else if (customId.startsWith('kick_')) {
+            const cmd = client.commands.get('kick_user');
+            if (cmd) await cmd.handleKickButtons(interaction, client);
+        }
+        else if (customId.startsWith('v4_')) {
+            const cmd = client.commands.get('security_hub');
+            if (cmd) await cmd.handleHubButtons(interaction, client);
+        }
+        else if (customId.startsWith('stats_period_')) {
+            const cmd = client.commands.get('moderation_stats');
+            if (cmd) await cmd.handleStatsButtons(interaction, client);
+        }
+        else if (customId.startsWith('chart_')) {
+            const cmd = client.commands.get('moderation_chart');
+            if (cmd) await cmd.handleChartButtons(interaction, client);
+        }
+        else if (customId.startsWith('spam_')) {
+            const cmd = client.commands.get('anti_spam');
+            if (cmd) await cmd.handleSpamButtons(interaction, client);
+        }
+        else if (customId.startsWith('link_')) {
+            const cmd = client.commands.get('link_blocker');
+            if (cmd) await cmd.handleLinkButtons(interaction, client);
+        }
+        else if (customId.startsWith('punish_')) {
+            const cmd = client.commands.get('punishment_summary');
+            if (cmd) await cmd.handlePunishButtons(interaction, client);
+        }
+        else if (customId.startsWith('auto_v4_')) {
+            const cmdName = customId.replace('auto_v4_', '');
+            const cmd = client.commands.get(cmdName);
+            if (cmd) await cmd.execute(interaction, client);
+        }
+
+        // ── WELCOME BUTTON HANDLERS ────────────────────────────────
+        if (customId === 'welcome_rules') {
+            interaction.reply({ content: '📜 **Server Rules:** Please check the dedicated <#rules-channel> or refer to the server handbook for behavioral guidelines.', ephemeral: true });
+        } else if (customId === 'welcome_roles') {
+            interaction.reply({ content: '🎭 **Self-Roles:** Use the `/roles` command or check the #onboarding channel to customize your identity.', ephemeral: true });
+        } else if (customId === 'welcome_apply') {
+            const applyCmd = client.commands.get('apply_panel');
+            if (applyCmd) await applyCmd.execute(interaction);
+            else interaction.reply({ content: '📝 Application system is currently undergoing maintenance.', ephemeral: true });
+        }
+    });
+
+    // ════════════════════════════════════════════════════════════════
+    // INTERACTION CREATE — Modals for Security Management
+    // ════════════════════════════════════════════════════════════════
+    client.on('interactionCreate', async (interaction) => {
+        if (!interaction.isModalSubmit()) return;
+        const { customId } = interaction;
+
+        if (customId === 'link_whitelist_modal') {
+            const cmd = client.commands.get('link_blocker');
+            if (cmd) await cmd.handleLinkModal(interaction, client);
+        }
+    });
+
+    if (logger) logger.info('[DashboardSystems] ✅ All systems registered (automod, antispam, welcome, autorole, logging, terminal)');
 }
 
 module.exports = { register, invalidateCache };

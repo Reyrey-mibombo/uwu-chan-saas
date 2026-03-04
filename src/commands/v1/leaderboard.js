@@ -81,6 +81,7 @@ module.exports = {
       const getButtons = (page) => {
         return new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('lb_prev').setLabel('◀ Prev').setStyle(ButtonStyle.Primary).setDisabled(page === 1),
+          new ButtonBuilder().setCustomId('lb_my_rank').setLabel('👤 My Status').setStyle(ButtonStyle.Secondary),
           new ButtonBuilder().setCustomId('lb_next').setLabel('Next ▶').setStyle(ButtonStyle.Primary).setDisabled(page === totalPages)
         );
       };
@@ -117,6 +118,31 @@ module.exports = {
     } catch (error) {
       console.error(error);
       await interaction.editReply({ embeds: [createErrorEmbed('Failed to load leaderboard.')] });
+    }
+  },
+
+  async handleLeaderboardButtons(interaction, client) {
+    const { customId, guildId, user } = interaction;
+    const staffSystem = client.systems.staff;
+
+    if (customId === 'lb_my_rank') {
+      await interaction.deferReply({ ephemeral: true });
+      const leaderboard = await staffSystem.getLeaderboard(guildId, 1000); // Fetch all to find rank
+      const rankIndex = leaderboard.findIndex(e => e.userId === user.id);
+
+      if (rankIndex === -1) return interaction.editReply({ content: 'You are not yet ranked on the leaderboard. Start a shift to begin!' });
+
+      const entry = leaderboard[rankIndex];
+      const embed = await createCustomEmbed(interaction, {
+        title: '👤 Personal Standings',
+        description: `You are currently ranked **#${rankIndex + 1}** on the server leaderboard.`,
+        fields: [
+          { name: '✨ Total Points', value: `\`${entry.points.toLocaleString()}\``, inline: true },
+          { name: '📊 Percentile', value: `\`${Math.round((1 - (rankIndex / leaderboard.length)) * 100)}%\``, inline: true }
+        ],
+        color: 'info'
+      });
+      await interaction.editReply({ embeds: [embed] });
     }
   }
 };

@@ -90,7 +90,11 @@ module.exports = {
                 { name: '🏅 Relational Analytics', value: `\`Lifetime Velocity:\` **${totalHrs}h**\n\`Merits Unlocked:\` **${trophies.length}**\n\`Login Streak:\` 🔥 **${staffSync.streak || 0}**`, inline: false }
             );
 
-            const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_case_file').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`case_notify_${targetUser.id}`).setLabel('🔔 Notify User').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId(`case_archive_${targetUser.id}`).setLabel('🗄️ Archive Lookup').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('auto_v1_case_file').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary)
+            );
             await interaction.editReply({ embeds: [embed], components: [row] });
 
         } catch (error) {
@@ -102,6 +106,45 @@ module.exports = {
             } else {
                 await interaction.editReply({ embeds: [errEmbed], ephemeral: true });
             }
+        }
+    },
+
+    async handleCaseButtons(interaction, client) {
+        const { customId, guildId, guild } = interaction;
+        const targetUserId = customId.split('_').pop();
+
+        if (customId.startsWith('case_notify_')) {
+            await interaction.deferReply({ ephemeral: true });
+            try {
+                const targetUser = await client.users.fetch(targetUserId);
+                const embed = await createCustomEmbed(interaction, {
+                    title: `🛡️ Security Notice: ${guild.name}`,
+                    description: `**Official Notification:** A moderator has accessed your personal dossier for review.\n\n*This is an automated administrative alert. Please ensure you are following all server protocols.*`,
+                    color: 'warning'
+                });
+                await targetUser.send({ embeds: [embed] });
+                await interaction.editReply({ content: `✅ Successfully dispatched administrative notice to <@${targetUserId}>.` });
+            } catch (e) {
+                await interaction.editReply({ content: `❌ Failed to notify user. They may have DMs closed.` });
+            }
+        }
+        else if (customId.startsWith('case_archive_')) {
+            await interaction.deferReply({ ephemeral: true });
+            const warnings = await Warning.find({ userId: targetUserId, guildId }).sort({ createdAt: -1 }).lean();
+
+            if (!warnings.length) return interaction.editReply({ content: 'No historical records found for this user.' });
+
+            const archiveLines = warnings.map(w => {
+                const date = `<t:${Math.floor(new Date(w.createdAt).getTime() / 1000)}:d>`;
+                return `• **${date}**: ${w.reason} (${w.severity})`;
+            }).join('\n');
+
+            const embed = await createCustomEmbed(interaction, {
+                title: `🗄️ Historical Archive: ${targetUserId}`,
+                description: `Complete record of all detected incidents:\n\n${archiveLines.substring(0, 3900)}`,
+                color: 'info'
+            });
+            await interaction.editReply({ embeds: [embed] });
         }
     }
 };

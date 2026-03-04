@@ -68,7 +68,8 @@ module.exports = {
       });
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('auto_v1_staff_stats').setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('stats_compare').setLabel('⚖️ Peer Comparison').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('stats_merits').setLabel('🏅 Merit Showcase').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setLabel('🏆 Leaderboard').setStyle(ButtonStyle.Link).setURL(`https://discord.com/channels/${interaction.guildId}`)
       );
       await interaction.editReply({ embeds: [embed], components: [row] });
@@ -76,6 +77,54 @@ module.exports = {
       console.error('Staff Stats Error:', error);
       const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_staff_stats').setLabel('  Retry').setStyle(ButtonStyle.Secondary));
       await interaction.editReply({ embeds: [createErrorEmbed('Failed to fetch staff statistics.')], components: [row] });
+    }
+  },
+
+  async handleStatsButtons(interaction, client) {
+    const { customId, guildId, user: requester } = interaction;
+    const staffSystem = client.systems.staff;
+    const targetUserId = interaction.message.embeds[0].title.split(': ').pop();
+    // Simplified lookup from current embed title if possible, else use requester
+
+    if (customId === 'stats_compare') {
+      await interaction.deferReply({ ephemeral: true });
+      const allUsers = await User.find({ 'guilds.guildId': guildId }).lean();
+      const staffUsers = allUsers.filter(u => {
+        const g = u.guilds.find(guild => guild.guildId === guildId);
+        return g && g.staff && g.staff.points > 0;
+      });
+
+      const totalPoints = staffUsers.reduce((sum, u) => sum + (u.guilds.find(g => g.guildId === guildId).staff.points || 0), 0);
+      const avgPoints = staffUsers.length > 0 ? totalPoints / staffUsers.length : 0;
+
+      const dbUser = await User.findOne({ userId: requester.id });
+      const myPoints = dbUser?.guilds?.find(g => g.guildId === guildId)?.staff?.points || 0;
+      const variance = myPoints - avgPoints;
+
+      const embed = await createCustomEmbed(interaction, {
+        title: '⚖️ Peer Performance Variance',
+        description: `Comparison of your performance against **${staffUsers.length}** active staff members.`,
+        fields: [
+          { name: '📊 Server Average', value: `\`${Math.round(avgPoints)} pts\``, inline: true },
+          { name: '✨ Your Standing', value: `\`${myPoints} pts\``, inline: true },
+          { name: '📈 Variance', value: `\`${variance > 0 ? '+' : ''}${Math.round(variance)} pts\` (${variance >= 0 ? 'Above' : 'Below'} Global Avg)`, inline: false }
+        ],
+        color: variance >= 0 ? 'success' : 'warning'
+      });
+      await interaction.editReply({ embeds: [embed] });
+    }
+    else if (customId === 'stats_merits') {
+      await interaction.deferReply({ ephemeral: true });
+      const dbUser = await User.findOne({ userId: requester.id });
+      const staffData = dbUser?.guilds?.find(g => g.guildId === guildId)?.staff || {};
+      const trophies = staffData.trophies || [];
+
+      const embed = await createCustomEmbed(interaction, {
+        title: '🏅 Personnel Merit Showcase',
+        description: trophies.length > 0 ? trophies.map(t => `🏆 **${t}**`).join('\n') : 'No official merits recorded for this user yet.',
+        color: 'premium'
+      });
+      await interaction.editReply({ embeds: [embed] });
     }
   }
 };

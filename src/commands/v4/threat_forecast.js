@@ -7,9 +7,9 @@ module.exports = {
         .setName('threat_forecast')
         .setDescription('Enterprise Hyper-Apex: macroscopic AI-Simulated Security Risk Trajectory Modeling'),
 
-    async execute(interaction) {
+    async execute(interaction, client) {
         try {
-            await interaction.deferReply();
+            if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
 
             // Enterprise Hyper-Apex License Guard
             const license = await validatePremiumLicense(interaction, 'premium');

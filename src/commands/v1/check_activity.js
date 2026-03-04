@@ -120,6 +120,7 @@ module.exports = {
             new ButtonBuilder().setCustomId('history').setLabel('📜 History').setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setCustomId('avatar_banner').setLabel('🖼️ Media').setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setCustomId('permissions').setLabel('🔑 Perms').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId(`activity_ping_${targetUser.id}`).setLabel('🔔 Personnel Ping').setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setCustomId('more').setLabel('➕ Tools').setStyle(ButtonStyle.Primary)
         );
 
@@ -241,6 +242,20 @@ module.exports = {
                     .setImage(banner || avatar)
                     .setDescription(`[Avatar URL](${avatar})\n[Banner URL](${banner || 'None'})`);
                 await i.editReply({ embeds: [mediaEmbed] });
+            }
+            else if (action.startsWith('activity_ping_')) {
+                await i.deferReply({ ephemeral: true });
+                try {
+                    const embed = await createCustomEmbed(interaction, {
+                        title: `📡 Operational Ping: ${interaction.guild.name}`,
+                        description: `**Administrative Alert:** A moderator is requesting an activity confirmation.\n\n*Please ensure your status is correctly reflected and you are responsive to server duties.*`,
+                        color: 'warning'
+                    });
+                    await targetUser.send({ embeds: [embed] });
+                    await i.editReply({ content: `✅ Dispatched personnel ping to <@${targetUserId}>.` });
+                } catch (e) {
+                    await i.editReply({ content: `❌ Failed to ping user. (DMs closed)` });
+                }
             }
             else if (action === 'more') {
                 await handleMoreOptions(i, interaction, member, activities);

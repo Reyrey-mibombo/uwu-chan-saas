@@ -1,15 +1,16 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
 const { createCustomEmbed, createErrorEmbed, createPremiumEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('security_hub')
-        .setDescription('Enterprise Hyper-Apex: Guardian Strategic Security Control Portal'),
+        .setDescription('🛡️ Enterprise Hyper-Apex: Guardian Strategic Security Control Portal')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
         try {
-            await interaction.deferReply();
+            if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
 
             // Enterprise License Guard
             const license = await validatePremiumLicense(interaction, 'premium');
@@ -45,6 +46,34 @@ module.exports = {
             console.error('Security Hub Error:', error);
             await interaction.editReply({ embeds: [createErrorEmbed('Nexus failure: Unable to synchronize Guardian Command Portal.')] });
         }
+    },
+
+    async handleHubButtons(interaction, client) {
+        const { customId, member } = interaction;
+
+        if (!member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+            return interaction.reply({ content: '❌ Authority level insufficient for Security Nexus control.', ephemeral: true });
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        try {
+            if (customId === 'v4_forecast') {
+                const cmd = client.commands.get('threat_forecast');
+                if (cmd) await cmd.execute(interaction, client);
+                else await interaction.editReply({ content: '❌ Threat Forecast subsystem is offline.' });
+            } else if (customId === 'v4_shield') {
+                const cmd = client.commands.get('shield_status');
+                if (cmd) await cmd.execute(interaction, client);
+                else await interaction.editReply({ content: '❌ Shield Status subsystem is offline.' });
+            } else if (customId === 'v4_logs') {
+                const cmd = client.commands.get('moderation_logs');
+                if (cmd) await cmd.execute(interaction, client);
+                else await interaction.editReply({ content: '❌ Security Logs subsystem is offline.' });
+            }
+        } catch (err) {
+            console.error('Hub Button Error:', err);
+            await interaction.editReply({ content: '❌ Subsystem execution failure.' });
+        }
     }
 };
-

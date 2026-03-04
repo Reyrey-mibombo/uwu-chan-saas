@@ -144,6 +144,26 @@ const guildSchema = new mongoose.Schema({
     warnings: { type: Number, default: 0 },
     lastActivity: Date
   },
+  welcomeConfig: {
+    enabled: { type: Boolean, default: false },
+    channelId: String,
+    title: { type: String, default: 'Welcome to the Server!' },
+    message: { type: String, default: 'We are glad to have you here!' },
+    imageURL: String,
+    buttons: {
+      rules: { enabled: { type: Boolean, default: false }, label: { type: String, default: 'Read Rules' } },
+      roles: { enabled: { type: Boolean, default: false }, label: { type: String, default: 'Get Roles' } },
+      apply: { enabled: { type: Boolean, default: false }, label: { type: String, default: 'Apply Now' } }
+    }
+  },
+  autoChatConfig: {
+    enabled: { type: Boolean, default: false },
+    channelId: String,
+    interval: { type: Number, default: 60 }, // Frequency in minutes
+    messages: { type: [String], default: ["How is everyone doing today?", "Don't forget to check out our rules!", "Welcome to the community!"] },
+    lastSent: Date,
+    nextSent: Date
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

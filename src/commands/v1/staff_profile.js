@@ -72,8 +72,16 @@ module.exports = {
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
+          .setCustomId(`profile_shifts_${user.id}`)
+          .setLabel('🕒 Recent Shifts')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId(`profile_promo_${user.id}`)
+          .setLabel('🚀 Promotion Check')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
           .setCustomId(`export_stats_${user.id}`)
-          .setLabel('📥 Export System Record')
+          .setLabel('📥 Export Record')
           .setStyle(ButtonStyle.Secondary)
       );
 
@@ -119,6 +127,50 @@ module.exports = {
     } catch (error) {
       console.error('Error handling export:', error);
       await interaction.editReply({ content: '❌ An error occurred exporting the CSV.' });
+    }
+  },
+
+  async handleProfileButtons(interaction, client) {
+    const { customId, guildId } = interaction;
+    const targetUserId = customId.split('_').pop();
+    const staffSystem = client.systems.staff;
+
+    if (customId.startsWith('profile_shifts_')) {
+      await interaction.deferReply({ ephemeral: true });
+      const { Shift } = require('../../database/mongo');
+      const shifts = await Shift.find({ userId: targetUserId, guildId }).sort({ startTime: -1 }).limit(5).lean();
+
+      if (!shifts.length) return interaction.editReply({ content: 'No recent shift data found for this user.' });
+
+      const shiftLines = shifts.map(s => {
+        const start = s.startTime ? `<t:${Math.floor(s.startTime.getTime() / 1000)}:d>` : 'Unknown';
+        const dur = s.duration ? `(${Math.floor(s.duration / 3600)}h ${Math.floor((s.duration % 3600) / 60)}m)` : '(Ongoing)';
+        return `• **${start}** ${dur}`;
+      }).join('\n');
+
+      const embed = await createCustomEmbed(interaction, {
+        title: `🕒 Recent Personnel Activity`,
+        description: `Showing last 5 recorded shifts for <@${targetUserId}>:\n\n${shiftLines}`,
+        color: 'info'
+      });
+      await interaction.editReply({ embeds: [embed] });
+    }
+    else if (customId.startsWith('profile_promo_')) {
+      await interaction.deferReply({ ephemeral: true });
+      const PromotionSystem = require('../../utils/promotionSystem');
+      const { User } = require('../../database/mongo');
+      const dbUser = await User.findOne({ userId: targetUserId });
+      const eligibility = await PromotionSystem.checkEligibility(targetUserId, guildId, dbUser);
+
+      const status = eligibility.isEligible ? '✅ **ELIGIBLE FOR PROMOTION**' : '❌ **INELIGIBLE FOR PROMOTION**';
+      const reasonLines = eligibility.reasons.map(r => `• ${r.field}: ${r.met ? '✅' : '❌'} (Req: ${r.required}, Got: ${r.current})`).join('\n');
+
+      const embed = await createCustomEmbed(interaction, {
+        title: `🚀 Rank Eligibility Protocol`,
+        description: `${status}\n\n**Requirement Breakdown:**\n${reasonLines || 'No requirements defined for this rank.'}`,
+        color: eligibility.isEligible ? 'success' : 'warning'
+      });
+      await interaction.editReply({ embeds: [embed] });
     }
   }
 };

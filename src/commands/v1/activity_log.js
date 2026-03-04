@@ -72,7 +72,12 @@ module.exports = {
         footer: `Displaying last ${activities.length} internal events`
       });
 
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v1_activity_log').setLabel('🔄 Sync Live Data').setStyle(ButtonStyle.Secondary));
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('activity_filter_all').setLabel('🌐 All Activity').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('activity_filter_staff').setLabel('👔 Staff Only').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('activity_filter_mod').setLabel('🛡️ Mod Only').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('auto_v1_activity_log').setLabel('🔄 Sync').setStyle(ButtonStyle.Secondary)
+      );
       await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (error) {
       console.error(error);
@@ -84,6 +89,36 @@ module.exports = {
         await interaction.editReply({ embeds: [errEmbed], ephemeral: true });
       }
     }
+  },
+
+  async handleActivityFilters(interaction, client) {
+    const { customId, guildId } = interaction;
+    await interaction.deferUpdate();
+
+    const Activity = require('../../database/mongo').Activity;
+    let query = { guildId };
+
+    if (customId === 'activity_filter_staff') {
+      query.type = { $in: ['shift_start', 'shift_end', 'promotion', 'demote', 'points_add', 'points_remove'] };
+    } else if (customId === 'activity_filter_mod') {
+      query.type = { $in: ['warn', 'mute', 'kick', 'ban', 'unmute', 'unban'] };
+    }
+
+    const activities = await Activity.find(query).sort({ createdAt: -1 }).limit(10);
+
+    // Using simple formatting for the refresh update
+    const activityList = await Promise.all(activities.map(async (a) => {
+      const user = await client.users.fetch(a.userId).catch(() => null);
+      return `• **${a.type.toUpperCase()}**  ${user?.username || 'Unknown'}  <t:${Math.floor(new Date(a.createdAt).getTime() / 1000)}:R>`;
+    }));
+
+    const embed = await createCustomEmbed(interaction, {
+      title: `📋 Filtered Activity: ${customId.split('_').pop().toUpperCase()}`,
+      description: activityList.join('\n') || 'No activity found for this filter.',
+      color: 'info'
+    });
+
+    await interaction.editReply({ embeds: [embed] });
   }
 };
 

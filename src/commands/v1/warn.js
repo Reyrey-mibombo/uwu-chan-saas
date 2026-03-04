@@ -76,11 +76,22 @@ module.exports = {
           ])
       );
 
-      await interaction.editReply({ embeds: [embed], components: [row] });
+      const actionRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`warn_history_${user.id}`)
+          .setLabel('📜 View History')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId(`warn_pardon_${user.id}`)
+          .setLabel('🛡️ Rapid Case File')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      await interaction.editReply({ embeds: [embed], components: [row, actionRow] });
     } catch (error) {
       console.error(error);
       const errEmbed = createErrorEmbed('An error occurred while warning the user.');
-            if (interaction.deferred || interaction.replied) {
+      if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ embeds: [errEmbed] });
       } else {
         await interaction.editReply({ embeds: [errEmbed], ephemeral: true });
@@ -141,6 +152,39 @@ module.exports = {
     } catch (error) {
       console.error('Quick Action execution error:', error);
       await interaction.editReply({ content: '❌ An error occurred executing the quick action. Ensure my role is higher than the target.' });
+    }
+  },
+
+  async handleHistoryButton(interaction, client) {
+    const { customId, guildId } = interaction;
+    const targetUserId = customId.split('_').pop();
+    const staffSystem = client.systems.staff;
+
+    if (customId.startsWith('warn_history_')) {
+      await interaction.deferReply({ ephemeral: true });
+      const warnings = await staffSystem.getUserWarnings(targetUserId, guildId);
+
+      if (!warnings?.history?.length) return interaction.editReply({ content: 'This user has no prior disciplinary records.' });
+
+      const historyLines = warnings.history.slice(-5).map(w => {
+        const date = `<t:${Math.floor(new Date(w.timestamp).getTime() / 1000)}:d>`;
+        return `• **${date}**: ${w.reason} (\`${w.severity}\`)`;
+      }).join('\n');
+
+      const embed = await createCustomEmbed(interaction, {
+        title: `📜 Disciplinary Archive: ${targetUserId}`,
+        description: `Showing last 5 historical records:\n\n${historyLines}`,
+        color: 'error'
+      });
+      await interaction.editReply({ embeds: [embed] });
+    } else if (customId.startsWith('warn_pardon_')) {
+      // Redirect to case file command logic
+      const caseCmd = client.commands.get('case_file');
+      if (caseCmd) {
+        // Mock interaction for case_file
+        interaction.options.getUser = () => ({ id: targetUserId });
+        await caseCmd.execute(interaction, client);
+      }
     }
   }
 };

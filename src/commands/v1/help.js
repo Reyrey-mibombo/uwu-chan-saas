@@ -107,13 +107,21 @@ module.exports = {
 
       const buttonRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
+          .setLabel('👔 My Profile')
+          .setCustomId('help_action_profile')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setLabel('📊 Live Stats')
+          .setCustomId('help_action_stats')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
           .setLabel('⭐ Upgrade')
           .setStyle(ButtonStyle.Link)
-          .setURL('https://discord.gg/uwuchan'),
+          .setURL('https://stratadashboard.vercel.app/pricing'),
         new ButtonBuilder()
-          .setLabel('🔗 GitHub')
+          .setLabel('📡 Support')
           .setStyle(ButtonStyle.Link)
-          .setURL('https://github.com/Reyrey-mibombo/uwu-chan-saas')
+          .setURL('https://discord.gg/uwuchan')
       );
 
       const msg = await interaction.editReply({ embeds: [embed], components: [selectRow, buttonRow], fetchReply: true });
@@ -127,6 +135,12 @@ module.exports = {
           await i.deferUpdate();
           const newEmbed = await buildCategoryEmbed(interaction, i.values[0]);
           await i.editReply({ embeds: [newEmbed], components: [selectRow, buttonRow] });
+        } else if (i.customId === 'help_action_profile') {
+          const cmd = client.commands.get('staff_profile');
+          if (cmd) await cmd.execute(i, client);
+        } else if (i.customId === 'help_action_stats') {
+          const cmd = client.commands.get('staff_stats');
+          if (cmd) await cmd.execute(i, client);
         }
       });
 

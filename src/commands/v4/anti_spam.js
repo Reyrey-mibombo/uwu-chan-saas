@@ -1,57 +1,99 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { validatePremiumLicense } = require('../../utils/enhancedPremiumGuard');
-const { createCustomEmbed, createErrorEmbed, createPremiumEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
+const { createCustomEmbed, createErrorEmbed, createSuccessEmbed } = require('../../utils/enhancedEmbeds');
 const { Guild } = require('../../database/mongo');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('anti_spam')
-    .setDescription('Enterprise Global Threat Intelligence & Anti-Spam Control'),
+    .setDescription('🛡️ Enterprise Global Threat Intelligence & Anti-Spam Control')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
-  async execute(interaction) {
+  async execute(interaction, client) {
     try {
-      await interaction.deferReply();
+      if (!interaction.deferred && !interaction.replied) await interaction.deferReply();
 
-      // Strict Enterprise License Guard
       const license = await validatePremiumLicense(interaction, 'premium');
       if (!license.allowed) {
         return await interaction.editReply({ embeds: [license.embed], components: license.components });
       }
 
-      const guildId = interaction.guildId;
-      const guild = await Guild.findOne({ guildId });
-
-      const embed = await createCustomEmbed(interaction, {
-        title: '??? Enterprise Guardian: Anti-Spam Node',
-        thumbnail: interaction.guild.iconURL({ dynamic: true }),
-        description: `### ?? Global Threat Intelligence\nMacroscopic security telemetry for sector **${interaction.guild.name}**. Monitoring cross-sector behavioral signals to neutralize known threat vectors.\n\n**?? Enterprise BUYER EXCLUSIVE**`,
-        fields: [
-          { name: '?? Defense Status', value: '`?? OPTIMIZED`', inline: true },
-          { name: '?? Threat Level', value: '`MINIMAL`', inline: true },
-          { name: '?? Active Registry', value: `\`100% Locked\``, inline: true },
-          { name: '?? Global Syncing', value: '`REAL-TIME`', inline: true },
-          { name: '?? Filter Intensity', value: '`MAXIMUM`', inline: true },
-          { name: '??? Version', value: '`Enterprise Guardian v4.2`', inline: true }
-        ],
-        footer: 'Global Guardian Intelligence � V4 Security Suite',
-        color: 'premium'
-      });
-
-      embed.addFields({
-        name: '??? Macroscopic Benchmarking',
-        value: '> Your sector is currently **34% more secure** than the average network node due to active Enterprise shielding.',
-        inline: false
-      });
-
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_anti_spam').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [embed], components: [row] });
-
+      await this.renderSpamNexus(interaction);
     } catch (error) {
       console.error('Enterprise Anti-Spam Error:', error);
-      const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('auto_v4_anti_spam').setLabel('� Sync Live Data').setStyle(ButtonStyle.Secondary));
-            await interaction.editReply({ embeds: [createErrorEmbed('Guardian Intelligence failure: Unable to synchronize threat matrices.')], components: [row] });
+      await interaction.editReply({ embeds: [createErrorEmbed('Guardian Intelligence failure: Unable to synchronize threat matrices.')] });
     }
+  },
+
+  async renderSpamNexus(interaction) {
+    const guildId = interaction.guildId;
+    let guild = await Guild.findOne({ guildId });
+    if (!guild) guild = new Guild({ guildId, name: interaction.guild.name });
+
+    const config = guild.settings?.antispam || { enabled: false, sensitivity: 'Standard' };
+    const status = config.enabled ? '🟢 OPTIMIZED' : '🔴 DEACTIVATED';
+    const intensity = config.sensitivity || 'Standard';
+
+    const embed = await createCustomEmbed(interaction, {
+      title: '🛰️ Enterprise Guardian: Anti-Spam Nexus',
+      thumbnail: interaction.guild.iconURL({ dynamic: true }),
+      description: `### 🛡️ Global Intelligence Pulse\nMacroscopic security telemetry for sector **${interaction.guild.name}**. Monitoring cross-sector behavioral signals.\n\n**💎 Enterprise HYPER-APEX EXCLUSIVE**`,
+      fields: [
+        { name: '🛡️ Defense Status', value: `\`${status}\``, inline: true },
+        { name: '⚖️ Sensitivity', value: `\`${intensity}\``, inline: true },
+        { name: '🧱 Active Registry', value: `\`${config.enabled ? '100% Locked' : 'Unlocked'}\``, inline: true },
+        { name: '📡 Global Sync', value: '`REAL-TIME`', inline: true },
+        { name: '⚡ Deterrence Pulse', value: `\`${config.enabled ? '4.8 GHz' : '0.0 GHz'}\``, inline: true },
+        { name: '✨ System Pulsar', value: '`RESONATING`', inline: true }
+      ],
+      footer: 'Anti-Spam Intelligence Nexus • V4 Security Suite',
+      color: config.enabled ? 'premium' : 'error'
+    });
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`spam_toggle_${config.enabled ? 'off' : 'on'}`)
+        .setLabel(config.enabled ? 'Disable Deterrence' : 'Enable Deterrence')
+        .setStyle(config.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+        .setEmoji(config.enabled ? '🔒' : '🔓'),
+      new ButtonBuilder()
+        .setCustomId(`spam_sense_${intensity === 'Standard' ? 'Maximal' : 'Standard'}`)
+        .setLabel(intensity === 'Standard' ? 'Set Maximal' : 'Set Standard')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('⚡'),
+      new ButtonBuilder()
+        .setCustomId('auto_v4_anti_spam')
+        .setLabel('Sync Nexus')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('🔄')
+    );
+
+    await interaction.editReply({ embeds: [embed], components: [row] });
+  },
+
+  async handleSpamButtons(interaction, client) {
+    const { customId, member, guildId } = interaction;
+    if (!member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      return interaction.reply({ content: '❌ Authority level insufficient for Security Nexus control.', ephemeral: true });
+    }
+
+    await interaction.deferUpdate();
+    const parts = customId.split('_');
+    const action = parts[1];
+    const value = parts[2];
+
+    let guild = await Guild.findOne({ guildId });
+    if (!guild) guild = new Guild({ guildId, name: interaction.guild.name });
+    if (!guild.settings) guild.settings = {};
+    if (!guild.settings.antispam) guild.settings.antispam = {};
+
+    if (action === 'toggle') {
+      guild.settings.antispam.enabled = (value === 'on');
+    } else if (action === 'sense') {
+      guild.settings.antispam.sensitivity = value;
+    }
+
+    await guild.save();
+    await this.renderSpamNexus(interaction);
   }
 };
-
-

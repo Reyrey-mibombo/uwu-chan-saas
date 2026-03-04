@@ -667,6 +667,11 @@ app.use('/api/stats', require('./api/stats'));
 app.use('/api/commands', require('./api/commands'));
 app.use('/api/dashboard', require('./api/routes'));
 
+// New enhanced dashboard API routes
+app.use('/api/advanced', require('./api/advanced'));
+app.use('/api/management', require('./api/management'));
+app.use('/api/health', require('./api/health'));
+
 // Mount webhook routes with specific middleware
 const paymentWebhook = require('./webhook/paymentWebhook');
 app.use('/webhooks/stripe', paymentWebhook);

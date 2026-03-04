@@ -226,6 +226,178 @@ class AnalyticsSystem {
     await Activity.deleteMany({ createdAt: { $lt: cutoff } });
     logger.info('Cleaned up old analytics data');
   }
+
+  // ═══════════════════════════════════════════════════════════
+  // WEB DASHBOARD ENHANCED METHODS
+  // ═══════════════════════════════════════════════════════════
+
+  async getDashboardStats(guildId, days = 7) {
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [
+      activities,
+      commandStats,
+      activityByDay,
+      topUsers
+    ] = await Promise.all([
+      Activity.find({ guildId, createdAt: { $gte: cutoff } }).lean(),
+      Activity.aggregate([
+        { $match: { guildId, type: 'command', createdAt: { $gte: cutoff } } },
+        { $group: { _id: '$data.command', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 }
+      ]),
+      Activity.aggregate([
+        { $match: { guildId, createdAt: { $gte: cutoff } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            count: { $sum: 1 },
+            commands: { $sum: { $cond: [{ $eq: ['$type', 'command'] }, 1, 0] } },
+            messages: { $sum: { $cond: [{ $eq: ['$type', 'message'] }, 1, 0] } }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]),
+      Activity.aggregate([
+        { $match: { guildId, createdAt: { $gte: cutoff } } },
+        { $group: { _id: '$userId', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 }
+      ])
+    ]);
+
+    return {
+      period: days,
+      totalActivities: activities.length,
+      breakdown: {
+        commands: activities.filter(a => a.type === 'command').length,
+        messages: activities.filter(a => a.type === 'message').length,
+        shifts: activities.filter(a => a.type === 'shift').length,
+        warnings: activities.filter(a => a.type === 'warning').length
+      },
+      topCommands: commandStats.map(c => ({ command: c._id, uses: c.count })),
+      activityByDay: activityByDay.map(d => ({
+        date: d._id,
+        total: d.count,
+        commands: d.commands,
+        messages: d.messages
+      })),
+      topUsers: topUsers.map(u => ({ userId: u._id, activities: u.count }))
+    };
+  }
+
+  async getRealTimeMetrics(guildId) {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const [recentActivity, hourlyActivity, dailyActivity, currentShifts] = await Promise.all([
+      Activity.countDocuments({ guildId, createdAt: { $gte: fiveMinutesAgo } }),
+      Activity.countDocuments({ guildId, createdAt: { $gte: oneHourAgo } }),
+      Activity.countDocuments({ guildId, createdAt: { $gte: oneDayAgo } }),
+      Shift.countDocuments({ guildId, endTime: null })
+    ]);
+
+    return {
+      online: {
+        activeNow: recentActivity,
+        lastHour: hourlyActivity,
+        lastDay: dailyActivity
+      },
+      shifts: {
+        active: currentShifts
+      },
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  async getPerformanceMetrics(guildId) {
+    const { User, Shift, Warning } = require('../database/mongo');
+
+    const [staffStats, shiftStats, warningStats] = await Promise.all([
+      User.aggregate([
+        { $match: { 'guilds.guildId': guildId } },
+        {
+          $project: {
+            guildData: {
+              $filter: {
+                input: '$guilds',
+                cond: { $eq: ['$$this.guildId', guildId] }
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalStaff: { $sum: 1 },
+            avgPoints: { $avg: { $arrayElemAt: ['$guildData.staff.points', 0] } },
+            totalPoints: { $sum: { $arrayElemAt: ['$guildData.staff.points', 0] } }
+          }
+        }
+      ]),
+      Shift.aggregate([
+        { $match: { guildId, endTime: { $ne: null } } },
+        {
+          $group: {
+            _id: null,
+            totalShifts: { $sum: 1 },
+            totalDuration: { $sum: '$duration' },
+            avgDuration: { $avg: '$duration' }
+          }
+        }
+      ]),
+      Warning.aggregate([
+        { $match: { guildId } },
+        {
+          $group: {
+            _id: null,
+            totalWarnings: { $sum: 1 },
+            bySeverity: {
+              $push: '$severity'
+            }
+          }
+        }
+      ])
+    ]);
+
+    return {
+      staff: staffStats[0] || { totalStaff: 0, avgPoints: 0, totalPoints: 0 },
+      shifts: shiftStats[0] || { totalShifts: 0, totalDuration: 0, avgDuration: 0 },
+      warnings: warningStats[0] || { totalWarnings: 0, bySeverity: [] }
+    };
+  }
+
+  async generateComparisonReport(guildId, compareGuildId, days = 7) {
+    const [guild1Stats, guild2Stats] = await Promise.all([
+      this.getDashboardStats(guildId, days),
+      this.getDashboardStats(compareGuildId, days)
+    ]);
+
+    return {
+      period: days,
+      guild1: {
+        guildId,
+        totalActivities: guild1Stats.totalActivities,
+        breakdown: guild1Stats.breakdown
+      },
+      guild2: {
+        guildId: compareGuildId,
+        totalActivities: guild2Stats.totalActivities,
+        breakdown: guild2Stats.breakdown
+      },
+      comparison: {
+        activityRatio: guild2Stats.totalActivities > 0
+          ? (guild1Stats.totalActivities / guild2Stats.totalActivities).toFixed(2)
+          : 'N/A',
+        commandRatio: guild2Stats.breakdown.commands > 0
+          ? (guild1Stats.breakdown.commands / guild2Stats.breakdown.commands).toFixed(2)
+          : 'N/A',
+        winner: guild1Stats.totalActivities > guild2Stats.totalActivities ? guildId : compareGuildId
+      }
+    };
+  }
 }
 
 module.exports = AnalyticsSystem;

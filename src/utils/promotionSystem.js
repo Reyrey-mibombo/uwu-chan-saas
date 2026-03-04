@@ -93,6 +93,15 @@ class PromotionSystem {
             }
         );
 
+        // Track auto-promotion in the Dashboard Activity logs
+        const oldRank = stats.rank || 'member'; // Fallback if old rank isn't strictly tracked in stats yet
+        await Activity.create({
+            guildId,
+            userId,
+            type: 'promotion',
+            data: { newRank, oldRank, promotedBy: 'auto_promoted' }
+        });
+
         const discordGuild = client.guilds.cache.get(guildId);
         if (!discordGuild) return { rank: newRank, success: true };
 
